@@ -91,6 +91,6 @@ import compression from 'compression';
 
   app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
 
-  await app.listen(port);
-  Logger.log(`Application is running on: http://localhost:${port}`);
+  await app.listen(port, '0.0.0.0');
+  Logger.log(`✅ Application is running on: http://0.0.0.0:${port}`);
 })();
