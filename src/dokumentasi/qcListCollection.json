@@ -1,0 +1,74 @@
+{
+  "info": {
+    "name": "QCMS QC List API",
+    "_postman_id": "123e4567-e89b-12d3-a456-426614174000",
+    "description": "Postman collection untuk QC List Service (Create Record, Get Records, Get Plans, Get Template Detail).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "QC List",
+      "item": [
+        {
+          "name": "Create QC Record",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qc_template_id\": \"T-H001\",\n  \"campaign_no\": \"CAMP-001\",\n  \"sequence_no\": 1,\n  \"pattern\": \"P-001\",\n  \"heat_number\": 150.5,\n  \"bloom_number\": 10,\n  \"type_material\": \"Steel\",\n  \"thick\": 12.5,\n  \"width\": 100.0,\n  \"length\": 1500.0,\n  \"kg_m\": 80.0,\n  \"weight\": 120000.0,\n  \"order_number\": 1,\n  \"item_number\": 1,\n  \"h\": 200.0,\n  \"b\": 150.0,\n  \"thicknees_web\": 8.0,\n  \"thicknes_flange\": 12.0,\n  \"pcs\": 5,\n  \"spec\": \"H-Beam 150t\",\n  \"ce\": 1.2,\n  \"finish_temp\": 1200.0,\n  \"charging_time\": \"2025-09-25T08:00:00Z\",\n  \"discharging_time\": \"2025-09-25T09:00:00Z\",\n  \"process_time\": 60.0,\n  \"remarks\": \"QC Test\",\n  \"created_by\": \"operator1\",\n  \"datas\": [\n    { \"input_code\": \"HEIGHT\", \"input_value\": 210.5, \"err_tolerance\": 5.0, \"status\": \"ok\", \"notified\": \"no\", \"position\": \"B1\" },\n    { \"input_code\": \"WIDTH_WF\", \"input_value\": 102.0, \"err_tolerance\": 3.0, \"status\": \"ok\", \"notified\": \"no\", \"position\": \"WF\" }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/qc-list/records",
+              "host": ["{{baseUrl}}"],
+              "path": ["qc-list", "records"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All QC Records",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/qc-list/records",
+              "host": ["{{baseUrl}}"],
+              "path": ["qc-list", "records"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All QC Plans",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/qc-list/plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["qc-list", "plans"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get QC Template Detail by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/qc-list/templates/T-H001",
+              "host": ["{{baseUrl}}"],
+              "path": ["qc-list", "templates", "T-H001"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

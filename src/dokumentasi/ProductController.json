@@ -1,0 +1,85 @@
+{
+  "info": {
+    "name": "QCMS Product API",
+    "_postman_id": "a1234567-89ab-cdef-0123-456789abcdef",
+    "description": "Postman collection untuk Product Service (ProductType & ProductTypeData)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Product",
+      "item": [
+        {
+          "name": "Get All Product Types",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/product/type",
+              "host": ["{{base_url}}"],
+              "path": ["product", "type"]
+            }
+          }
+        },
+        {
+          "name": "Get All Product Type Data",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/product/type-data",
+              "host": ["{{base_url}}"],
+              "path": ["product", "type-data"]
+            }
+          }
+        },
+        {
+          "name": "Get Product Type Data by prodtype_id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/product/type-data/:prodtypeId",
+              "host": ["{{base_url}}"],
+              "path": ["product", "type-data", ":prodtypeId"],
+              "variable": [
+                {
+                  "key": "prodtypeId",
+                  "value": "PT001"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    }
+  ]
+}

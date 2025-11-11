@@ -1,0 +1,76 @@
+{
+  "prodtype_id": "H-Beam",
+  "name": "QC H-Beam 150t",
+  "fields": [
+    {
+      "input_code": "HEIGHT",
+      "label": "Height",
+      "input_type": "number",
+      "min_tolerance": 100.0,
+      "max_tolerance": 150.0,
+      "order_numb": 1,
+      "enabled": true,
+      "sound": "string"
+    },
+    {
+      "input_code": "WIDTH_WF",
+      "label": "Width WF",
+      "input_type": "number",
+      "min_tolerance": 50.0,
+      "max_tolerance": 80.0,
+      "order_numb": 2,
+      "enabled": true,
+      "sound": "string"
+    },
+    {
+      "input_code": "RADIUS",
+      "label": "Radius",
+      "input_type": "number",
+      "min_tolerance": 50.0,
+      "max_tolerance": 80.0,
+      "order_numb": 2,
+      "enabled": true,
+      "sound": "string"
+    },
+    {
+      "input_code": "H_B1",
+      "label": "H(B1)",
+      "input_type": "number",
+      "min_tolerance": 8.0,
+      "max_tolerance": 12.0,
+      "order_numb": 3,
+      "enabled": true,
+      "sound": "string"
+    },
+    {
+      "input_code": "C_B1",
+      "label": "C(B1)",
+      "input_type": "number",
+      "min_tolerance": 5.0,
+      "max_tolerance": 10.0,
+      "order_numb": 4,
+      "enabled": true,
+      "sound": "string"
+    },
+    {
+      "input_code": "H_b3_L",
+      "label": "H(b3)",
+      "input_type": "number",
+      "min_tolerance": 5.0,
+      "max_tolerance": 10.0,
+      "order_numb": 5,
+      "enabled": true,
+      "sound": "string"
+    },
+    {
+      "input_code": "H_b3_R",
+      "label": "H(b3)",
+      "input_type": "number",
+      "min_tolerance": 5.0,
+      "max_tolerance": 10.0,
+      "order_numb": 6,
+      "enabled": true,
+      "sound": "string"
+    }
+  ]
+}

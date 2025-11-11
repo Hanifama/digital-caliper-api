@@ -1,0 +1,111 @@
+{
+  "info": {
+    "name": "QCMS QC Template API",
+    "_postman_id": "9e1a1d47-bd23-4b76-9b22-abcdef987654",
+    "description": "Postman collection untuk QC Template Service (Create, Get All, Get Data, Get Data by TemplateId, Update, Delete).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "QC Template",
+      "item": [
+        {
+          "name": "Create QC Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prodtype_id\": \"H\",\n  \"qc_template_id\": \"T-H001\",\n  \"name\": \"QC H-Beam 150t\",\n  \"status\": \"ACTIVE\",\n  \"created_by\": \"admin\",\n  \"fields\": [\n    {\n      \"input_code\": \"HEIGHT\",\n      \"label\": \"Height\",\n      \"input_type\": \"number\",\n      \"min_tolerance\": 100.0,\n      \"max_tolerance\": 150.0,\n      \"order_numb\": 1,\n      \"enabled\": true\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/qc-template",
+              "host": ["{{baseUrl}}"],
+              "path": ["qc-template"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All QC Templates",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/qc-template",
+              "host": ["{{baseUrl}}"],
+              "path": ["qc-template"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All QC Template Data (with pagination)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/qc-template/data?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["qc-template", "data"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get QC Template Data by TemplateId",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/qc-template/data/{{templateId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["qc-template", "data", "{{templateId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update QC Template",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"QC H-Beam 150t (Updated)\",\n  \"status\": \"INACTIVE\",\n  \"updated_by\": \"admin\",\n  \"fields\": [\n    {\n      \"input_code\": \"HEIGHT\",\n      \"label\": \"Height\",\n      \"input_type\": \"number\",\n      \"min_tolerance\": 110.0,\n      \"max_tolerance\": 140.0,\n      \"order_numb\": 1,\n      \"enabled\": true\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/qc-template/{{templateId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["qc-template", "{{templateId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete QC Template",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/qc-template/{{templateId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["qc-template", "{{templateId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

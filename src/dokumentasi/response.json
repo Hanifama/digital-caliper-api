@@ -1,0 +1,82 @@
+{
+  "code": 200,
+  "status": true,
+  "message": "Berhasil memuat produk.",
+  "data": {
+    "table": [
+      {
+        "name": "t1",
+        "fields": [
+          {
+            "code": "H.t1",
+            "name": "H(t1)",
+            "type": "number",
+            "isTable": true,
+            "productType": "H-Beam"
+          },
+          {
+            "code": "C.t1",
+            "name": "C(t1)",
+            "type": "number",
+            "isTable": true,
+            "productType": "H-Beam"
+          },
+          {
+            "code": "T.t1",
+            "name": "T(t1)",
+            "type": "number",
+            "isTable": true,
+            "productType": "H-Beam"
+          }
+        ]
+      }
+    ],
+    "default": [],
+    "basic": [],
+    "FormRight": [
+      {
+        "name": "Concavity of Web",
+        "fields": [
+          {
+            "code": "concavity.of.web.tlt50",
+            "name": "T<50%",
+            "type": "number",
+            "isTable": false,
+            "productType": "H-Beam",
+            "isEnabled": false
+          },
+          {
+            "code": "concavity.of.web.nominal",
+            "name": "Nominal",
+            "type": "number",
+            "isTable": false,
+            "productType": "H-Beam",
+            "isEnabled": false
+          },
+          {
+            "code": "concavity.of.web.tgt50",
+            "name": "T>50%",
+            "type": "number",
+            "isTable": false,
+            "productType": "H-Beam",
+            "isEnabled": false
+          },
+          {
+            "code": "concavity.of.web.max",
+            "name": "Max",
+            "type": "number",
+            "isTable": false,
+            "productType": "H-Beam",
+            "isEnabled": false
+          }
+        ],
+        "relatedTablePositions": ["t5"]
+      },
+      {
+        "name": "Flange Thickness",
+        "fields": [{}],
+        "relatedTablePositions": ["t1", "t2", "t3", "t4"]
+      }
+    ]
+  }
+}

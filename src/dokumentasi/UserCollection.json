@@ -1,0 +1,111 @@
+{
+  "info": {
+    "name": "QCMS Digital Caliper API",
+    "_postman_id": "d41d8cd9-8f00-3204-a980-abcdef123456",
+    "description": "Postman collection untuk User Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user?page=1&limit=10&role=Manajer&status=1",
+              "host": ["{{base_url}}"],
+              "path": ["user"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "role", "value": "Manajer" },
+                { "key": "status", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user/:userId",
+              "host": ["{{base_url}}"],
+              "path": ["user", ":userId"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"departement\": \"IT\",\n  \"roleId\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/user/:userId",
+              "host": ["{{base_url}}"],
+              "path": ["user", ":userId"]
+            }
+          }
+        },
+        {
+          "name": "Update Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPassword\": \"NewPass123$\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/user/password/:userId",
+              "host": ["{{base_url}}"],
+              "path": ["user", "password", ":userId"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+
+import { AuthService } from './auth.service';
+import { AuthController } from './auth.controller';
+
+import { PasswordService } from './password.service';
+import { TokenManagerService } from './tokenManager.service';
+
+import { MessageModule } from '../message/message.module';
+
+import { JwtStrategy } from './strategy/jwt.strategy';
+
+import { User } from './entitities/user.entity';
+import { Role } from './entitities/role.entity';
+import { Menu } from './entitities/menu.entity';
+import { RoleMenu } from './entitities/role-menu.entity';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([User, Role, RoleMenu, Menu]),
+    JwtModule.registerAsync({
+      global: true,
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('ACCESS_TOKEN_SECRET'),
+        signOptions: { expiresIn: '7h' },
+      }),
+    }),
+    MessageModule,
+  ],
+  controllers: [AuthController],
+  providers: [AuthService, TokenManagerService, PasswordService, JwtStrategy],
+  exports: [TokenManagerService, PasswordService],
+})
+export class AuthModule {}

@@ -1,0 +1,155 @@
+{
+  "info": {
+    "name": "QCMS Digital Caliper API - Master Role",
+    "_postman_id": "e1234567-89ab-cdef-0123-456789abcdef",
+    "description": "Postman collection untuk Master Role Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get All Roles",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/role",
+          "host": ["{{base_url}}"],
+          "path": ["role"]
+        }
+      }
+    },
+    {
+      "name": "Create Role",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Operator\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/role",
+          "host": ["{{base_url}}"],
+          "path": ["role"]
+        }
+      }
+    },
+    {
+      "name": "Get Menu by User",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/role/menu",
+          "host": ["{{base_url}}"],
+          "path": ["role", "menu"]
+        }
+      }
+    },
+    {
+      "name": "Update Role",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Supervisor\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/role/:roleId",
+          "host": ["{{base_url}}"],
+          "path": ["role", ":roleId"]
+        }
+      }
+    },
+    {
+      "name": "Delete Role",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/role/:roleId",
+          "host": ["{{base_url}}"],
+          "path": ["role", ":roleId"]
+        }
+      }
+    },
+    {
+      "name": "Assign Menus to Role",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"menuIds\": [\"menu-1\", \"menu-2\"]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/role/:roleId/menus",
+          "host": ["{{base_url}}"],
+          "path": ["role", ":roleId", "menus"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}
