@@ -8,6 +8,9 @@ COPY package*.json ./
 # Install production dependencies saja
 RUN npm ci --omit=dev
 
+# Install pakacge cli global
+RUN npm install -g @nestjs/cli
+
 # Copy seluruh source code
 COPY . .
 
