@@ -118,37 +118,55 @@ export class NotificationService implements OnModuleInit {
     return groups;
   }
 
-  // Kirim Image ke grup tujuan
-  async sendImageToGroup(imageUrl: string, caption?: string) {
+  // Kirim Image ke beberapa grup sekaligus
+  async sendImageToGroups(
+    imageUrl: string,
+    caption?: string,
+    groupNames: string[] = ['bot tester'],
+  ) {
     if (!this.client || !this.isReady)
       throw new Error('WhatsApp client belum siap');
 
-    const fixedGroupName = 'bot tester'; // Nama grup
-
-    // Cari grup
+    // Ambil semua chat
     const chats = await this.client.getChats();
-    const group = chats.find(
-      (chat) =>
-        chat.isGroup &&
-        chat.name.toLowerCase() === fixedGroupName.toLowerCase(),
-    );
-
-    if (!group) throw new Error(`Grup "${fixedGroupName}" tidak ditemukan`);
 
     // Konversi URL → File Path
     const fileName = imageUrl.split('/uploads/')[1];
     if (!fileName) throw new Error('URL upload tidak valid');
 
     const filePath = join(process.cwd(), 'uploads', fileName);
-
-    // Load dari file lokal
     const media = MessageMedia.fromFilePath(filePath);
 
-    // Kirim ke grup
-    return this.client.sendMessage(group.id._serialized, media, { caption });
+    const results: string[] = [];
+    const failed: string[] = [];
+
+    // Loop kirim ke tiap grup
+    for (const groupName of groupNames) {
+      const group = chats.find(
+        (chat) =>
+          chat.isGroup && chat.name.toLowerCase() === groupName.toLowerCase(),
+      );
+
+      if (!group) {
+        console.warn(`⚠️ Grup "${groupName}" tidak ditemukan`);
+        failed.push(groupName);
+        continue;
+      }
+
+      try {
+        await this.client.sendMessage(group.id._serialized, media, { caption });
+        console.log(`✅ Gambar terkirim ke grup "${groupName}"`);
+        results.push(groupName);
+      } catch (err) {
+        console.error(`❌ Gagal mengirim ke grup "${groupName}"`, err);
+        failed.push(groupName);
+      }
+    }
+
+    return { success: results.length > 0, sentTo: results, failed };
   }
 
-  // Kirim QC histori & Image ke grup tujuan
+  // Kirim QC histori & Image ke beberapa grup
   async sendQcImage(qcId: string, imageUrl: string) {
     if (!this.client || !this.isReady)
       throw new Error('WhatsApp client belum siap');
@@ -178,8 +196,14 @@ export class NotificationService implements OnModuleInit {
       .addOrderBy('d.input_code', 'ASC')
       .getRawMany();
 
-    const totalPassed = raw.filter((r) => r.status === 'Passed').length;
+    const passed = raw.filter((r) => r.status === 'Passed');
     const errors = raw.filter((r) => r.status === 'Not Passed');
+
+    const mappedPassed = passed.map((p) => ({
+      code: p.code,
+      value: p.value,
+      position: p.position,
+    }));
 
     const mappedErrors = errors.map((e) => ({
       code: e.code,
@@ -187,14 +211,18 @@ export class NotificationService implements OnModuleInit {
       position: e.position,
     }));
 
+    // Grouping by posisi
+    const passedWithPosition = mappedPassed.filter((e) => !!e.position);
+    const passedWithoutPosition = mappedPassed.filter((e) => !e.position);
     const errorsWithPosition = mappedErrors.filter((e) => !!e.position);
     const errorsWithoutPosition = mappedErrors.filter((e) => !e.position);
 
+    const groupedPassed = this.groupByPosition(passedWithPosition);
     const groupedErrors = this.groupByPosition(errorsWithPosition);
 
     const message = this.generateQcMessage({
       qcId: record.qc_id,
-      template: record.profile,
+      size: record.size,
       location: record.location_id,
       locationName: record.location?.name ?? '-',
       statusQC: record.status,
@@ -202,9 +230,11 @@ export class NotificationService implements OnModuleInit {
       createdAt: record.created_dt.toLocaleDateString('id-ID'),
       startDate: record.start_dt?.toLocaleTimeString('id-ID'),
       endDate: record.created_dt?.toLocaleTimeString('id-ID'),
-      totalPassed,
+      totalPassed: passed.length,
       totalErrors: errors.length,
+      groupedPassed,
       groupedErrors,
+      passedWithoutPosition,
       errorsWithoutPosition,
     });
 
@@ -212,14 +242,15 @@ export class NotificationService implements OnModuleInit {
       `Berhasil mengirim notifikasi untuk QC Batch Id ${qcId}`,
     );
 
-    // Kirim ke grup tetap
-    return this.sendImageToGroup(imageUrl, message);
+    // Kirim ke beberapa grup sekaligus
+    const targetGroups = ['test wa gys', 'erp development'];
+    return this.sendImageToGroups(imageUrl, message, targetGroups);
   }
 
-  // Generate plan text message format
+  // Generate plain text message format
   generateQcMessage(data: {
     qcId: string;
-    template: string;
+    size: string;
     location: string;
     locationName: string;
     statusQC: string;
@@ -229,12 +260,14 @@ export class NotificationService implements OnModuleInit {
     createdAt: string;
     totalPassed: number;
     totalErrors: number;
+    groupedPassed: Record<string, any[]>;
     groupedErrors: Record<string, any[]>;
+    passedWithoutPosition?: { code: string; value: number }[];
     errorsWithoutPosition?: { code: string; value: number }[];
   }) {
     const {
       qcId,
-      template,
+      size,
       location,
       locationName,
       statusQC,
@@ -244,14 +277,16 @@ export class NotificationService implements OnModuleInit {
       createdAt,
       totalPassed,
       totalErrors,
+      groupedPassed,
       groupedErrors,
+      passedWithoutPosition = [],
       errorsWithoutPosition = [],
     } = data;
 
     let message = `📋 *QUALITY CONTROL REPORT*\n`;
     message += `──────────────────────\n`;
     message += `*Batch ID:* ${qcId}\n`;
-    message += `*Template:* ${template}\n`;
+    message += `*Size:* ${size}\n`;
     message += `*Lokasi:* ${locationName} (${location})\n`;
     message += `*Status QC:* ${statusQC} (${statusAllQC})\n`;
     message += `*Tanggal QC:* ${createdAt}\n`;
@@ -262,10 +297,51 @@ export class NotificationService implements OnModuleInit {
     message += `❌ *Not Passed:* ${totalErrors}\n`;
     message += `──────────────────────\n\n`;
 
-    message += `❌ *Detail Not Passed:*\n\n`;
+    // -------------------------------
+    // ✅ Detail Passed
+    // -------------------------------
+    message += `✅ *Detail Passed:*\n\n`;
     let counter = 1;
-    // Cetak data yang punya posisi
-    for (const pos of Object.keys(groupedErrors)) {
+
+    // urutkan posisi supaya FormRight di akhir
+    const sortedPassedKeys = Object.keys(groupedPassed).sort((a, b) => {
+      if (a === 'FormRight') return 1;
+      if (b === 'FormRight') return -1;
+      return 0;
+    });
+
+    for (const pos of sortedPassedKeys) {
+      if (pos !== 'FormRight') {
+        message += `📌 Posisi ${pos}\n`;
+      }
+      groupedPassed[pos].forEach((item) => {
+        message += `${counter}. [${item.code}] Value: ${item.value}\n`;
+        counter++;
+      });
+      message += `\n`;
+    }
+
+    // tanpa posisi → terakhir tanpa label posisi
+    passedWithoutPosition.forEach((item) => {
+      message += `${counter}. [${item.code}] Value: ${item.value}\n`;
+      counter++;
+    });
+    message += `──────────────────────\n\n`;
+
+    // -------------------------------
+    // ❌ Detail Not Passed
+    // -------------------------------
+    message += `❌ *Detail Not Passed:*\n\n`;
+    counter = 1;
+
+    // urutkan posisi supaya FormRight di akhir
+    const sortedErrorKeys = Object.keys(groupedErrors).sort((a, b) => {
+      if (a === 'FormRight') return 1;
+      if (b === 'FormRight') return -1;
+      return 0;
+    });
+
+    for (const pos of sortedErrorKeys) {
       if (pos !== 'FormRight') {
         message += `📌 Posisi ${pos}\n`;
       }
@@ -276,15 +352,15 @@ export class NotificationService implements OnModuleInit {
       message += `\n`;
     }
 
-    // Cetak data tanpa posisi
+    // tanpa posisi → terakhir tanpa label posisi
     errorsWithoutPosition.forEach((item) => {
       message += `${counter}. [${item.code}] Value: ${item.value}\n`;
       counter++;
     });
+
     if (errorsWithoutPosition.length) message += `\n`;
 
     message += `⚠️ Please check and verify.`;
-
     return message;
   }
 }
