@@ -123,7 +123,7 @@ export class NotificationService implements OnModuleInit {
     if (!this.client || !this.isReady)
       throw new Error('WhatsApp client belum siap');
 
-    const fixedGroupName = 'Test WA GYS'; // Nama grup
+    const fixedGroupName = 'bot tester'; // Nama grup
 
     // Cari grup
     const chats = await this.client.getChats();
