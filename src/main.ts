@@ -40,7 +40,7 @@ import compression from 'compression';
         'http://localhost:5173', // dev
         'http://localhost:4173', // staging
         'https://digitalcaliper.webview.cloud', // dev prod
-        'https://www.digitalcaliper.webview.cloud', // prod www
+        'http://172.16.22.170', // prod www
       ];
 
       if (allowedOrigins.includes(origin)) {
