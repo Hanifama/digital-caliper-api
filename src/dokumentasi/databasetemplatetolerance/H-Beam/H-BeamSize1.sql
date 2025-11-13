@@ -88,7 +88,7 @@ INSERT INTO `qc_template_data` (`input_code`, `qc_template_id`, `label`, `input_
 ('flange.thickness','TMP-rtxtuyp','Flange Thickness','number',7,7.5,8,8.5,9,0,50,1,'','FormRight','Flange Thickness'),
 ('width.of.web','TMP-rtxtuyp','Width of Web','number',98,99,100,101,102,0,51,1,'','FormRight','Width of Web'),
 ('web.thickness','TMP-rtxtuyp','Web Thickness','number',5.3,5.65,6,6.35,6.7,0,52,1,'','FormRight','Web Thickness'),
-('unit.weight','TMP-rtxtuyp','Unit Weight (Kgm) (Kgm)','number',16.1,16.5,16.9,17.3,17.7,0,53,1,'','FormRight','Unit Weight (Kgm) (Kgm)'),
+('unit.weight','TMP-rtxtuyp','Unit Weight (Kgm)','number',16.1,16.5,16.9,17.3,17.7,0,53,1,'','FormRight','Unit Weight (Kgm)'),
 ('radius','TMP-rtxtuyp','Radius','number',0,0,8,0,0,0,54,1,'','FormRight','Radius'),
 ('web.off.center','TMP-rtxtuyp','Web Off Center','number',-2.5,-1.25,0,1.25,2.5,0,55,1,'','FormRight','Web Off Center'),
 ('os','TMP-rtxtuyp','OS','number',0,0,1.5,0,0,0,56,1,'','FormRight','OS'),

@@ -54,26 +54,25 @@ export class QcListService {
 
     // Filter search
     if (search && search.trim() !== '' && search !== '{{search}}') {
-      const searchNumber = isNaN(Number(search.trim()))
-        ? -1
-        : Number(search.trim());
-      const searchText = `%${search.trim().toLowerCase()}%`;
+      const trimmed = search.trim();
+      const searchText = `%${trimmed.toLowerCase()}%`;
+      const searchNumber = Number(trimmed);
 
-      plansQuery.andWhere(
-        `(LOWER(qp.qc_id) LIKE :searchText 
-      OR LOWER(qp.campaign_no) LIKE :searchText 
-      OR LOWER(qt.name) LIKE :searchText 
-      OR qp.sequence_no = :searchNumber)`,
-        { searchText, searchNumber },
-      );
-
-      countQuery.andWhere(
-        `(LOWER(qp.qc_id) LIKE :searchText 
-      OR LOWER(qp.campaign_no) LIKE :searchText 
-      OR LOWER(qt.name) LIKE :searchText 
-      OR qp.sequence_no = :searchNumber)`,
-        { searchText, searchNumber },
-      );
+      if (!isNaN(searchNumber) && /^\d+$/.test(trimmed)) {
+        // Kalau input murni angka, hanya cari berdasarkan sequence_no
+        plansQuery.andWhere('qp.sequence_no = :searchNumber', { searchNumber });
+        countQuery.andWhere('qp.sequence_no = :searchNumber', { searchNumber });
+      } else {
+        // Kalau input teks, cari di qc_id, template_name, atau status
+        plansQuery.andWhere(
+          '(LOWER(qp.qc_id) LIKE :searchText OR LOWER(qt.name) LIKE :searchText OR LOWER(qp.status) LIKE :searchText)',
+          { searchText },
+        );
+        countQuery.andWhere(
+          '(LOWER(qp.qc_id) LIKE :searchText OR LOWER(qt.name) LIKE :searchText OR LOWER(qp.status) LIKE :searchText)',
+          { searchText },
+        );
+      }
     }
 
     // Filter location
@@ -119,6 +118,7 @@ export class QcListService {
       location_id: p.location_id,
       location_name: p.location?.name,
       size: p.size,
+      sequence_no: p.sequence_no,
       product: p.product,
       status: p.status,
       created_by: p.created_by,
@@ -185,24 +185,25 @@ export class QcListService {
 
     // Filter search
     if (search && search.trim() !== '' && search !== '{{search}}') {
-      plansQuery.andWhere(
-        '(LOWER(qp.qc_id) LIKE LOWER(:search) OR LOWER(qp.campaign_no) LIKE LOWER(:search) OR LOWER(qt.name) LIKE LOWER(:search) OR qp.sequence_no = :searchNumber)',
-        {
-          search: `%${search.trim()}%`,
-          searchNumber: isNaN(Number(search.trim()))
-            ? -1
-            : Number(search.trim()),
-        },
-      );
-      countQuery.andWhere(
-        '(LOWER(qp.qc_id) LIKE LOWER(:search) OR LOWER(qp.campaign_no) LIKE LOWER(:search) OR LOWER(qt.name) LIKE LOWER(:search) OR qp.sequence_no = :searchNumber)',
-        {
-          search: `%${search.trim()}%`,
-          searchNumber: isNaN(Number(search.trim()))
-            ? -1
-            : Number(search.trim()),
-        },
-      );
+      const trimmed = search.trim();
+      const searchText = `%${trimmed.toLowerCase()}%`;
+      const searchNumber = Number(trimmed);
+
+      if (!isNaN(searchNumber) && /^\d+$/.test(trimmed)) {
+        // Kalau input murni angka, hanya cari berdasarkan sequence_no
+        plansQuery.andWhere('qp.sequence_no = :searchNumber', { searchNumber });
+        countQuery.andWhere('qp.sequence_no = :searchNumber', { searchNumber });
+      } else {
+        // Kalau input berupa teks, cari di qc_id, template_name, atau status
+        plansQuery.andWhere(
+          '(LOWER(qp.qc_id) LIKE :searchText OR LOWER(qt.name) LIKE :searchText OR LOWER(qp.status) LIKE :searchText)',
+          { searchText },
+        );
+        countQuery.andWhere(
+          '(LOWER(qp.qc_id) LIKE :searchText OR LOWER(qt.name) LIKE :searchText OR LOWER(qp.status) LIKE :searchText)',
+          { searchText },
+        );
+      }
     }
 
     // Filter tanggal
@@ -254,6 +255,7 @@ export class QcListService {
       template_name: p.qc_template?.name,
       location_id: p.location_id,
       location_name: p.location?.name,
+      sequence_no: p.sequence_no,
       size: p.size,
       product: p.product,
       notes: p.notes,

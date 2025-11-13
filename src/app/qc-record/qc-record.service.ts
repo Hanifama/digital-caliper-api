@@ -84,21 +84,27 @@ export class QcRecordService {
 
     // Filter pencarian
     if (search && search.trim() !== '' && search !== '{{search}}') {
-      const searchTerm = `%${search.trim()}%`;
-      recordsQuery.andWhere(
-        `(qc.qc_id LIKE :search 
-      OR qc.pattern LIKE :search 
-      OR template.name LIKE :search 
-      OR qc.status LIKE :search)`,
-        { search: searchTerm },
-      );
-      countQuery.andWhere(
-        `(qc.qc_id LIKE :search 
-      OR qc.pattern LIKE :search 
-      OR template.name LIKE :search 
-      OR qc.status LIKE :search)`,
-        { search: searchTerm },
-      );
+      const trimmed = search.trim();
+      const searchText = `%${trimmed.toLowerCase()}%`;
+      const searchNumber = Number(trimmed);
+
+      if (!isNaN(searchNumber) && /^\d+$/.test(trimmed)) {
+        // Kalau input murni angka, cari berdasarkan sequence_no
+        recordsQuery.andWhere('qc.sequence_no = :searchNumber', {
+          searchNumber,
+        });
+        countQuery.andWhere('qc.sequence_no = :searchNumber', { searchNumber });
+      } else {
+        // Kalau input berupa teks, cari di qc_id, template_name, atau status
+        recordsQuery.andWhere(
+          '(LOWER(qc.qc_id) LIKE :searchText OR LOWER(template.name) LIKE :searchText OR LOWER(qc.status) LIKE :searchText)',
+          { searchText },
+        );
+        countQuery.andWhere(
+          '(LOWER(qc.qc_id) LIKE :searchText OR LOWER(template.name) LIKE :searchText OR LOWER(qc.status) LIKE :searchText)',
+          { searchText },
+        );
+      }
     }
 
     // Filter tanggal
@@ -115,8 +121,12 @@ export class QcRecordService {
     }
 
     // Filter agar hanya status selain Processing
-    recordsQuery.andWhere('qc.status != :status', { status: 'Processing' });
-    countQuery.andWhere('qc.status != :status', { status: 'Processing' });
+    recordsQuery.andWhere('qc.status IN (:...statuses)', {
+      statuses: ['Done', 'Canceled'],
+    });
+    countQuery.andWhere('qc.status IN (:...statuses)', {
+      statuses: ['Done', 'Canceled'],
+    });
 
     // Order + pagination
     recordsQuery.orderBy('qc.created_dt', 'DESC').offset(offset).limit(limit);
@@ -294,6 +304,7 @@ export class QcRecordService {
       bloom_number: plan.bloom_number,
       type_material: plan.type_material,
       thick: plan.thick,
+      nominal: plan.kgm_nominal,
       width: plan.width,
       length: plan.length,
       kg_m: plan.kg_m,
