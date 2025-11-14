@@ -515,6 +515,28 @@ export class QcListService {
 
     const existingIdsSet = new Set(existingBatchIds.map((b) => b.qc_id));
 
+    // ✅ STEP BARU: Cek duplikat batch_id dalam file Excel
+    const excelBatchIds = new Set();
+    const duplicateInExcel = new Set();
+
+    // First pass: identifikasi duplikat dalam Excel
+    rows.forEach((row) => {
+      let qcId = row['batch_id'] || null;
+      if (qcId) {
+        qcId = qcId.replace(/\s+/g, '');
+        if (excelBatchIds.has(qcId)) {
+          duplicateInExcel.add(qcId);
+        } else {
+          excelBatchIds.add(qcId);
+        }
+      }
+    });
+
+    console.log(
+      `⚠️  Found ${duplicateInExcel.size} duplicate batch_ids in Excel:`,
+      Array.from(duplicateInExcel),
+    );
+
     // Step 4: Kumpulkan SEMUA SIZE UNIK dari Excel untuk batch query
     const allSizes = new Set(
       rows
@@ -556,6 +578,7 @@ export class QcListService {
     // Step 6: Process data dengan chunking
     const BATCH_SIZE = 500;
     const plansToInsert: QcPlan[] = [];
+    const processedBatchIds = new Set(); // ✅ Track batch_id yang sudah diproses
 
     let totalSuccessCount = 0;
     let skippedDueToMissingProduct = 0;
@@ -563,6 +586,7 @@ export class QcListService {
     let skippedDueToMissingTemplate = 0;
     let skippedDueToDuplicate = 0;
     let skippedDueToMissingBatch = 0;
+    let skippedDueToDuplicateInExcel = 0; // ✅ Counter baru
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
@@ -589,10 +613,21 @@ export class QcListService {
 
       qcId = qcId.replace(/\s+/g, '');
 
+      // ✅ CEK 1: Duplikat dalam database
       if (existingIdsSet.has(qcId)) {
         skippedDueToDuplicate++;
         continue;
       }
+
+      // ✅ CEK 2: Duplikat dalam file Excel (hanya proses pertama kali)
+      if (processedBatchIds.has(qcId)) {
+        console.log(`⏭️  Skip: Duplicate batch_id in Excel: ${qcId}`);
+        skippedDueToDuplicateInExcel++;
+        continue;
+      }
+
+      // Tandai batch_id ini sudah diproses
+      processedBatchIds.add(qcId);
 
       // CARI TEMPLATE BERDASARKAN SIZE SAJA
       const sizeKey = sizeName.toLowerCase().trim();
@@ -612,7 +647,7 @@ export class QcListService {
         qc_id: qcId,
         qc_template_id: foundTemplate.qc_template_id,
         location_id: user.locationId,
-        product: productName, // tetap simpan product dari Excel, meski tidak dipakai untuk lookup
+        product: productName,
         size: sizeName,
         specifications: row['specifications'] ?? null,
         dimension: sizeName,
@@ -660,13 +695,14 @@ export class QcListService {
       skippedDueToMissingSize,
       skippedDueToMissingTemplate,
       skippedDueToDuplicate,
+      skippedDueToDuplicateInExcel, // ✅ Tambahkan counter baru
       skippedDueToMissingBatch,
       totalProcessed: rows.length,
     };
 
     console.log(`📈 Hasil import:`, result);
 
-    const message = `Import selesai: ${result.successCount} berhasil, ${result.skippedDueToDuplicate} duplikat, ${result.skippedDueToMissingTemplate} template tidak ditemukan.`;
+    const message = `Import selesai: ${result.successCount} berhasil, ${result.skippedDueToDuplicate} duplikat (database), ${result.skippedDueToDuplicateInExcel} duplikat (Excel), ${result.skippedDueToMissingTemplate} template tidak ditemukan.`;
     this.messageService.setMessage(message);
 
     return result;
