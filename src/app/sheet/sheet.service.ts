@@ -69,10 +69,10 @@ export class SheetService {
         'Brand',
       ];
 
-      const jsonData = dataRows.map((row) => {
+      const jsonData = dataRows.map((row, rowIndex) => {
         const obj: Record<string, any> = {};
 
-        // Mapping kolom yang diperlukan saja
+        // Mapping kolom yang diperlukan saja (SISTEM LAMA)
         finalHeaders.forEach((key, i) => {
           if (!neededColumns.some((col) => key.includes(col))) return;
 
@@ -84,20 +84,20 @@ export class SheetService {
             value = `${value ?? ''}${extraValue}`.trim();
             obj['batch_id'] = value;
           }
-          // Product
+          // Product - SKIP DULU, nanti kita override dengan value dari AE
           else if (key.includes('Product')) {
-            obj['product'] = value;
+            // Jangan set dulu, nanti di override
           }
-          // Size
-          else if (key.includes('Size') || key.includes('Material size')) {
-            obj['size'] = value;
+          // Size - SKIP DULU, nanti kita override dengan value dari AL
+          else if (key.includes('Size')) {
+            // Jangan set dulu, nanti di override
           }
           // Grade
           else if (key.includes('Grade')) {
             obj['grade'] = value;
           }
           // Kg/m
-          else if (key.includes('Kg / m') || key.includes('Kg/m')) {
+          else if (key.includes('Kg/m')) {
             obj['kgm_nominal'] = parseFloat(value) || null;
           }
           // Brand
@@ -114,6 +114,21 @@ export class SheetService {
           }
         });
 
+        // PRODUCT dari kolom AE (index 30) - FIX!
+        obj['product'] = row[30] ? row[30].toString().trim() : null;
+
+        // SIZE dari kolom AL (index 37) - FIX!
+        obj['size'] = row[37] ? row[37].toString().trim() : null;
+
+        // Debug untuk beberapa baris pertama
+        if (rowIndex < 3) {
+          console.log(`🔍 Row ${rowIndex + 1}:`, {
+            product: obj['product'],
+            size: obj['size'],
+            batch_id: obj['batch_id'],
+          });
+        }
+
         return obj;
       });
 
@@ -123,6 +138,8 @@ export class SheetService {
       );
 
       console.log(`📝 Data berhasil dibaca: ${cleaned.length} rows`);
+      console.log(`✅ Mapping: PRODUCT ← kolom 30 (AE), SIZE ← kolom 37 (AL)`);
+
       return cleaned;
     } catch (error) {
       throw new Error(`Gagal parsing QC Plan Excel: ${error}`);
