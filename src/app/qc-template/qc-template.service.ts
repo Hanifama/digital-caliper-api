@@ -174,7 +174,7 @@ export class QcTemplateService {
     });
 
     const size = await this.sizeRepo.findOne({
-      where: { prodtype_id: template.prodtype_id },
+      where: { size_id: template.size_id },
     });
 
     // Step 3: Ambil mapping data dari product master
