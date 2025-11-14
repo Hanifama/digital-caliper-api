@@ -193,7 +193,7 @@ export class QcTemplateService {
       template_name: template?.name,
       template_prodtype_id: template?.prodtype_id,
       template_prodtype_name: template?.profile, // renamed from product_name
-      template_size_id: size?.size_id,
+      template_size_id: template?.size_id,
       template_size_name: size?.name,
       template_std_dimention: template?.std_dimention, // renamed from std_grade
       template_brand_merek: template?.brand_merek, // new field
