@@ -81,7 +81,11 @@ export class QcListService {
       countQuery.andWhere('qp.location_id = :locationId', { locationId });
     }
 
-    plansQuery.orderBy('qp.created_dt', 'DESC').offset(offset).limit(limit);
+    plansQuery
+      .orderBy('qp.sequence_no', 'ASC')
+      .addOrderBy('qp.created_dt', 'DESC')
+      .offset(offset)
+      .limit(limit);
 
     const [plans, totalData] = await Promise.all([
       plansQuery.getMany(),
@@ -224,7 +228,11 @@ export class QcListService {
     }
 
     // Sorting & pagination
-    plansQuery.orderBy('qp.created_dt', 'DESC').offset(offset).limit(limit);
+    plansQuery
+      .orderBy('qp.sequence_no', 'ASC')
+      .addOrderBy('qp.created_dt', 'DESC')
+      .offset(offset)
+      .limit(limit);
 
     const [plans, totalData] = await Promise.all([
       plansQuery.getMany(),
@@ -474,7 +482,6 @@ export class QcListService {
     );
   }
 
-  /** Import QC Plan berdasarkan lokasi user */
   /** Import QC Plan berdasarkan lokasi user - SIZE ONLY TEMPLATE MATCHING */
   async importQcPlans(file: Express.Multer.File, userId: string) {
     // Step 1: Ambil user data

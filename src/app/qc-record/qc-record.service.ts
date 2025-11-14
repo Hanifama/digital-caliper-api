@@ -129,7 +129,11 @@ export class QcRecordService {
     });
 
     // Order + pagination
-    recordsQuery.orderBy('qc.created_dt', 'DESC').offset(offset).limit(limit);
+    recordsQuery
+      .orderBy('qc.sequence_no', 'ASC')
+      .addOrderBy('qc.created_dt', 'DESC')
+      .offset(offset)
+      .limit(limit);
 
     const [records, totalData] = await Promise.all([
       recordsQuery.getMany(),
