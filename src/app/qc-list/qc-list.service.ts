@@ -476,7 +476,7 @@ export class QcListService {
 
   /** Import QC Plan berdasarkan lokasi user */
   async importQcPlans(file: Express.Multer.File, userId: string) {
-    // Step 1: Ambil data user dan cek lokasi
+    // Step 1: Ambil user data
     const user = await this.userRepo.findOne({
       where: { user_id: userId },
       select: ['locationId', 'name', 'user_id'],
@@ -488,7 +488,7 @@ export class QcListService {
       );
     }
 
-    // Step 2: Ambil data dari Excel melalui sheet service
+    // Step 2: Baca data dengan chunking
     const rows: any[] = await this.sheetService.importQcPlanExcel(file);
     if (!rows.length) {
       throw new BadRequestException(
@@ -496,132 +496,174 @@ export class QcListService {
       );
     }
 
-    // Step 3: Siapkan array untuk insert dan set batch ID yang sudah ada
-    const plansToInsert: QcPlan[] = [];
+    console.log(`📊 Memproses ${rows.length} rows dari Excel`);
+
+    // Step 3: Pre-fetch existing batch IDs dengan query yang lebih efisien
     const existingBatchIds = await this.qcPlanRepo
       .createQueryBuilder('plan')
       .select('plan.qc_id')
       .where('plan.location_id = :locationId', { locationId: user.locationId })
-      .getRawMany();
-    const existingIdsSet = new Set(existingBatchIds.map((b) => b.plan_qc_id));
+      .getMany();
 
-    // Step 4: Inisialisasi counter untuk skip data
+    const existingIdsSet = new Set(existingBatchIds.map((b) => b.qc_id));
+
+    // Step 4: Kumpulkan semua product-size combinations untuk batch query
+    const productSizeCombinations = new Set(
+      rows
+        .filter((row) => row.product && row.size)
+        .map((row) => `${row.product.toLowerCase()}|${row.size.toLowerCase()}`),
+    );
+
+    // Step 5: Batch query templates
+    const productSizeArray = Array.from(productSizeCombinations).map((ps) => {
+      const [product, size] = ps.split('|');
+      return { product, size };
+    });
+
+    console.log(
+      `🔍 Mencari template untuk ${productSizeArray.length} kombinasi product-size`,
+    );
+
+    const templates = await this.qcTemplateRepo
+      .createQueryBuilder('template')
+      .leftJoinAndSelect('template.size', 'size')
+      .leftJoinAndSelect('size.productType', 'productType')
+      .where('LOWER(productType.name) IN (:...products)', {
+        products: productSizeArray.map((ps) => ps.product),
+      })
+      .andWhere('LOWER(size.name) IN (:...sizes)', {
+        sizes: productSizeArray.map((ps) => ps.size),
+      })
+      .getMany();
+
+    console.log(`✅ Ditemukan ${templates.length} template yang sesuai`);
+
+    // Create lookup map untuk templates
+    const templateMap = new Map();
+    templates.forEach((template) => {
+      const key = `${template.size.productType.name.toLowerCase()}|${template.size.name.toLowerCase()}`;
+      templateMap.set(key, template);
+    });
+
+    // Step 6: Process data dengan chunking
+    const BATCH_SIZE = 500;
+    const plansToInsert: QcPlan[] = [];
+
+    // COUNTER YANG BENAR
+    let totalSuccessCount = 0; // <-- INI YANG DIPERBAIKI
     let skippedDueToMissingProduct = 0;
     let skippedDueToMissingSize = 0;
     let skippedDueToMissingTemplate = 0;
     let skippedDueToDuplicate = 0;
+    let skippedDueToMissingBatch = 0;
 
-    // Step 5: Loop tiap baris Excel
-    for (const row of rows) {
-      const productName = row['product'] || null; // sudah fix dari sheet service
-      const sizeName = row['size'] || null; // sudah fix dari sheet service
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
 
-      // Skip jika Produk tidak ada
+      // DEBUG: Log setiap 50 rows
+      if (i % 50 === 0) {
+        console.log(`🔧 Memproses row ${i + 1}/${rows.length}`);
+      }
+
+      const productName = row['product'] || null;
+      const sizeName = row['size'] || null;
+
       if (!productName) {
         skippedDueToMissingProduct++;
         continue;
       }
-
-      // Skip jika Size tidak ada
       if (!sizeName) {
         skippedDueToMissingSize++;
         continue;
       }
 
-      // Tentukan qcId (batch ID)
-      let qcId =
-        row['batch_id'] ||
-        row['batchid'] ||
-        row['batch_id'] ||
-        `QC-${uuidv4().slice(0, 8)}`;
+      let qcId = row['batch_id'] || null;
+      if (!qcId) {
+        skippedDueToMissingBatch++;
+        continue;
+      }
+
       qcId = qcId.replace(/\s+/g, '');
 
-      // Skip jika batch ID sudah ada
       if (existingIdsSet.has(qcId)) {
         skippedDueToDuplicate++;
         continue;
       }
 
-      const specifications = row['specifications'] ?? null;
-      const brandMerek = row['brand_merek'] ?? null;
-      const dimension = sizeName;
-      const sequenceNo = row['sequence_no'] ?? null;
-      const grade = row['grade'] ?? null;
-      const kgNominal = row['kgm_nominal'] ?? null;
+      // Cari template dari map
+      const templateKey = `${productName.toLowerCase()}|${sizeName.toLowerCase()}`;
+      const foundTemplate = templateMap.get(templateKey);
 
-      // Cari template QC sesuai produk & size
-      const foundTemplate = await this.qcTemplateRepo
-        .createQueryBuilder('template')
-        .leftJoinAndSelect('template.size', 'size')
-        .leftJoinAndSelect('size.productType', 'productType')
-        .where('LOWER(size.name) = LOWER(:sizeName)', { sizeName })
-        .andWhere('LOWER(productType.name) = LOWER(:productName)', {
-          productName,
-        })
-        .getOne();
-
-      // Skip jika template tidak ditemukan
       if (!foundTemplate) {
+        console.log(
+          `❌ Template tidak ditemukan untuk: ${productName} - ${sizeName}`,
+        );
         skippedDueToMissingTemplate++;
         continue;
       }
 
-      // Buat plan QC baru
       const plan = this.qcPlanRepo.create({
         qc_id: qcId,
         qc_template_id: foundTemplate.qc_template_id,
         location_id: user.locationId,
         product: productName,
         size: sizeName,
-        specifications,
-        dimension,
-        sequence_no: sequenceNo,
-        std_grad: grade,
-        kgm_nominal: kgNominal,
-        brand_merek: brandMerek,
+        specifications: row['specifications'] ?? null,
+        dimension: sizeName,
+        sequence_no: row['sequence_no'] ?? null,
+        std_grad: row['grade'] ?? null,
+        kgm_nominal: row['kgm_nominal'] ?? null,
+        brand_merek: row['brand_merek'] ?? null,
         status: 'New Data',
         created_by: user.user_id,
         created_dt: new Date(),
       });
 
       plansToInsert.push(plan);
+
+      // Save per batch dan reset array untuk mengurangi memory usage
+      if (plansToInsert.length >= BATCH_SIZE) {
+        try {
+          const savedPlans = await this.qcPlanRepo.save(plansToInsert);
+          totalSuccessCount += savedPlans.length; // <-- TAMBAH KE TOTAL
+          console.log(`💾 Menyimpan batch: ${savedPlans.length} records`);
+          plansToInsert.length = 0;
+        } catch (saveError) {
+          console.error('❌ Error menyimpan batch:', saveError);
+          throw saveError;
+        }
+      }
     }
 
-    // Step 6: Simpan semua plan yang valid
+    // Save sisa data
     if (plansToInsert.length > 0) {
-      await this.qcPlanRepo.save(plansToInsert);
+      try {
+        const savedPlans = await this.qcPlanRepo.save(plansToInsert);
+        totalSuccessCount += savedPlans.length; // <-- TAMBAH KE TOTAL
+        console.log(`💾 Menyimpan sisa: ${savedPlans.length} records`);
+      } catch (saveError) {
+        console.error('❌ Error menyimpan sisa data:', saveError);
+        throw saveError;
+      }
     }
 
-    // Step 7: Buat message ringkas
-    const totalSkipped =
-      skippedDueToMissingProduct +
-      skippedDueToMissingSize +
-      skippedDueToMissingTemplate;
-    const messageParts: string[] = [];
-    if (plansToInsert.length > 0)
-      messageParts.push(`${plansToInsert.length} QC Plan berhasil diimport.`);
-    if (totalSkipped > 0)
-      messageParts.push(
-        `${totalSkipped} data dilewati karena produk/size/template tidak ditemukan di file.`,
-      );
-    if (skippedDueToDuplicate > 0)
-      messageParts.push(
-        `${skippedDueToDuplicate} data dilewati karena batch ID duplikat.`,
-      );
-
-    const message = messageParts.join(' ');
-
-    // Step 8: Simpan message supaya FE bisa pakai
-    this.messageService.setMessage(message);
-
-    // Step 9: Return result sebagai object
-    return {
-      successCount: plansToInsert.length,
+    // Step 7: Return result dengan totalSuccessCount
+    const result = {
+      successCount: totalSuccessCount, // <-- PAKAI YANG INI
       skippedDueToMissingProduct,
       skippedDueToMissingSize,
       skippedDueToMissingTemplate,
       skippedDueToDuplicate,
+      skippedDueToMissingBatch,
+      totalProcessed: rows.length,
     };
+
+    console.log(`📈 Hasil import:`, result);
+
+    const message = `Import selesai: ${result.successCount} berhasil, ${result.skippedDueToDuplicate} duplikat, ${result.skippedDueToMissingTemplate} template tidak ditemukan.`;
+    this.messageService.setMessage(message);
+
+    return result;
   }
 
   /** Export QC Plan XLSX */

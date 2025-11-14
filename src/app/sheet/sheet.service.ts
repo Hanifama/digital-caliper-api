@@ -28,11 +28,9 @@ export class SheetService {
 
   async importQcPlanExcel(file: Express.Multer.File): Promise<any[]> {
     try {
-      // Step 1: Baca workbook dan sheet pertama
       const workbook = XLSX.read(file.buffer, { type: 'buffer' });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
-      // Step 2: Konversi sheet ke array 2D
       const raw = XLSX.utils.sheet_to_json(sheet, {
         header: 1,
         defval: null,
@@ -44,12 +42,10 @@ export class SheetService {
         );
       }
 
-      // Step 3: Ambil header dan subheader, data mulai baris ke-5
       const headerRow = raw[2];
       const subHeaderRow = raw[3];
       const dataRows = raw.slice(4);
 
-      // Step 4: Gabungkan header dan subheader
       const finalHeaders = headerRow.map((h, i) => {
         const top = (h ?? '').toString().trim();
         const sub = (subHeaderRow[i] ?? '').toString().trim();
@@ -59,100 +55,74 @@ export class SheetService {
         return `__col${i}`;
       });
 
-      console.log('🧩 FINAL DETECTION HEADERS:', finalHeaders);
+      // Hanya ambil kolom yang diperlukan untuk mengurangi memory usage
+      const neededColumns = [
+        'No',
+        'BATCH ID',
+        'Material size',
+        'Kg / m',
+        'Product',
+        'Specifications',
+        'Dimension',
+        'Size',
+        'Grade',
+        'Brand',
+      ];
 
-      // Step 5: Cari index kolom penting
-      const produkIndex = finalHeaders.findIndex(
-        (h) => h.toLowerCase() === 'product',
-      );
-      if (produkIndex === -1)
-        throw new Error('Kolom "Produk" tidak ditemukan di Excel.');
-
-      const batchIndex = finalHeaders.findIndex((h) =>
-        h.toLowerCase().includes('batch id'),
-      );
-      if (batchIndex === -1)
-        throw new Error('Kolom "BATCH ID" tidak ditemukan di Excel.');
-      const extraIndex = batchIndex + 1;
-
-      // const remarksIndex = finalHeaders.findIndex(
-      //   (h) => h.toLowerCase() === 'remarks',
-      // );
-      // const brandNearRemarksIndex =
-      //   remarksIndex - 1 >= 0 ? remarksIndex - 1 : null;
-
-      // Debug
-      // console.log('📌 produkIndex:', produkIndex, '📌 batchIndex:', batchIndex, '📌 brandNearRemarksIndex:', brandNearRemarksIndex);
-
-      // Step 6: Konversi dataRows ke JSON, gabungkan BATCH ID + kolom tambahan
       const jsonData = dataRows.map((row) => {
         const obj: Record<string, any> = {};
 
-        const sequenceIndex = finalHeaders.findIndex(
-          (h) => h.toLowerCase() === 'no',
-        );
-
-        // Cari index Size (di dekat PO dan Kg/m)
-        const sizeIndex = finalHeaders.findIndex(
-          (h) => h.toLowerCase() === 'size',
-        );
-
-        // Cari index Product (diapit CE & Specifications)
-        const productIndexAlt = finalHeaders.findIndex(
-          (h) => h.toLowerCase() === 'product',
-        );
-
-        const gradeIndex = finalHeaders.findIndex(
-          (h) => h.toLowerCase() === 'grade',
-        );
-        const kgmIndex = finalHeaders.findIndex((h) =>
-          h.toLowerCase().includes('kg/m'),
-        );
-        const brandIndex = finalHeaders.findIndex(
-          (h) => h.toLowerCase() === 'brand',
-        );
-        const specIndex = finalHeaders.findIndex(
-          (h) => h.toLowerCase() === 'specifications',
-        );
-
+        // Mapping kolom yang diperlukan saja
         finalHeaders.forEach((key, i) => {
+          if (!neededColumns.some((col) => key.includes(col))) return;
+
           let value = row[i];
 
-          if (i === batchIndex) {
-            const extraValue = row[extraIndex] ? ` ${row[extraIndex]}` : '';
+          // Batch ID processing
+          if (key.includes('BATCH ID')) {
+            const extraValue = row[i + 1] ? ` ${row[i + 1]}` : '';
             value = `${value ?? ''}${extraValue}`.trim();
             obj['batch_id'] = value;
-          } else if (i === productIndexAlt) {
-            obj['product'] = row[i]; // ambil Product sesuai lokasi CE & Specifications
-          } else if (i === sizeIndex) {
-            obj['size'] = row[i]; // ambil Size dekat PO/Kg/m
-          } else if (i === sequenceIndex) {
-            obj['sequence_no'] = row[i];
-          } else if (i === gradeIndex) {
-            obj['grade'] = row[i]; // tangkap Grade
-          } else if (i === kgmIndex) {
-            obj['kgm_nominal'] = parseFloat(row[i]) || null; // tangkap Kg/m
-          } else if (i === brandIndex) {
-            obj['brand_merek'] = row[i];
-          } else if (i === specIndex) {
-            obj['specifications'] = row[i];
-          } else {
-            obj[key] = row[i];
+          }
+          // Product
+          else if (key.includes('Product')) {
+            obj['product'] = value;
+          }
+          // Size
+          else if (key.includes('Size') || key.includes('Material size')) {
+            obj['size'] = value;
+          }
+          // Grade
+          else if (key.includes('Grade')) {
+            obj['grade'] = value;
+          }
+          // Kg/m
+          else if (key.includes('Kg / m') || key.includes('Kg/m')) {
+            obj['kgm_nominal'] = parseFloat(value) || null;
+          }
+          // Brand
+          else if (key.includes('Brand')) {
+            obj['brand_merek'] = value;
+          }
+          // Specifications
+          else if (key.includes('Spec') || key.includes('Spek')) {
+            obj['specifications'] = value;
+          }
+          // Sequence No
+          else if (key.includes('No')) {
+            obj['sequence_no'] = value;
           }
         });
 
         return obj;
       });
 
-      console.log('📝 SAMPLE DATA IMPORTED:', jsonData.slice(0, 2));
-
-      // Step 7: Filter baris kosong
-      const cleaned = jsonData.filter((r) =>
-        Object.values(r).some((v) => v !== null && v !== ''),
+      // Filter baris kosong dengan criteria yang lebih spesifik
+      const cleaned = jsonData.filter(
+        (r) => r.batch_id || r.product || r.size, // minimal ada salah satu field penting
       );
 
-      // Debug
-      // console.log('✅ TOTAL ROWS TERBACA:', cleaned.length);
+      console.log(`📝 Data berhasil dibaca: ${cleaned.length} rows`);
       return cleaned;
     } catch (error) {
       throw new Error(`Gagal parsing QC Plan Excel: ${error}`);
