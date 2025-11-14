@@ -475,6 +475,7 @@ export class QcListService {
   }
 
   /** Import QC Plan berdasarkan lokasi user */
+  /** Import QC Plan berdasarkan lokasi user - SIZE ONLY TEMPLATE MATCHING */
   async importQcPlans(file: Express.Multer.File, userId: string) {
     // Step 1: Ambil user data
     const user = await this.userRepo.findOne({
@@ -498,7 +499,7 @@ export class QcListService {
 
     console.log(`📊 Memproses ${rows.length} rows dari Excel`);
 
-    // Step 3: Pre-fetch existing batch IDs dengan query yang lebih efisien
+    // Step 3: Pre-fetch existing batch IDs
     const existingBatchIds = await this.qcPlanRepo
       .createQueryBuilder('plan')
       .select('plan.qc_id')
@@ -507,41 +508,41 @@ export class QcListService {
 
     const existingIdsSet = new Set(existingBatchIds.map((b) => b.qc_id));
 
-    // Step 4: Kumpulkan semua product-size combinations untuk batch query
-    const productSizeCombinations = new Set(
+    // Step 4: Kumpulkan SEMUA SIZE UNIK dari Excel untuk batch query
+    const allSizes = new Set(
       rows
-        .filter((row) => row.product && row.size)
-        .map((row) => `${row.product.toLowerCase()}|${row.size.toLowerCase()}`),
+        .filter((row) => row.size)
+        .map((row) => row.size.toLowerCase().trim()),
     );
 
-    // Step 5: Batch query templates
-    const productSizeArray = Array.from(productSizeCombinations).map((ps) => {
-      const [product, size] = ps.split('|');
-      return { product, size };
-    });
+    console.log(`🔍 Mencari template untuk ${allSizes.size} unique sizes`);
 
-    console.log(
-      `🔍 Mencari template untuk ${productSizeArray.length} kombinasi product-size`,
-    );
-
+    // Step 5: Batch query templates BERDASARKAN SIZE SAJA
     const templates = await this.qcTemplateRepo
       .createQueryBuilder('template')
       .leftJoinAndSelect('template.size', 'size')
       .leftJoinAndSelect('size.productType', 'productType')
-      .where('LOWER(productType.name) IN (:...products)', {
-        products: productSizeArray.map((ps) => ps.product),
-      })
-      .andWhere('LOWER(size.name) IN (:...sizes)', {
-        sizes: productSizeArray.map((ps) => ps.size),
+      .where('LOWER(size.name) IN (:...sizes)', {
+        sizes: Array.from(allSizes),
       })
       .getMany();
 
     console.log(`✅ Ditemukan ${templates.length} template yang sesuai`);
 
-    // Create lookup map untuk templates
+    // DEBUG: Log template yang ditemukan
+    if (templates.length > 0) {
+      console.log('📋 Template yang ditemukan:');
+      templates.forEach((template, index) => {
+        console.log(
+          `   ${index + 1}. Size: "${template.size?.name}", ProductType: "${template.size?.productType?.name}"`,
+        );
+      });
+    }
+
+    // Create lookup map untuk templates BERDASARKAN SIZE SAJA
     const templateMap = new Map();
     templates.forEach((template) => {
-      const key = `${template.size.productType.name.toLowerCase()}|${template.size.name.toLowerCase()}`;
+      const key = template.size.name.toLowerCase().trim();
       templateMap.set(key, template);
     });
 
@@ -549,8 +550,7 @@ export class QcListService {
     const BATCH_SIZE = 500;
     const plansToInsert: QcPlan[] = [];
 
-    // COUNTER YANG BENAR
-    let totalSuccessCount = 0; // <-- INI YANG DIPERBAIKI
+    let totalSuccessCount = 0;
     let skippedDueToMissingProduct = 0;
     let skippedDueToMissingSize = 0;
     let skippedDueToMissingTemplate = 0;
@@ -568,10 +568,7 @@ export class QcListService {
       const productName = row['product'] || null;
       const sizeName = row['size'] || null;
 
-      if (!productName) {
-        skippedDueToMissingProduct++;
-        continue;
-      }
+      // CEK: Sekarang product optional, size wajib
       if (!sizeName) {
         skippedDueToMissingSize++;
         continue;
@@ -590,23 +587,25 @@ export class QcListService {
         continue;
       }
 
-      // Cari template dari map
-      const templateKey = `${productName.toLowerCase()}|${sizeName.toLowerCase()}`;
-      const foundTemplate = templateMap.get(templateKey);
+      // CARI TEMPLATE BERDASARKAN SIZE SAJA
+      const sizeKey = sizeName.toLowerCase().trim();
+      const foundTemplate = templateMap.get(sizeKey);
 
       if (!foundTemplate) {
         console.log(
-          `❌ Template tidak ditemukan untuk: ${productName} - ${sizeName}`,
+          `⏭️  Skip: Template tidak ditemukan untuk size: ${sizeName}`,
         );
         skippedDueToMissingTemplate++;
         continue;
       }
 
+      console.log(`✅ Template ditemukan untuk size: ${sizeName}`);
+
       const plan = this.qcPlanRepo.create({
         qc_id: qcId,
         qc_template_id: foundTemplate.qc_template_id,
         location_id: user.locationId,
-        product: productName,
+        product: productName, // tetap simpan product dari Excel, meski tidak dipakai untuk lookup
         size: sizeName,
         specifications: row['specifications'] ?? null,
         dimension: sizeName,
@@ -621,11 +620,11 @@ export class QcListService {
 
       plansToInsert.push(plan);
 
-      // Save per batch dan reset array untuk mengurangi memory usage
+      // Save per batch
       if (plansToInsert.length >= BATCH_SIZE) {
         try {
           const savedPlans = await this.qcPlanRepo.save(plansToInsert);
-          totalSuccessCount += savedPlans.length; // <-- TAMBAH KE TOTAL
+          totalSuccessCount += savedPlans.length;
           console.log(`💾 Menyimpan batch: ${savedPlans.length} records`);
           plansToInsert.length = 0;
         } catch (saveError) {
@@ -639,7 +638,7 @@ export class QcListService {
     if (plansToInsert.length > 0) {
       try {
         const savedPlans = await this.qcPlanRepo.save(plansToInsert);
-        totalSuccessCount += savedPlans.length; // <-- TAMBAH KE TOTAL
+        totalSuccessCount += savedPlans.length;
         console.log(`💾 Menyimpan sisa: ${savedPlans.length} records`);
       } catch (saveError) {
         console.error('❌ Error menyimpan sisa data:', saveError);
@@ -647,9 +646,9 @@ export class QcListService {
       }
     }
 
-    // Step 7: Return result dengan totalSuccessCount
+    // Step 7: Return result
     const result = {
-      successCount: totalSuccessCount, // <-- PAKAI YANG INI
+      successCount: totalSuccessCount,
       skippedDueToMissingProduct,
       skippedDueToMissingSize,
       skippedDueToMissingTemplate,
