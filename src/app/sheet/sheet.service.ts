@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as XLSX from 'xlsx';
+import { Workbook } from 'exceljs';
+import { getCellValue } from './helpers/getCellValue';
 
 @Injectable()
 export class SheetService {
@@ -28,121 +30,67 @@ export class SheetService {
 
   async importQcPlanExcel(file: Express.Multer.File): Promise<any[]> {
     try {
-      const workbook = XLSX.read(file.buffer, { type: 'buffer' });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const workbook = new Workbook();
+      await workbook.xlsx.load(file.buffer as any);
 
-      const raw = XLSX.utils.sheet_to_json(sheet, {
-        header: 1,
-        defval: null,
-      }) as any[][];
+      const sheet = workbook.worksheets[0];
+      if (!sheet) throw new Error('Sheet pertama tidak ditemukan.');
 
-      if (raw.length < 5) {
-        throw new Error(
-          'Format Excel tidak sesuai. Harus ada minimal 5 baris.',
+      const results: Array<Record<string, any>> = [];
+      let emptyCount = 0;
+      const MAX_EMPTY = 10;
+
+      sheet.eachRow((row, rowNumber) => {
+        if (rowNumber <= 4) return;
+
+        const cells = row.values as any[];
+
+        const isEmpty = cells.every(
+          (cell) =>
+            cell === null || cell === undefined || String(cell).trim() === '',
         );
-      }
 
-      const headerRow = raw[2];
-      const subHeaderRow = raw[3];
-      const dataRows = raw.slice(4);
-
-      const finalHeaders = headerRow.map((h, i) => {
-        const top = (h ?? '').toString().trim();
-        const sub = (subHeaderRow[i] ?? '').toString().trim();
-        if (top && sub) return `${top} ${sub}`.trim();
-        if (sub && !top) return sub;
-        if (top && !sub) return top;
-        return `__col${i}`;
-      });
-
-      // Hanya ambil kolom yang diperlukan untuk mengurangi memory usage
-      const neededColumns = [
-        'No',
-        'BATCH ID',
-        'Material size',
-        'Kg / m',
-        'Product',
-        'Specifications',
-        'Dimension',
-        'Size',
-        'Grade',
-        'Brand',
-      ];
-
-      const jsonData = dataRows.map((row, rowIndex) => {
-        const obj: Record<string, any> = {};
-
-        // Mapping kolom yang diperlukan saja (SISTEM LAMA)
-        finalHeaders.forEach((key, i) => {
-          if (!neededColumns.some((col) => key.includes(col))) return;
-
-          let value = row[i];
-
-          // Batch ID processing
-          if (key.includes('BATCH ID')) {
-            const extraValue = row[i + 1] ? ` ${row[i + 1]}` : '';
-            value = `${value ?? ''}${extraValue}`.trim();
-            obj['batch_id'] = value;
-          }
-          // Product - SKIP DULU, nanti kita override dengan value dari AE
-          else if (key.includes('Product')) {
-            // Jangan set dulu, nanti di override
-          }
-          // Size - SKIP DULU, nanti kita override dengan value dari AL
-          else if (key.includes('Size')) {
-            // Jangan set dulu, nanti di override
-          }
-          // Grade
-          else if (key.includes('Grade')) {
-            obj['grade'] = value;
-          }
-          // Kg/m
-          else if (key.includes('Kg/m')) {
-            obj['kgm_nominal'] = parseFloat(value) || null;
-          }
-          // Brand
-          else if (key.includes('Brand')) {
-            obj['brand_merek'] = value;
-          }
-          // Specifications
-          else if (key.includes('Spec') || key.includes('Spek')) {
-            obj['specifications'] = value;
-          }
-          // Sequence No
-          else if (key.includes('No')) {
-            obj['sequence_no'] = value;
-          }
-        });
-
-        // PRODUCT dari kolom AE (index 30) - FIX!
-        obj['product'] = row[30] ? row[30].toString().trim() : null;
-
-        // SIZE dari kolom AL (index 37) - FIX!
-        obj['size'] = row[37] ? row[37].toString().trim() : null;
-
-        // Debug untuk beberapa baris pertama
-        if (rowIndex < 3) {
-          console.log(`🔍 Row ${rowIndex + 1}:`, {
-            product: obj['product'],
-            size: obj['size'],
-            batch_id: obj['batch_id'],
-          });
+        if (isEmpty) {
+          emptyCount++;
+          if (emptyCount >= MAX_EMPTY) return;
+          return;
+        } else {
+          emptyCount = 0;
         }
 
-        return obj;
+        const sequence_no = getCellValue(cells[1]);
+        const batchB = getCellValue(cells[2]);
+        const batchC = getCellValue(cells[3]);
+        const product = getCellValue(cells[31]);
+        const specifications = getCellValue(cells[32]);
+        const sizeVal = getCellValue(cells[38]);
+        const std_grade = getCellValue(cells[40]);
+        const brand_merek = getCellValue(cells[41]);
+
+        let batchId: string | null = null;
+
+        if (batchB && batchC) {
+          batchId = `${batchB} ${batchC}`.trim();
+        }
+
+        if (!batchId) return;
+
+        const obj: Record<string, any> = {
+          sequence_no,
+          batch_id: batchId,
+          product,
+          specifications,
+          size: sizeVal,
+          std_grade,
+          brand_merek,
+        };
+
+        results.push(obj);
       });
 
-      // Filter baris kosong dengan criteria yang lebih spesifik
-      const cleaned = jsonData.filter(
-        (r) => r.batch_id || r.product || r.size, // minimal ada salah satu field penting
-      );
-
-      console.log(`📝 Data berhasil dibaca: ${cleaned.length} rows`);
-      console.log(`✅ Mapping: PRODUCT ← kolom 30 (AE), SIZE ← kolom 37 (AL)`);
-
-      return cleaned;
-    } catch (error) {
-      throw new Error(`Gagal parsing QC Plan Excel: ${error}`);
+      return results;
+    } catch (err) {
+      throw new Error(`Gagal baca QC Plan Excel (ExcelJS): ${err}`);
     }
   }
 

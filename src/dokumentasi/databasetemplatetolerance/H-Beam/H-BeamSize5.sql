@@ -29,24 +29,24 @@ INSERT INTO `qc_template_data` (`input_code`, `qc_template_id`, `label`, `input_
 ('T.B2','TMP-rtxtuyt','T(B2)','number',197,198.5,200,201.5,203,NULL,15,1,'','B2','table'),
 
 -- t1 (16-18)
-('H.t1','TMP-rtxtuyt','H(t1)','number',7.3,7.65,8,8.35,8.7,NULL,16,1,'','t1','table'),
-('C.t1','TMP-rtxtuyt','C(t1)','number',7.3,7.65,8,8.35,8.7,NULL,17,1,'','t1','table'),
-('T.t1','TMP-rtxtuyt','T(t1)','number',7.3,7.65,8,8.35,8.7,NULL,18,1,'','t1','table'),
+('H.t1','TMP-rtxtuyt','H(t1)','number',11,11.5,12,12.5,13,NULL,16,1,'','t1','table'),
+('C.t1','TMP-rtxtuyt','C(t1)','number',11,11.5,12,12.5,13,NULL,17,1,'','t1','table'),
+('T.t1','TMP-rtxtuyt','T(t1)','number',11,11.5,12,12.5,13,NULL,18,1,'','t1','table'),
 
 -- t2 (19-21)
-('H.t2','TMP-rtxtuyt','H(t2)','number',7.3,7.65,8,8.35,8.7,NULL,19,1,'','t2','table'),
-('C.t2','TMP-rtxtuyt','C(t2)','number',7.3,7.65,8,8.35,8.7,NULL,20,1,'','t2','table'),
-('T.t2','TMP-rtxtuyt','T(t2)','number',7.3,7.65,8,8.35,8.7,NULL,21,1,'','t2','table'),
+('H.t2','TMP-rtxtuyt','H(t2)','number',11,11.5,12,12.5,13,NULL,19,1,'','t2','table'),
+('C.t2','TMP-rtxtuyt','C(t2)','number',11,11.5,12,12.5,13,NULL,20,1,'','t2','table'),
+('T.t2','TMP-rtxtuyt','T(t2)','number',11,11.5,12,12.5,13,NULL,21,1,'','t2','table'),
 
 -- t3 (22-24)
-('H.t3','TMP-rtxtuyt','H(t3)','number',7.3,7.65,8,8.35,8.7,NULL,22,1,'','t3','table'),
-('C.t3','TMP-rtxtuyt','C(t3)','number',7.3,7.65,8,8.35,8.7,NULL,23,1,'','t3','table'),
-('T.t3','TMP-rtxtuyt','T(t3)','number',7.3,7.65,8,8.35,8.7,NULL,24,1,'','t3','table'),
+('H.t3','TMP-rtxtuyt','H(t3)','number',11,11.5,12,12.5,13,NULL,22,1,'','t3','table'),
+('C.t3','TMP-rtxtuyt','C(t3)','number',11,11.5,12,12.5,13,NULL,23,1,'','t3','table'),
+('T.t3','TMP-rtxtuyt','T(t3)','number',11,11.5,12,12.5,13,NULL,24,1,'','t3','table'),
 
 -- t4 (25-27)
-('H.t4','TMP-rtxtuyt','H(t4)','number',7.3,7.65,8,8.35,8.7,NULL,25,1,'','t4','table'),
-('C.t4','TMP-rtxtuyt','C(t4)','number',7.3,7.65,8,8.35,8.7,NULL,26,1,'','t4','table'),
-('T.t4','TMP-rtxtuyt','T(t4)','number',7.3,7.65,8,8.35,8.7,NULL,27,1,'','t4','table'),
+('H.t4','TMP-rtxtuyt','H(t4)','number',11,11.5,12,12.5,13,NULL,25,1,'','t4','table'),
+('C.t4','TMP-rtxtuyt','C(t4)','number',11,11.5,12,12.5,13,NULL,26,1,'','t4','table'),
+('T.t4','TMP-rtxtuyt','T(t4)','number',11,11.5,12,12.5,13,NULL,27,1,'','t4','table'),
 
 -- t5 (28-30)
 ('H.t5','TMP-rtxtuyt','H(t5)','number',7.3,7.65,8,8.35,8.7,NULL,28,1,'','t5','table'),

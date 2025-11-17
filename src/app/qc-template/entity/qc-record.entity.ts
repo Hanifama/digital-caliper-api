@@ -39,6 +39,15 @@ export class QcRecord {
   @Column({ length: 50, nullable: true })
   dimension: string;
 
+  @Column({ type: 'text', nullable: true })
+  notes: string;
+
+  @Column({ length: 25, nullable: true })
+  std_grad: string;
+
+  @Column('float', { nullable: true })
+  kgm_nominal: number;
+
   @Column({ length: 25, nullable: true })
   campaign_no: string;
 
@@ -128,9 +137,6 @@ export class QcRecord {
 
   @Column('float', { nullable: true })
   radius: number;
-
-  @Column('float', { nullable: true })
-  nominal: number;
 
   @Column({ length: 20, nullable: true })
   status: string;

@@ -4,6 +4,7 @@ import {
   IsString,
   IsNotEmpty,
   IsInt,
+  Length,
 } from 'class-validator';
 
 export class UpdateUserDto {
@@ -22,6 +23,11 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString({ message: 'Departement harus berupa teks' })
   departement?: string;
+
+  @IsOptional()
+  @IsString({ message: 'NIK harus berupa string' })
+  @Length(16, 16, { message: 'NIK harus 16 karakter' })
+  NIK?: string;
 
   @IsOptional()
   @IsString({ message: 'RoleId harus berupa teks' })

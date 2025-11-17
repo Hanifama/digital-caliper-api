@@ -5,6 +5,7 @@ import {
   IsString,
   MinLength,
   IsUrl,
+  Length,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -27,6 +28,11 @@ export class CreateUserDto {
   @IsNotEmpty({ message: 'Password wajib diisi' })
   @MinLength(6, { message: 'Password minimal 6 karakter' })
   password: string;
+
+  @IsOptional()
+  @IsString({ message: 'NIK harus berupa string' })
+  @Length(16, 16, { message: 'NIK harus 16 karakter' })
+  NIK?: string;
 
   @IsOptional()
   @IsString()

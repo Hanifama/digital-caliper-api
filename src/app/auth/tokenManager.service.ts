@@ -11,7 +11,10 @@ export class TokenManagerService {
   ) {}
 
   public async generateAccessToken(jwtPayload: IJwtPayload): Promise<string> {
-    return await this.jwtService.signAsync(jwtPayload);
+    return await this.jwtService.signAsync(jwtPayload, {
+      secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
+      expiresIn: '365d', // token berlaku 1 tahun
+    });
   }
 
   public async generateRefreshToken(jwtPayload: IJwtPayload): Promise<string> {

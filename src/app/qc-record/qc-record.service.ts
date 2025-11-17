@@ -196,8 +196,6 @@ export class QcRecordService {
       status: r.status,
       status_overall: r.status_overall,
       invalid_data: invalidMap.get(r.qc_id) || 0,
-      pattern: r.pattern,
-      campaign_no: r.campaign_no,
       sequence_no: r.sequence_no,
       size: r.size,
       created_by: r.created_by,
@@ -301,6 +299,14 @@ export class QcRecordService {
       qc_template_id: plan.qc_template_id,
       location_id: plan.location_id,
       size: plan.size,
+      product: plan.product,
+      specifications: plan.specifications,
+      dimension: plan.dimension,
+      profile: plan.profile,
+      brand_merek: plan.brand_merek,
+      notes: plan.notes,
+      std_grad: plan.std_grad,
+      kgm_nominal: plan.kgm_nominal,
       campaign_no: plan.campaign_no,
       sequence_no: plan.sequence_no,
       pattern: plan.pattern,
@@ -308,7 +314,7 @@ export class QcRecordService {
       bloom_number: plan.bloom_number,
       type_material: plan.type_material,
       thick: plan.thick,
-      nominal: plan.kgm_nominal,
+      // nominal: plan.kgm_nominal,
       width: plan.width,
       length: plan.length,
       kg_m: plan.kg_m,
@@ -352,6 +358,7 @@ export class QcRecordService {
   }
 
   /** Create QC Record */
+  /** Create QC Record */
   @Transactional()
   async createQcRecordData(dto: AddQcRecordTablesDto, userId: string) {
     let { qc_id, qc_template_id, basic, default: defaultData, data } = dto;
@@ -394,7 +401,6 @@ export class QcRecordService {
       });
       await this.qcRecordRepo.save(record);
     } else {
-      // Validasi jika qc_id belum start procesing
       record = await this.qcRecordRepo.findOne({ where: { qc_id } });
       if (!record) {
         throw new BadRequestException(
@@ -402,7 +408,6 @@ export class QcRecordService {
         );
       }
 
-      // Validasi jika qc_id sudah ada di database
       if (record.status === 'Done' || record.status_overall !== 'Processing') {
         throw new BadRequestException(
           `QC dengan Batch Id ${qc_id} sudah diperiksa.`,
@@ -417,7 +422,7 @@ export class QcRecordService {
       record.weight = basic.weight ?? record.weight;
       record.kg_m = basic.actual ?? record.kg_m;
       record.percent_deviasi = basic.percentDeviasi ?? record.percent_deviasi;
-      record.nominal = basic.nominal ?? record.nominal;
+      record.kgm_nominal = basic.nominal ?? record.kgm_nominal;
       record.cow = basic.cow ?? record.cow;
       record.os = basic.os ?? record.os;
       record.radius = basic.radius ?? record.radius;
@@ -448,7 +453,6 @@ export class QcRecordService {
       where: { qc_template_id: record.qc_template_id },
     });
 
-    // Kalau template data kosong
     if (!templateDataList.length) {
       throw new BadRequestException(
         `Tidak ditemukan data field untuk qc_template_id "${record.qc_template_id}".`,
@@ -456,6 +460,14 @@ export class QcRecordService {
     }
 
     const templateMap = new Map(templateDataList.map((t) => [t.input_code, t]));
+
+    // Ambil semua productTypeData
+    const productTypeDataList = await this.productTypeDataRepo.find({
+      where: { prodtype_id: record.product },
+    });
+    const productTypeMap = new Map(
+      productTypeDataList.map((item) => [item.code, item]),
+    );
 
     const processedFields: Array<{
       qc_data_id: string;
@@ -470,27 +482,80 @@ export class QcRecordService {
       max_tolerance: number;
     }> = [];
 
-    // ambil semua productTypeData berdasarkan prodtype_id
-    const productTypeDataList = await this.productTypeDataRepo.find({
-      where: { prodtype_id: record.product },
-    });
-
-    // bikin map: code => productTypeData
-    const productTypeMap = new Map(
-      productTypeDataList.map((item) => [item.code, item]),
-    );
-
     const warnings: string[] = [];
-    let hasNullField = false;
     let checkedCount = 0;
     let uncheckedCount = 0;
     let checkedPassedCount = 0;
     let checkedNotPassedCount = 0;
 
+    // --- VALIDASI BARU: Group by position dan check minimal satu field terisi ---
+    // Handle case ketika data tidak ada atau undefined
+    if (!data || !Array.isArray(data)) {
+      data = [];
+    }
+
+    const positionGroups = new Map<string, any[]>();
+
+    // Group data by position dengan validasi
+    data.forEach((table) => {
+      // Validasi struktur table
+      if (!table || typeof table !== 'object') {
+        warnings.push('Struktur data table tidak valid');
+        return;
+      }
+
+      if (!table.position) {
+        warnings.push('Table tidak memiliki property position');
+        return;
+      }
+
+      if (!Array.isArray(table.fields)) {
+        warnings.push(`Table ${table.position} tidak memiliki fields array`);
+        return;
+      }
+
+      // Pastikan positionGroups selalu memiliki array untuk position ini
+      if (!positionGroups.has(table.position)) {
+        positionGroups.set(table.position, []);
+      }
+
+      // Hanya push fields yang valid
+      const validFields = table.fields.filter(
+        (field) => field && typeof field === 'object' && field.code,
+      );
+
+      // Gunakan optional chaining untuk menghindari error
+      positionGroups.get(table.position)?.push(...validFields);
+    });
+
+    // Validasi: setiap position minimal ada satu field yang diisi (tidak semua null)
+    positionGroups.forEach((fields, position) => {
+      const filledFields = fields.filter(
+        (field) =>
+          field.input_value !== null &&
+          field.input_value !== undefined &&
+          typeof field.input_value === 'number' &&
+          !isNaN(field.input_value),
+      );
+
+      if (filledFields.length === 0) {
+        warnings.push(
+          `Position ${position}: minimal satu field (H/C/T) harus diisi`,
+        );
+      }
+    });
+
+    // Jika ada warning validasi position, throw exception
+    if (warnings.length > 0) {
+      throw new BadRequestException({
+        message: warnings,
+      });
+    }
+
     // --- BASIC QC CHECK ---
     if (basic) {
       // 1. Radius
-      if (basic.radius !== undefined) {
+      if (basic.radius !== undefined && basic.radius !== null) {
         const t = templateMap.get('radius');
         if (t) {
           const status =
@@ -514,7 +579,7 @@ export class QcRecordService {
       }
 
       // 2. OS
-      if (basic.os !== undefined) {
+      if (basic.os !== undefined && basic.os !== null) {
         const t = templateMap.get('os');
         if (t) {
           const status =
@@ -538,7 +603,7 @@ export class QcRecordService {
       }
 
       // 3. CoW
-      if (basic.cow !== undefined) {
+      if (basic.cow !== undefined && basic.cow !== null) {
         const t = templateMap.get('cow');
         if (t) {
           const status =
@@ -562,7 +627,7 @@ export class QcRecordService {
       }
 
       // 4. Nominal
-      if (basic.nominal !== undefined) {
+      if (basic.nominal !== undefined && basic.nominal !== null) {
         const t = templateMap.get('unit.weight');
         if (t) {
           const status =
@@ -589,28 +654,32 @@ export class QcRecordService {
       }
     }
 
-    // loop data dari dto.data
+    // --- PROCESS DATA DTO (dengan logika baru) ---
     for (const table of data) {
-      for (const field of table.fields) {
-        const template = templateMap.get(field.code);
-        if (!template)
-          throw new BadRequestException(
-            `Field "${field.code}" tidak ada di template.`,
-          );
+      // Skip table yang invalid
+      if (!table || !Array.isArray(table.fields)) {
+        continue;
+      }
 
-        if (field.input_value === null || field.input_value === undefined) {
-          warnings.push(
-            `${table.position}  kolom ${field.code}  tidak boleh kosong`,
-          );
-          hasNullField = true;
+      for (const field of table.fields) {
+        // Skip field yang tidak valid
+        if (!field || !field.code) {
           continue;
         }
 
-        if (typeof field.input_value !== 'number' || isNaN(field.input_value)) {
-          warnings.push(
-            `${table.position} kolom ${field.code} harus berupa angka yang valid`,
-          );
-          hasNullField = true;
+        // Skip field yang tidak diisi (null/undefined) atau bukan number
+        if (
+          field.input_value === null ||
+          field.input_value === undefined ||
+          typeof field.input_value !== 'number' ||
+          isNaN(field.input_value)
+        ) {
+          continue;
+        }
+
+        const template = templateMap.get(field.code);
+        if (!template) {
+          warnings.push(`Field "${field.code}" tidak ada di template.`);
           continue;
         }
 
@@ -635,11 +704,12 @@ export class QcRecordService {
           ) {
             errTolerance = field.input_value;
             status = 'Not Passed';
-            checkedNotPassedCount++; //total not passed
+            checkedNotPassedCount++;
           } else {
-            checkedPassedCount++; // total passed
+            checkedPassedCount++;
           }
         }
+
         processedFields.push({
           qc_data_id: `QCD-${uuidv4().replace(/-/g, '').slice(0, 20)}`,
           qc_id: record.qc_id,
@@ -655,19 +725,22 @@ export class QcRecordService {
       }
     }
 
-    // jika ada field invalid, hentikan proses
-    if (hasNullField) {
+    // Jika ada warning validasi data, hentikan proses
+    if (warnings.length > 0) {
       throw new BadRequestException({
         message: warnings,
       });
     }
 
     // Tahap 4: Simpan data hasil QC ke database
-    await this.qcDataRepo.save(
-      processedFields.map(
-        ({ min_tolerance, max_tolerance, ...entityOnly }) => entityOnly,
-      ),
-    );
+    if (processedFields.length > 0) {
+      await this.qcDataRepo.save(
+        processedFields.map(
+          ({ min_tolerance, max_tolerance, ...entityOnly }) => entityOnly,
+        ),
+      );
+    }
+
     // Tahap 41: Simpan record ke database
     await this.qcRecordRepo.save(record);
 
@@ -675,12 +748,22 @@ export class QcRecordService {
     const passedCount = processedFields.filter(
       (f) => f.status === 'Passed',
     ).length;
-    const notPassedCount = processedFields.length - passedCount;
-    const statusOverall = notPassedCount > 0 ? 'Not Passed' : 'Passed';
+    const notPassedCount = processedFields.filter(
+      (f) => f.status === 'Not Passed',
+    ).length;
+
+    // Jika tidak ada field yang diproses, status overall = "Not Passed"
+    const statusOverall =
+      processedFields.length === 0
+        ? 'Not Passed'
+        : notPassedCount > 0
+          ? 'Not Passed'
+          : 'Passed';
 
     record.status_overall = statusOverall;
     record.status = 'Done';
     await this.qcRecordRepo.save(record);
+
     record = await this.qcRecordRepo
       .createQueryBuilder('qc')
       .leftJoinAndSelect('qc.location', 'loc')
@@ -701,45 +784,6 @@ export class QcRecordService {
     }
 
     // Tahap 6: Kirim pesan sukses & response akhir
-    // const qcMessage = (() => {
-    //   const errors = processedFields.filter((f) => f.status === 'Not Passed');
-    //   const totalErrors = errors.length;
-
-    //   const locationName = record.location?.name ?? record.location_id;
-
-    //   if (totalErrors === 0) {
-    //     return `✅ *QC Report* ✅\n*QC ID:* ${record.qc_id}\n*Location:* ${locationName}\nSemua item QC *Passed*! 🎉\n🕒 *Time:* ${new Date().toLocaleString('id-ID')}`;
-    //   }
-
-    //   let message = `🚨 *QC Error Report* 🚨\n`;
-    //   message += `*BATCH ID:* ${record.qc_id}\n`;
-    //   message += `*Lokasi:* ${locationName}\n`;
-    //   message += `*Total Errors:* ${totalErrors}\n`;
-    //   message += `🕒 *Waktu:* ${new Date().toLocaleString('id-ID')}\n\n`;
-    //   message += `*Detail:*\n`;
-
-    //   errors.forEach((f, idx) => {
-    //     message += `${idx + 1}. *${f.input_code}* → Nilai: ${f.input_value} (Toleransi: ${f.min_tolerance}-${f.max_tolerance})\n`;
-
-    //     if (f.input_value < f.min_tolerance) {
-    //       message += `   ⚠️ Nilai di bawah toleransi minimum (${f.min_tolerance})\n`;
-    //     } else if (f.input_value > f.max_tolerance) {
-    //       message += `   ⚠️ Nilai di atas toleransi maksimum (${f.max_tolerance})\n`;
-    //     }
-    //   });
-
-    //   message += `\n⚠️ HANYA!\n📌 Catatan: Ini laporan otomatis dari sistem QC.`;
-
-    //   return message;
-    // })();
-
-    // try {
-    //   await this.notificationService.sendToGroup('Bot Tester', qcMessage);
-    // } catch (err) {
-    //   console.error('Gagal kirim WA notification:', err.message);
-    // }
-
-    // Tahap 7: Kirim pesan sukses & response akhir
     this.messageService.setMessage(
       `QC Data untuk ${qc_id} berhasil direkam (${statusOverall}).`,
     );
@@ -1012,7 +1056,7 @@ export class QcRecordService {
       weight: 'weight',
       'kgm.actual': 'kg_m',
       'percent.deviasi': 'percent_deviasi',
-      'kgm.nominal': 'nominal',
+      'kgm.nominal': 'kgm_nominal',
       'radius.basic': 'radius',
       'os.basic': 'os',
       'cow.basic': 'cow',

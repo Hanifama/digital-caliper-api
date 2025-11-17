@@ -110,7 +110,12 @@ export class NotificationService implements OnModuleInit {
     const groups: Record<string, any[]> = {};
 
     data.forEach((item) => {
-      const pos = item.position!;
+      // Gabungkan FormRight dan yang tanpa position ke "Basic"
+      let pos = item.position;
+      if (!pos || pos === 'FormRight') {
+        pos = 'Basic';
+      }
+
       if (!groups[pos]) groups[pos] = [];
       groups[pos].push(item);
     });
@@ -211,14 +216,9 @@ export class NotificationService implements OnModuleInit {
       position: e.position,
     }));
 
-    // Grouping by posisi
-    const passedWithPosition = mappedPassed.filter((e) => !!e.position);
-    const passedWithoutPosition = mappedPassed.filter((e) => !e.position);
-    const errorsWithPosition = mappedErrors.filter((e) => !!e.position);
-    const errorsWithoutPosition = mappedErrors.filter((e) => !e.position);
-
-    const groupedPassed = this.groupByPosition(passedWithPosition);
-    const groupedErrors = this.groupByPosition(errorsWithPosition);
+    // Grouping by posisi (FormRight dan tanpa position digabung ke Basic)
+    const groupedPassed = this.groupByPosition(mappedPassed);
+    const groupedErrors = this.groupByPosition(mappedErrors);
 
     const message = this.generateQcMessage({
       qcId: record.qc_id,
@@ -234,8 +234,6 @@ export class NotificationService implements OnModuleInit {
       totalErrors: errors.length,
       groupedPassed,
       groupedErrors,
-      passedWithoutPosition,
-      errorsWithoutPosition,
     });
 
     this.messageService.setMessage(
@@ -243,7 +241,7 @@ export class NotificationService implements OnModuleInit {
     );
 
     // Kirim ke beberapa grup sekaligus
-    const targetGroups = ['test wa gys', 'erp development'];
+    const targetGroups = ['erp development', 'test wa gys'];
     return this.sendImageToGroups(imageUrl, message, targetGroups);
   }
 
@@ -262,8 +260,6 @@ export class NotificationService implements OnModuleInit {
     totalErrors: number;
     groupedPassed: Record<string, any[]>;
     groupedErrors: Record<string, any[]>;
-    passedWithoutPosition?: { code: string; value: number }[];
-    errorsWithoutPosition?: { code: string; value: number }[];
   }) {
     const {
       qcId,
@@ -279,8 +275,6 @@ export class NotificationService implements OnModuleInit {
       totalErrors,
       groupedPassed,
       groupedErrors,
-      passedWithoutPosition = [],
-      errorsWithoutPosition = [],
     } = data;
 
     let message = `📋 *QUALITY CONTROL REPORT*\n`;
@@ -300,65 +294,69 @@ export class NotificationService implements OnModuleInit {
     // -------------------------------
     // ✅ Detail Passed
     // -------------------------------
-    message += `✅ *Detail Passed:*\n\n`;
-    let counter = 1;
+    if (totalPassed > 0) {
+      message += `✅ *Detail Passed:*\n\n`;
+      let counter = 1;
 
-    // urutkan posisi supaya FormRight di akhir
-    const sortedPassedKeys = Object.keys(groupedPassed).sort((a, b) => {
-      if (a === 'FormRight') return 1;
-      if (b === 'FormRight') return -1;
-      return 0;
-    });
-
-    for (const pos of sortedPassedKeys) {
-      if (pos !== 'FormRight') {
-        message += `📌 Posisi ${pos}\n`;
-      }
-      groupedPassed[pos].forEach((item) => {
-        message += `${counter}. [${item.code}] Value: ${item.value}\n`;
-        counter++;
+      // Urutkan: Basic di akhir, lainnya diurutkan alphabetically
+      const sortedPassedKeys = Object.keys(groupedPassed).sort((a, b) => {
+        if (a === 'Basic') return 1;
+        if (b === 'Basic') return -1;
+        return a.localeCompare(b);
       });
-      message += `\n`;
-    }
 
-    // tanpa posisi → terakhir tanpa label posisi
-    passedWithoutPosition.forEach((item) => {
-      message += `${counter}. [${item.code}] Value: ${item.value}\n`;
-      counter++;
-    });
-    message += `──────────────────────\n\n`;
+      for (const pos of sortedPassedKeys) {
+        const items = groupedPassed[pos];
+        if (items.length > 0) {
+          // Label untuk Basic & posisi lainnya
+          if (pos === 'Basic') {
+            message += `📌 *Basic*\n`;
+          } else {
+            message += `📌 *Position ${pos}*\n`;
+          }
+
+          items.forEach((item) => {
+            message += `${counter}. [${item.code}] Value: ${item.value}\n`;
+            counter++;
+          });
+          message += `\n`;
+        }
+      }
+      message += `──────────────────────\n\n`;
+    }
 
     // -------------------------------
     // ❌ Detail Not Passed
     // -------------------------------
-    message += `❌ *Detail Not Passed:*\n\n`;
-    counter = 1;
+    if (totalErrors > 0) {
+      message += `❌ *Detail Not Passed:*\n\n`;
+      let counter = 1;
 
-    // urutkan posisi supaya FormRight di akhir
-    const sortedErrorKeys = Object.keys(groupedErrors).sort((a, b) => {
-      if (a === 'FormRight') return 1;
-      if (b === 'FormRight') return -1;
-      return 0;
-    });
-
-    for (const pos of sortedErrorKeys) {
-      if (pos !== 'FormRight') {
-        message += `📌 Posisi ${pos}\n`;
-      }
-      groupedErrors[pos].forEach((item) => {
-        message += `${counter}. [${item.code}] Value: ${item.value}\n`;
-        counter++;
+      // Urutkan: Basic di akhir, lainnya diurutkan alphabetically
+      const sortedErrorKeys = Object.keys(groupedErrors).sort((a, b) => {
+        if (a === 'Basic') return 1;
+        if (b === 'Basic') return -1;
+        return a.localeCompare(b);
       });
-      message += `\n`;
+
+      for (const pos of sortedErrorKeys) {
+        const items = groupedErrors[pos];
+        if (items.length > 0) {
+          // Label untuk Basic vs posisi lainnya
+          if (pos === 'Basic') {
+            message += `📌 *Basic Parameters*\n`;
+          } else {
+            message += `📌 *Position ${pos}*\n`;
+          }
+
+          items.forEach((item) => {
+            message += `${counter}. [${item.code}] Value: ${item.value}\n`;
+            counter++;
+          });
+          message += `\n`;
+        }
+      }
     }
-
-    // tanpa posisi → terakhir tanpa label posisi
-    errorsWithoutPosition.forEach((item) => {
-      message += `${counter}. [${item.code}] Value: ${item.value}\n`;
-      counter++;
-    });
-
-    if (errorsWithoutPosition.length) message += `\n`;
 
     message += `⚠️ Please check and verify.`;
     return message;

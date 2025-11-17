@@ -138,7 +138,7 @@ export class AuthService {
    */
   async login(dto: LoginUserDto) {
     const user = await this.userRepo.findOne({
-      where: { email: dto.email },
+      where: [{ email: dto.identifier }, { NIK: dto.identifier }],
       relations: ['role'],
     });
 

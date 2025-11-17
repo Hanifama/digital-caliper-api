@@ -63,6 +63,7 @@ export class UserService {
       role_status: role?.status,
       location_id: location?.location_id,
       location_name: location?.name,
+      NIK: rest.NIK,
     };
   }
 
@@ -95,6 +96,7 @@ export class UserService {
       name: dto.name,
       email: dto.email,
       password: hashedPassword,
+      NIK: dto.NIK,
       departement: dto.departement,
       role,
       location,
@@ -288,6 +290,16 @@ export class UserService {
 
     if (dto.departement !== undefined) user.departement = dto.departement;
 
+    // Update NIK
+    if (dto.NIK !== undefined && dto.NIK !== user.NIK) {
+      const existing = await this.userRepo.findOne({
+        where: { NIK: dto.NIK },
+      });
+      if (existing && existing.user_id !== userId)
+        throw new BadRequestException('NIK sudah digunakan');
+      user.NIK = dto.NIK;
+    }
+
     await this.userRepo.save(user);
     this.messageService.setMessage('Profile berhasil diperbarui');
   }
@@ -322,6 +334,16 @@ export class UserService {
 
     // Update departement
     if (dto.departement !== undefined) user.departement = dto.departement;
+
+    // Update NIK
+    if (dto.NIK !== undefined && dto.NIK !== user.NIK) {
+      const existing = await this.userRepo.findOne({
+        where: { NIK: dto.NIK },
+      });
+      if (existing && existing.user_id !== userId)
+        throw new BadRequestException('NIK sudah digunakan');
+      user.NIK = dto.NIK;
+    }
 
     // Update role
     if (dto.roleId !== undefined && dto.roleId !== user.role.role_id) {
@@ -370,6 +392,7 @@ export class UserService {
         email: savedUser.email,
         role: savedUser.role?.name,
         departement: savedUser.departement,
+        NIK: savedUser.NIK,
         image: savedUser.image,
         status: savedUser.status,
       };

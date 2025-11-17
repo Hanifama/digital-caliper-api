@@ -29,6 +29,9 @@ export class User {
   @Column({ type: 'varchar', length: 100 })
   password: string;
 
+  @Column({ type: 'varchar', length: 16, unique: true, nullable: true })
+  NIK: string;
+
   @Column({ type: 'varchar', length: 50, nullable: true })
   departement: string;
 

@@ -7,6 +7,7 @@ export class UserResponseDto {
   role: string;
   departement?: string;
   image?: string;
+  NIK?: string;
   last_login?: Date;
   status: number;
 }

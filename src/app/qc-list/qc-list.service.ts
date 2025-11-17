@@ -14,6 +14,8 @@ import { MessageService } from 'src/app/message/message.service';
 import { IResponsePageWrapper } from 'src/types/interface/IResPageWrapper.interface';
 import { User } from '../auth/entitities/user.entity';
 import { SheetService } from '../sheet/sheet.service';
+import { QcRecord } from '../qc-template/entity/qc-record.entity';
+import { QcTemplateData } from '../qc-template/entity/qc-template-data.entity';
 
 @Injectable()
 export class QcListService {
@@ -24,13 +26,72 @@ export class QcListService {
     @InjectRepository(QcTemplate)
     private readonly qcTemplateRepo: Repository<QcTemplate>,
 
+    @InjectRepository(QcTemplateData)
+    private readonly qcTemplateDataRepo: Repository<QcTemplateData>,
+
     @InjectRepository(QcPlan)
     private readonly qcPlanRepo: Repository<QcPlan>,
+
+    @InjectRepository(QcRecord)
+    private readonly qcRecordRepo: Repository<QcRecord>,
 
     private readonly sheetService: SheetService,
 
     private readonly messageService: MessageService,
   ) {}
+
+  private async insertQcPlan(plans: QcPlan[]) {
+    if (!plans.length) return;
+
+    const escape = (v: any) =>
+      v === null || v === undefined
+        ? 'NULL'
+        : `'${String(v).replace(/'/g, "''")}'`;
+
+    const values = plans
+      .map(
+        (p) => `(
+        ${escape(p.qc_id)},
+        ${escape(p.qc_template_id)},
+        ${escape(p.location_id)},
+        ${escape(p.product)},
+        ${escape(p.profile)},
+        ${escape(p.size)},
+        ${escape(p.specifications)},
+        ${escape(p.dimension)},
+        ${escape(p.sequence_no)},
+        ${escape(p.std_grad)},
+        ${p.kgm_nominal ?? 'NULL'},
+        ${escape(p.brand_merek)},
+        ${escape(p.status)},
+        ${escape(p.created_by)},
+        NOW()
+      )`,
+      )
+      .join(',');
+
+    const sql = `
+      INSERT INTO qc_plan (
+        qc_id,
+        qc_template_id,
+        location_id,
+        product,
+        profile,
+        size,
+        specifications,
+        dimension,
+        sequence_no,
+        std_grad,
+        kgm_nominal,
+        brand_merek,
+        status,
+        created_by,
+        created_dt
+      ) VALUES ${values};
+    `;
+
+    await this.qcPlanRepo.query(sql);
+  }
 
   /** Ambil semua QC Plan beserta template terkait admin */
   async getAllQcPlansAdmin(
@@ -122,6 +183,8 @@ export class QcListService {
       location_id: p.location_id,
       location_name: p.location?.name,
       size: p.size,
+      kgm_nominal: p.kgm_nominal,
+      brand_merek: p.brand_merek,
       sequence_no: p.sequence_no,
       product: p.product,
       status: p.status,
@@ -263,6 +326,8 @@ export class QcListService {
       template_name: p.qc_template?.name,
       location_id: p.location_id,
       location_name: p.location?.name,
+      kgm_nominal: p.kgm_nominal,
+      brand_merek: p.brand_merek,
       sequence_no: p.sequence_no,
       size: p.size,
       product: p.product,
@@ -482,9 +547,12 @@ export class QcListService {
     );
   }
 
-  /** Import QC Plan berdasarkan lokasi user - SIZE ONLY TEMPLATE MATCHING */
+  /**
+   * Import QC Plan berdasarkan lokasi user
+   */
   async importQcPlans(file: Express.Multer.File, userId: string) {
-    // Step 1: Ambil user data
+    /** ------------------------------------------------------------------
+     * Step 1: Ambil data user, pastikan user memiliki locationId */
     const user = await this.userRepo.findOne({
       where: { user_id: userId },
       select: ['locationId', 'name', 'user_id'],
@@ -496,7 +564,8 @@ export class QcListService {
       );
     }
 
-    // Step 2: Baca data dengan chunking
+    /** ------------------------------------------------------------------
+     * Step 2: Parse file Excel menjadi rows */
     const rows: any[] = await this.sheetService.importQcPlanExcel(file);
     if (!rows.length) {
       throw new BadRequestException(
@@ -504,156 +573,151 @@ export class QcListService {
       );
     }
 
-    console.log(`📊 Memproses ${rows.length} rows dari Excel`);
-
-    // Step 3: Pre-fetch existing batch IDs
-    const existingBatchIds = await this.qcPlanRepo
+    /** ------------------------------------------------------------------
+     * Step 3: Fetch seluruh qc_id yang sudah ada di DB (qc_plan & qc_record)*/
+    const existingPlanIds = await this.qcPlanRepo
       .createQueryBuilder('plan')
       .select('plan.qc_id')
-      .where('plan.location_id = :locationId', { locationId: user.locationId })
+      .where('plan.location_id = :loc', { loc: user.locationId })
       .getMany();
 
-    const existingIdsSet = new Set(existingBatchIds.map((b) => b.qc_id));
+    const existingRecordIds = await this.qcRecordRepo
+      .createQueryBuilder('rec')
+      .select('rec.qc_id')
+      .where('rec.location_id = :loc', { loc: user.locationId })
+      .getMany();
 
-    // ✅ STEP BARU: Cek duplikat batch_id dalam file Excel
-    const excelBatchIds = new Set();
-    const duplicateInExcel = new Set();
+    const existingPlanSet = new Set(existingPlanIds.map((p) => p.qc_id));
+    const existingRecordSet = new Set(existingRecordIds.map((r) => r.qc_id));
 
-    // First pass: identifikasi duplikat dalam Excel
+    /** ------------------------------------------------------------------
+     * Step 4: Identifikasi duplikat batch_id di dalam file Excel itu sendiri*/
+    const excelSeen = new Set();
+    const duplicateExcelIds = new Set();
+
     rows.forEach((row) => {
       let qcId = row['batch_id'] || null;
-      if (qcId) {
-        qcId = qcId.replace(/\s+/g, '');
-        if (excelBatchIds.has(qcId)) {
-          duplicateInExcel.add(qcId);
-        } else {
-          excelBatchIds.add(qcId);
-        }
+      if (!qcId) return;
+
+      qcId = qcId.replace(/\s+/g, '');
+      if (excelSeen.has(qcId)) {
+        duplicateExcelIds.add(qcId);
+      } else {
+        excelSeen.add(qcId);
       }
     });
 
-    console.log(
-      `⚠️  Found ${duplicateInExcel.size} duplicate batch_ids in Excel:`,
-      Array.from(duplicateInExcel),
-    );
-
-    // Step 4: Kumpulkan SEMUA SIZE UNIK dari Excel untuk batch query
+    /** ------------------------------------------------------------------
+     * Step 5: Ambil semua size unik dari Excel untuk dipakai batch-query template*/
     const allSizes = new Set(
-      rows
-        .filter((row) => row.size)
-        .map((row) => row.size.toLowerCase().trim()),
+      rows.filter((r) => r.size).map((r) => r.size.toLowerCase().trim()),
     );
 
-    console.log(`🔍 Mencari template untuk ${allSizes.size} unique sizes`);
-
-    // Step 5: Batch query templates BERDASARKAN SIZE SAJA
+    /** ------------------------------------------------------------------
+     * Step 6: Fetch semua template yang memiliki size yang cocok*/
     const templates = await this.qcTemplateRepo
       .createQueryBuilder('template')
       .leftJoinAndSelect('template.size', 'size')
       .leftJoinAndSelect('size.productType', 'productType')
-      .where('LOWER(size.name) IN (:...sizes)', {
-        sizes: Array.from(allSizes),
-      })
+      .where('LOWER(size.name) IN (:...sizes)', { sizes: Array.from(allSizes) })
       .getMany();
 
-    console.log(`✅ Ditemukan ${templates.length} template yang sesuai`);
-
-    // DEBUG: Log template yang ditemukan
-    if (templates.length > 0) {
-      console.log('📋 Template yang ditemukan:');
-      templates.forEach((template, index) => {
-        console.log(
-          `   ${index + 1}. Size: "${template.size?.name}", ProductType: "${template.size?.productType?.name}"`,
-        );
-      });
-    }
-
-    // Create lookup map untuk templates BERDASARKAN SIZE SAJA
     const templateMap = new Map();
-    templates.forEach((template) => {
-      const key = template.size.name.toLowerCase().trim();
-      templateMap.set(key, template);
+    templates.forEach((t) => {
+      templateMap.set(t.size.name.toLowerCase().trim(), t);
     });
 
-    // Step 6: Process data dengan chunking
+    /** ------------------------------------------------------------------
+     * Step 7: Persiapan variabel proses batch insert*/
     const BATCH_SIZE = 500;
     const plansToInsert: QcPlan[] = [];
-    const processedBatchIds = new Set(); // ✅ Track batch_id yang sudah diproses
+    const processedExcelIds = new Set();
 
-    let totalSuccessCount = 0;
-    let skippedDueToMissingProduct = 0;
-    let skippedDueToMissingSize = 0;
-    let skippedDueToMissingTemplate = 0;
-    let skippedDueToDuplicate = 0;
-    let skippedDueToMissingBatch = 0;
-    let skippedDueToDuplicateInExcel = 0; // ✅ Counter baru
+    let totalSuccess = 0;
+    let skippedMissingSize = 0;
+    let skippedMissingBatch = 0;
+    let skippedMissingTemplate = 0;
+    let skippedDuplicateExcel = 0;
+    let skippedDuplicatePlan = 0;
+    let skippedDuplicateRecord = 0;
 
+    const templateUnitWeights = await this.qcTemplateDataRepo
+      .createQueryBuilder('d')
+      .select(['d.qc_template_id', 'd.nominal_tolerance'])
+      .where('d.input_code = :code', { code: 'unit.weight' })
+      .getMany();
+
+    // Buat map: templateId → nominal_tolerance
+    const weightMap = new Map<string, number>();
+    templateUnitWeights.forEach((d) => {
+      weightMap.set(d.qc_template_id, Number(d.nominal_tolerance));
+    });
+
+    /** ------------------------------------------------------------------
+     * Step 8: Loop utama pemrosesan setiap row Excel */
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
 
-      // DEBUG: Log setiap 50 rows
-      if (i % 50 === 0) {
-        console.log(`🔧 Memproses row ${i + 1}/${rows.length}`);
-      }
-
-      const productName = row['product'] || null;
       const sizeName = row['size'] || null;
-
-      // CEK: Sekarang product optional, size wajib
       if (!sizeName) {
-        skippedDueToMissingSize++;
+        skippedMissingSize++;
         continue;
       }
 
       let qcId = row['batch_id'] || null;
       if (!qcId) {
-        skippedDueToMissingBatch++;
+        skippedMissingBatch++;
         continue;
       }
 
       qcId = qcId.replace(/\s+/g, '');
 
-      // ✅ CEK 1: Duplikat dalam database
-      if (existingIdsSet.has(qcId)) {
-        skippedDueToDuplicate++;
+      /** --------------------------------------------------------------
+       * CEK URUTAN DUPLIKAT */
+
+      // 1️ Duplicate in Excel (should be checked first)
+      if (processedExcelIds.has(qcId)) {
+        skippedDuplicateExcel++;
+        continue;
+      }
+      processedExcelIds.add(qcId);
+
+      // 2️ Duplicate in qc_plan
+      if (existingPlanSet.has(qcId)) {
+        skippedDuplicatePlan++;
         continue;
       }
 
-      // ✅ CEK 2: Duplikat dalam file Excel (hanya proses pertama kali)
-      if (processedBatchIds.has(qcId)) {
-        console.log(`⏭️  Skip: Duplicate batch_id in Excel: ${qcId}`);
-        skippedDueToDuplicateInExcel++;
+      // 3️ Duplicate in qc_record
+      if (existingRecordSet.has(qcId)) {
+        skippedDuplicateRecord++;
         continue;
       }
 
-      // Tandai batch_id ini sudah diproses
-      processedBatchIds.add(qcId);
-
-      // CARI TEMPLATE BERDASARKAN SIZE SAJA
+      /** --------------------------------------------------------------
+       * Step 9: Cari template berdasarkan SIZE saja*/
       const sizeKey = sizeName.toLowerCase().trim();
       const foundTemplate = templateMap.get(sizeKey);
 
       if (!foundTemplate) {
-        console.log(
-          `⏭️  Skip: Template tidak ditemukan untuk size: ${sizeName}`,
-        );
-        skippedDueToMissingTemplate++;
+        skippedMissingTemplate++;
         continue;
       }
 
-      console.log(`✅ Template ditemukan untuk size: ${sizeName}`);
-
+      /** --------------------------------------------------------------
+       * Step 10: Build QcPlan entity */
       const plan = this.qcPlanRepo.create({
         qc_id: qcId,
         qc_template_id: foundTemplate.qc_template_id,
         location_id: user.locationId,
-        product: productName,
+        product: row['product'] || null,
+        profile: sizeName,
         size: sizeName,
         specifications: row['specifications'] ?? null,
         dimension: sizeName,
         sequence_no: row['sequence_no'] ?? null,
-        std_grad: row['grade'] ?? null,
-        kgm_nominal: row['kgm_nominal'] ?? null,
+        std_grad: row['std_grade'] ?? null,
+        kgm_nominal: weightMap.get(foundTemplate.qc_template_id),
         brand_merek: row['brand_merek'] ?? null,
         status: 'New Data',
         created_by: user.user_id,
@@ -662,48 +726,38 @@ export class QcListService {
 
       plansToInsert.push(plan);
 
-      // Save per batch
+      /** --------------------------------------------------------------
+       * Step 11: Insert batch jika sudah mencapai limit */
       if (plansToInsert.length >= BATCH_SIZE) {
-        try {
-          const savedPlans = await this.qcPlanRepo.save(plansToInsert);
-          totalSuccessCount += savedPlans.length;
-          console.log(`💾 Menyimpan batch: ${savedPlans.length} records`);
-          plansToInsert.length = 0;
-        } catch (saveError) {
-          console.error('❌ Error menyimpan batch:', saveError);
-          throw saveError;
-        }
+        await this.insertQcPlan(plansToInsert);
+        totalSuccess += plansToInsert.length;
+        plansToInsert.length = 0;
       }
     }
 
-    // Save sisa data
+    /** ------------------------------------------------------------------
+     * Step 12: Insert sisa data yang belum diinsert*/
     if (plansToInsert.length > 0) {
-      try {
-        const savedPlans = await this.qcPlanRepo.save(plansToInsert);
-        totalSuccessCount += savedPlans.length;
-        console.log(`💾 Menyimpan sisa: ${savedPlans.length} records`);
-      } catch (saveError) {
-        console.error('❌ Error menyimpan sisa data:', saveError);
-        throw saveError;
-      }
+      await this.insertQcPlan(plansToInsert);
+      totalSuccess += plansToInsert.length;
     }
 
-    // Step 7: Return result
+    /** ------------------------------------------------------------------
+     * Step 13: Build hasil laporan */
     const result = {
-      successCount: totalSuccessCount,
-      skippedDueToMissingProduct,
-      skippedDueToMissingSize,
-      skippedDueToMissingTemplate,
-      skippedDueToDuplicate,
-      skippedDueToDuplicateInExcel, // ✅ Tambahkan counter baru
-      skippedDueToMissingBatch,
       totalProcessed: rows.length,
+      successCount: totalSuccess,
+      skippedMissingSize,
+      skippedMissingBatch,
+      skippedMissingTemplate,
+      skippedDuplicateExcel,
+      skippedDuplicatePlan,
+      skippedDuplicateRecord,
     };
 
-    console.log(`📈 Hasil import:`, result);
-
-    const message = `Import selesai: ${result.successCount} berhasil, ${result.skippedDueToDuplicate} duplikat (database), ${result.skippedDueToDuplicateInExcel} duplikat (Excel), ${result.skippedDueToMissingTemplate} template tidak ditemukan.`;
-    this.messageService.setMessage(message);
+    this.messageService.setMessage(
+      `Berhasil import data sebanyak ${totalSuccess} QC`,
+    );
 
     return result;
   }
