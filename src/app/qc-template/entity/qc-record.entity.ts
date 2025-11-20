@@ -147,13 +147,13 @@ export class QcRecord {
   @Column({ length: 20, nullable: true })
   status_overall: string;
 
-  @Column({ nullable: true, type: 'datetime' })
+  @Column({ type: 'timestamp', nullable: true })
   start_dt: Date;
 
   @Column({ length: 50, nullable: true })
   created_by: string;
 
-  @Column({ type: 'datetime' })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_dt: Date;
 
   @Column({ length: 50, nullable: true })
