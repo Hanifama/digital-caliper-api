@@ -134,14 +134,6 @@ export class NotificationService implements OnModuleInit {
 
     // Ambil semua chat
     const chats = await this.client.getChats();
-    console.log(
-      'Chats:',
-      chats.map((c) => ({
-        id: c.id?._serialized,
-        name: c.name,
-        isGroup: c.isGroup,
-      })),
-    );
 
     // Konversi URL → File Path
     const fileName = imageUrl.split('/uploads/')[1];
