@@ -149,7 +149,7 @@ export class NotificationService implements OnModuleInit {
     for (const groupName of groupNames) {
       const group = chats.find(
         (chat) =>
-          chat.isGroup && chat.name.toLowerCase() === groupName.toLowerCase(),
+          chat.isGroup && chat.name?.toLowerCase() === groupName.toLowerCase(),
       );
 
       if (!group) {
