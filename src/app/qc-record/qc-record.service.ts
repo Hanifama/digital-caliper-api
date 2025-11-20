@@ -335,8 +335,6 @@ export class QcRecordService {
       process_time: plan.process_time,
       remarks: plan.remarks,
       created_by: plan.created_by,
-      created_dt: new Date(),
-      start_dt: new Date(),
       status_overall: status || 'Processing',
     });
 
@@ -397,7 +395,6 @@ export class QcRecordService {
         qc_template_id,
         status_overall: 'Processing',
         status: 'Processing',
-        created_dt: new Date(),
       });
       await this.qcRecordRepo.save(record);
     } else {
