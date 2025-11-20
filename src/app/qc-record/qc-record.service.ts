@@ -9,6 +9,12 @@ import { Repository } from 'typeorm';
 import { Transactional } from 'typeorm-transactional';
 
 import { v4 as uuidv4 } from 'uuid';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 import { MessageService } from '../message/message.service';
 // import { NotificationService } from '../notification/notification.service';
@@ -335,8 +341,8 @@ export class QcRecordService {
       process_time: plan.process_time,
       remarks: plan.remarks,
       created_by: plan.created_by,
-      created_dt: new Date(),
-      start_dt: new Date(),
+      created_dt: dayjs().tz('Asia/Jakarta').toDate(),
+      start_dt: dayjs().tz('Asia/Jakarta').toDate(),
       status_overall: status || 'Processing',
     });
 
