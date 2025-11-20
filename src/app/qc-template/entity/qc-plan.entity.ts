@@ -41,6 +41,9 @@ export class QcPlan {
   @Column({ type: 'text', nullable: true })
   notes: string;
 
+  @Column({ length: 150, nullable: true })
+  file_name: string;
+
   @Column({ length: 25, nullable: true })
   std_grad: string;
 

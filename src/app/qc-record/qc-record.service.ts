@@ -197,6 +197,7 @@ export class QcRecordService {
       status_overall: r.status_overall,
       invalid_data: invalidMap.get(r.qc_id) || 0,
       sequence_no: r.sequence_no,
+      file_name: r.file_name,
       size: r.size,
       created_by: r.created_by,
       created_by_name: userMap.get(r.created_by) || '-',
@@ -309,12 +310,12 @@ export class QcRecordService {
       kgm_nominal: plan.kgm_nominal,
       campaign_no: plan.campaign_no,
       sequence_no: plan.sequence_no,
+      file_name: plan.file_name,
       pattern: plan.pattern,
       heat_number: plan.heat_number,
       bloom_number: plan.bloom_number,
       type_material: plan.type_material,
       thick: plan.thick,
-      // nominal: plan.kgm_nominal,
       width: plan.width,
       length: plan.length,
       kg_m: plan.kg_m,
@@ -357,7 +358,6 @@ export class QcRecordService {
     };
   }
 
-  /** Create QC Record */
   /** Create QC Record */
   @Transactional()
   async createQcRecordData(dto: AddQcRecordTablesDto, userId: string) {
@@ -554,7 +554,7 @@ export class QcRecordService {
 
     // --- BASIC QC CHECK ---
     if (basic) {
-      // 1. Radius
+      // 1. Radius (harus sama persis)
       if (basic.radius !== undefined && basic.radius !== null) {
         const t = templateMap.get('radius');
         if (t) {
@@ -572,18 +572,17 @@ export class QcRecordService {
             min_tolerance: t.min_tolerance,
             max_tolerance: t.max_tolerance,
           });
-
           status === 'Passed' ? checkedPassedCount++ : checkedNotPassedCount++;
           checkedCount++;
         }
       }
 
-      // 2. OS
+      // 2. OS (> nominal_tolerance = Not Passed)
       if (basic.os !== undefined && basic.os !== null) {
         const t = templateMap.get('os');
         if (t) {
           const status =
-            basic.os === t.nominal_tolerance ? 'Passed' : 'Not Passed';
+            basic.os > t.nominal_tolerance ? 'Not Passed' : 'Passed';
           processedFields.push({
             qc_data_id: `QCD-${uuidv4().replace(/-/g, '').slice(0, 20)}`,
             qc_id: record.qc_id,
@@ -596,18 +595,17 @@ export class QcRecordService {
             min_tolerance: t.min_tolerance,
             max_tolerance: t.max_tolerance,
           });
-
           status === 'Passed' ? checkedPassedCount++ : checkedNotPassedCount++;
           checkedCount++;
         }
       }
 
-      // 3. CoW
+      // 3. CoW (> actual_tolerance = Not Passed)
       if (basic.cow !== undefined && basic.cow !== null) {
         const t = templateMap.get('cow');
         if (t) {
           const status =
-            basic.cow === t.actual_tolerance ? 'Passed' : 'Not Passed';
+            basic.cow > t.actual_tolerance ? 'Not Passed' : 'Passed';
           processedFields.push({
             qc_data_id: `QCD-${uuidv4().replace(/-/g, '').slice(0, 20)}`,
             qc_id: record.qc_id,
@@ -620,13 +618,12 @@ export class QcRecordService {
             min_tolerance: t.min_tolerance,
             max_tolerance: t.max_tolerance,
           });
-
           status === 'Passed' ? checkedPassedCount++ : checkedNotPassedCount++;
           checkedCount++;
         }
       }
 
-      // 4. Nominal
+      // 4. Nominal (range min-max)
       if (basic.nominal !== undefined && basic.nominal !== null) {
         const t = templateMap.get('unit.weight');
         if (t) {
@@ -634,7 +631,6 @@ export class QcRecordService {
             basic.nominal >= t.min_tolerance && basic.nominal <= t.max_tolerance
               ? 'Passed'
               : 'Not Passed';
-
           processedFields.push({
             qc_data_id: `QCD-${uuidv4().replace(/-/g, '').slice(0, 20)}`,
             qc_id: record.qc_id,
@@ -647,14 +643,13 @@ export class QcRecordService {
             min_tolerance: t.min_tolerance,
             max_tolerance: t.max_tolerance,
           });
-
           status === 'Passed' ? checkedPassedCount++ : checkedNotPassedCount++;
           checkedCount++;
         }
       }
     }
 
-    // --- PROCESS DATA DTO (dengan logika baru) ---
+    // --- PROCESS DATA ---
     for (const table of data) {
       // Skip table yang invalid
       if (!table || !Array.isArray(table.fields)) {

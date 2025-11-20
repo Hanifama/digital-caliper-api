@@ -222,6 +222,8 @@ export class NotificationService implements OnModuleInit {
 
     const message = this.generateQcMessage({
       qcId: record.qc_id,
+      noSequence: record.sequence_no,
+      kgmActual: record.kg_m,
       size: record.size,
       location: record.location_id,
       locationName: record.location?.name ?? '-',
@@ -248,6 +250,8 @@ export class NotificationService implements OnModuleInit {
   // Generate plain text message format
   generateQcMessage(data: {
     qcId: string;
+    noSequence: number;
+    kgmActual: number;
     size: string;
     location: string;
     locationName: string;
@@ -263,6 +267,8 @@ export class NotificationService implements OnModuleInit {
   }) {
     const {
       qcId,
+      noSequence,
+      kgmActual,
       size,
       location,
       locationName,
@@ -279,8 +285,10 @@ export class NotificationService implements OnModuleInit {
 
     let message = `📋 *QUALITY CONTROL REPORT*\n`;
     message += `──────────────────────\n`;
+    message += `*No Sequence* ${noSequence}\n`;
     message += `*Batch ID:* ${qcId}\n`;
     message += `*Size:* ${size}\n`;
+    message += `*Kg/m Actual* ${kgmActual}\n`;
     message += `*Lokasi:* ${locationName} (${location})\n`;
     message += `*Status QC:* ${statusQC} (${statusAllQC})\n`;
     message += `*Tanggal QC:* ${createdAt}\n`;
