@@ -134,6 +134,14 @@ export class NotificationService implements OnModuleInit {
 
     // Ambil semua chat
     const chats = await this.client.getChats();
+    console.log(
+      'Chats:',
+      chats.map((c) => ({
+        id: c.id?._serialized,
+        name: c.name,
+        isGroup: c.isGroup,
+      })),
+    );
 
     // Konversi URL → File Path
     const fileName = imageUrl.split('/uploads/')[1];
@@ -147,10 +155,10 @@ export class NotificationService implements OnModuleInit {
 
     // Loop kirim ke tiap grup
     for (const groupName of groupNames) {
-      const group = chats.find(
-        (chat) =>
-          chat.isGroup && chat.name?.toLowerCase() === groupName.toLowerCase(),
-      );
+      const group = chats.find((chat) => {
+        if (!chat || !chat.isGroup || !chat.name) return false;
+        return chat.name.toLowerCase() === groupName.toLowerCase();
+      });
 
       if (!group) {
         console.warn(`⚠️ Grup "${groupName}" tidak ditemukan`);
