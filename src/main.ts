@@ -10,6 +10,8 @@ import {
   VersioningType,
 } from '@nestjs/common';
 
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
 import { initializeTransactionalContext } from 'typeorm-transactional';
 
 import helmet, { frameguard, noSniff, xssFilter } from 'helmet';
@@ -90,6 +92,16 @@ import compression from 'compression';
   );
 
   app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
+
+  const config = new DocumentBuilder()
+    .setTitle('API Documentation')
+    .setDescription('Dokumentasi API untuk Project Digital Caliper')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api-docs', app, document);
 
   await app.listen(port, '0.0.0.0');
   Logger.log(`✅ Application is running on: http://0.0.0.0:${port}`);
