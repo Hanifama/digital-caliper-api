@@ -147,19 +147,19 @@ export class QcRecord {
   @Column({ length: 20, nullable: true })
   status_overall: string;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @Column()
   start_dt: Date;
 
   @Column({ length: 50, nullable: true })
   created_by: string;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @Column()
   created_dt: Date;
 
   @Column({ length: 50, nullable: true })
   updated_by: string;
 
-  @Column({ nullable: true, type: 'datetime' })
+  @Column({ nullable: true })
   updated_dt: Date;
 
   @ManyToOne(() => QcTemplate, (qc) => qc.records)

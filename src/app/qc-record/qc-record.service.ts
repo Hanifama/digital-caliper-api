@@ -335,6 +335,8 @@ export class QcRecordService {
       process_time: plan.process_time,
       remarks: plan.remarks,
       created_by: plan.created_by,
+      created_dt: new Date(),
+      start_dt: new Date(),
       status_overall: status || 'Processing',
     });
 
