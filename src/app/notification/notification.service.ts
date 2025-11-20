@@ -241,7 +241,7 @@ export class NotificationService implements OnModuleInit {
     );
 
     // Kirim ke beberapa grup sekaligus
-    const targetGroups = ['erp development', 'test wa gys'];
+    const targetGroups = ['gys production beam plant'];
     return this.sendImageToGroups(imageUrl, message, targetGroups);
   }
 

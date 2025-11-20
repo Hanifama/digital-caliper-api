@@ -132,17 +132,22 @@ export class MasterService {
         { status: 'active' },
       )
       .leftJoinAndSelect('roleMenu.menu', 'menu')
-      .loadRelationCountAndMap('role.total_user', 'role.users') // otomatis hitung total user
+      .loadRelationCountAndMap('role.total_user', 'role.users')
       .where('role.role_id = :roleId', { roleId })
       .getOne();
 
     if (!roleDetail) throw new NotFoundException('Role tidak ditemukan');
 
-    const menus = roleDetail.roleMenus.map((rm) => ({
-      menu_id: rm.menu.menu_id,
-      name: rm.menu.name,
-      status: rm.menu.status,
-    }));
+    const menus = roleDetail.roleMenus
+      .map((rm) => {
+        if (!rm.menu) return null;
+        return {
+          menu_id: rm.menu.menu_id,
+          name: rm.menu.name,
+          status: rm.menu.status,
+        };
+      })
+      .filter(Boolean);
 
     this.messageService.setMessage('Berhasil memuat detail role');
 

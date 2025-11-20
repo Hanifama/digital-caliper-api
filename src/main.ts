@@ -36,19 +36,19 @@ import compression from 'compression';
 
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-
       const allowedOrigins = [
-        'http://localhost:5173', // dev
-        'http://localhost:4173', // staging
-        'https://digitalcaliper.webview.cloud', // dev prod
+        'http://localhost:5173', // dev frontend
+        'http://localhost:4173', // staging frontend
+        'https://digitalcaliper.webview.cloud', // prod dev
         'http://172.16.22.170', // prod www
+        'http://localhost:8085', // Swagger UI
       ];
 
-      if (allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        console.warn('Blocked by CORS:', origin);
+        callback(null, false);
       }
     },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
@@ -98,6 +98,10 @@ import compression from 'compression';
     .setDescription('Dokumentasi API untuk Project Digital Caliper')
     .setVersion('1.0')
     .addBearerAuth()
+
+    .addServer('http://localhost:8085', 'Development Server')
+    .addServer('https://api-digitalcaliper.webview.cloud/', 'Staging Server')
+    .addServer('http://172.16.22.170/api', 'Production Server')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

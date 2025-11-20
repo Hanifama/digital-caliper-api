@@ -1,4 +1,5 @@
 import { IsNotEmpty, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export interface ILoginResponse {
   accessToken: string;
@@ -10,6 +11,10 @@ export interface IRefreshTokenResponse {
 }
 
 export class RefreshTokenDto {
+  @ApiProperty({
+    description: 'Refresh token yang valid',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
   @IsNotEmpty({ message: 'Refresh token wajib diisi' })
   @IsString()
   refreshToken: string;

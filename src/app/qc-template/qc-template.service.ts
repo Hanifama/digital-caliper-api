@@ -746,10 +746,10 @@ export class QcTemplateService {
     // Step 4: Update template utama
     template.prodtype_id = dto.prodtype_id;
     template.name = dto.name;
-    template.profile = dto.profile;
-    template.std_dimention = dto.std_dimention;
-    template.brand_merek = dto.brand_merek;
-    template.specification = dto.specification;
+    template.profile = dto.profile ?? '';
+    template.std_dimention = dto.std_dimention ?? '';
+    template.brand_merek = dto.brand_merek ?? '';
+    template.specification = dto.specification ?? '';
     template.status = dto.status;
     template.updated_by = user?.full_name ?? 'system';
     template.updated_dt = new Date();
