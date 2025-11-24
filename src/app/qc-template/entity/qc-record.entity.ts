@@ -15,11 +15,14 @@ export class QcRecord {
   @PrimaryColumn({ length: 50 })
   qc_id: string;
 
+  @PrimaryColumn('int')
+  sequence_no: number;
+
+  @PrimaryColumn({ length: 25 })
+  location_id: string;
+
   @Column({ length: 25 })
   qc_template_id: string;
-
-  @Column({ length: 25, nullable: true })
-  location_id: string;
 
   @Column({ length: 25, nullable: true })
   size: string;
@@ -53,9 +56,6 @@ export class QcRecord {
 
   @Column({ length: 25, nullable: true })
   campaign_no: string;
-
-  @Column('int', { nullable: true })
-  sequence_no: number;
 
   @Column({ length: 25, nullable: true })
   pattern: string;

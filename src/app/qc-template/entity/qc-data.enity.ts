@@ -9,6 +9,12 @@ export class QcData {
   @Column({ length: 25 })
   qc_id: string;
 
+  @Column()
+  sequence_no: number;
+
+  @Column({ length: 25 })
+  location_id: string;
+
   @Column({ length: 25 })
   input_code: string;
 
@@ -29,6 +35,10 @@ export class QcData {
 
   // relation
   @ManyToOne(() => QcRecord, (qc) => qc.datas)
-  @JoinColumn({ name: 'qc_id' })
+  @JoinColumn([
+    { name: 'qc_id', referencedColumnName: 'qc_id' },
+    { name: 'sequence_no', referencedColumnName: 'sequence_no' },
+    { name: 'location_id', referencedColumnName: 'location_id' },
+  ])
   qc_record: QcRecord;
 }

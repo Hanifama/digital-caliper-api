@@ -1,4 +1,9 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumberString,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class StartProcessingDto {
@@ -9,6 +14,13 @@ export class StartProcessingDto {
   @IsNotEmpty({ message: 'qc_id tidak boleh kosong' })
   @IsString({ message: 'qc_id harus berupa string' })
   qc_id: string;
+
+  @ApiProperty({
+    description: 'Nomor sequence QC',
+    example: 2,
+  })
+  @IsNotEmpty()
+  no_seq: number;
 
   @ApiPropertyOptional({
     description: 'Status awal (opsional)',

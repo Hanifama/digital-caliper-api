@@ -282,36 +282,66 @@ export class QcRecordService {
 
   /** Start Status QC Record */
   @Transactional()
-  async startProcessingFromPlan(dto: StartProcessingDto) {
-    const { qc_id, status } = dto;
+  async startProcessingFromPlan(dto: StartProcessingDto, userId: string) {
+    const { qc_id, no_seq, status } = dto;
+    const sequence_no = no_seq;
 
-    if (!qc_id) {
-      throw new BadRequestException('qc_id wajib dikirim dalam request body.');
+    if (!qc_id || !sequence_no) {
+      throw new BadRequestException('qc_id dan no_seq wajib dikirim.');
     }
 
-    // 1. Cek apakah QC Plan-nya ada
-    const plan = await this.qcPlanRepo.findOne({ where: { qc_id } });
+    /** 1. Ambil location_id berdasar user */
+    const user = await this.userRepo.findOne({
+      where: { user_id: userId },
+    });
+
+    if (!user?.locationId) {
+      throw new BadRequestException(
+        'User tidak memiliki location_id. Tidak bisa memulai QC Record.',
+      );
+    }
+
+    const location_id = user.locationId;
+
+    /** 2. Ambil QC Plan berdasarkan:
+     * qc_id + sequence_no + location_id
+     */
+    const plan = await this.qcPlanRepo.findOne({
+      where: {
+        qc_id,
+        sequence_no,
+        location_id,
+      },
+    });
+
     if (!plan) {
       throw new BadRequestException(
-        `QC Plan dengan qc_id "${qc_id}" tidak ditemukan.`,
+        `QC Plan tidak ditemukan untuk qc_id "${qc_id}", seq "${sequence_no}", location "${location_id}".`,
       );
     }
 
-    // 2. Cek apakah QC Record untuk qc_id ini sudah pernah dibuat
+    /** 3. Cek apakah QC Record sudah ada */
     const existingRecord = await this.qcRecordRepo.findOne({
-      where: { qc_id },
+      where: {
+        qc_id,
+        sequence_no,
+        location_id,
+      },
     });
+
     if (existingRecord) {
       throw new BadRequestException(
-        `QC Record untuk ${qc_id} sudah di proses.`,
+        `QC Record untuk qc_id "${qc_id}" seq "${sequence_no}" location "${location_id}" sudah ada.`,
       );
     }
 
-    // 3. Buat record baru dengan menyalin data dari plan
+    /** 4. Create QC Record dari QC Plan */
     const newRecord = this.qcRecordRepo.create({
       qc_id: plan.qc_id,
       qc_template_id: plan.qc_template_id,
       location_id: plan.location_id,
+      sequence_no: plan.sequence_no,
+
       size: plan.size,
       product: plan.product,
       specifications: plan.specifications,
@@ -322,7 +352,6 @@ export class QcRecordService {
       std_grad: plan.std_grad,
       kgm_nominal: plan.kgm_nominal,
       campaign_no: plan.campaign_no,
-      sequence_no: plan.sequence_no,
       file_name: plan.file_name,
       pattern: plan.pattern,
       heat_number: plan.heat_number,
@@ -347,24 +376,28 @@ export class QcRecordService {
       discharging_time: plan.discharging_time,
       process_time: plan.process_time,
       remarks: plan.remarks,
-      created_by: plan.created_by,
+
+      created_by: userId,
+      created_dt: new Date(),
+      start_dt: new Date(),
       status_overall: status || 'Processing',
     });
 
     await this.qcRecordRepo.save(newRecord);
 
-    // 4. Update status QC Plan jadi processing
+    /** 5. Update status QC Plan */
     plan.status = status || 'Processing';
     await this.qcPlanRepo.save(plan);
 
-    // 5. Kirim pesan sukses
+    /** 6. Message sukses */
     this.messageService.setMessage(
-      `QC Plan ${qc_id} bersetatus di ${plan.status}.`,
+      `QC Plan ${qc_id} (seq: ${plan.sequence_no}) berstatus ${plan.status}.`,
     );
 
-    // 6. Return response
     return {
       qc_id,
+      sequence_no: plan.sequence_no,
+      location_id: plan.location_id,
       status: plan.status,
     };
   }
@@ -372,8 +405,17 @@ export class QcRecordService {
   /** Create QC Record */
   @Transactional()
   async createQcRecordData(dto: AddQcRecordTablesDto, userId: string) {
-    let { qc_id, qc_template_id, basic, default: defaultData, data } = dto;
+    let {
+      qc_id,
+      qc_template_id,
+      no_seq,
+      basic,
+      default: defaultData,
+      data,
+    } = dto;
     let record: QcRecord | null = null;
+
+    const sequence_no = no_seq;
 
     const user = await this.userRepo.findOne({ where: { user_id: userId } });
     if (!user?.locationId) {
@@ -411,7 +453,13 @@ export class QcRecordService {
       });
       await this.qcRecordRepo.save(record);
     } else {
-      record = await this.qcRecordRepo.findOne({ where: { qc_id } });
+      record = await this.qcRecordRepo.findOne({
+        where: {
+          qc_id,
+          location_id: user.locationId,
+          sequence_no,
+        },
+      });
       if (!record) {
         throw new BadRequestException(
           `QC Record dengan Batch Id ${qc_id} belum diproses.`,
@@ -482,6 +530,8 @@ export class QcRecordService {
     const processedFields: Array<{
       qc_data_id: string;
       qc_id: string;
+      sequence_no: number;
+      location_id: string;
       input_code: string;
       input_value: number;
       err_tolerance: number;
@@ -573,6 +623,8 @@ export class QcRecordService {
           processedFields.push({
             qc_data_id: `QCD-${uuidv4().replace(/-/g, '').slice(0, 20)}`,
             qc_id: record.qc_id,
+            sequence_no: record.sequence_no,
+            location_id: record.location_id,
             input_code: 'radius',
             input_value: basic.radius,
             err_tolerance: status === 'Not Passed' ? basic.radius : 0,
@@ -596,6 +648,8 @@ export class QcRecordService {
           processedFields.push({
             qc_data_id: `QCD-${uuidv4().replace(/-/g, '').slice(0, 20)}`,
             qc_id: record.qc_id,
+            sequence_no: record.sequence_no,
+            location_id: record.location_id,
             input_code: 'os',
             input_value: basic.os,
             err_tolerance: status === 'Not Passed' ? basic.os : 0,
@@ -619,6 +673,8 @@ export class QcRecordService {
           processedFields.push({
             qc_data_id: `QCD-${uuidv4().replace(/-/g, '').slice(0, 20)}`,
             qc_id: record.qc_id,
+            sequence_no: record.sequence_no,
+            location_id: record.location_id,
             input_code: 'cow',
             input_value: basic.cow,
             err_tolerance: status === 'Not Passed' ? basic.cow : 0,
@@ -644,6 +700,8 @@ export class QcRecordService {
           processedFields.push({
             qc_data_id: `QCD-${uuidv4().replace(/-/g, '').slice(0, 20)}`,
             qc_id: record.qc_id,
+            sequence_no: record.sequence_no,
+            location_id: record.location_id,
             input_code: 'nominal',
             input_value: basic.nominal,
             err_tolerance: status === 'Not Passed' ? basic.nominal : 0,
@@ -718,6 +776,8 @@ export class QcRecordService {
         processedFields.push({
           qc_data_id: `QCD-${uuidv4().replace(/-/g, '').slice(0, 20)}`,
           qc_id: record.qc_id,
+          sequence_no: record.sequence_no,
+          location_id: record.location_id,
           input_code: field.code,
           input_value: field.input_value,
           err_tolerance: errTolerance,
@@ -808,10 +868,31 @@ export class QcRecordService {
   }
 
   /** Detail QC Record Gruped*/
-  async getQcRecordDetail(qcId: string): Promise<QcRecordGroupedResult> {
+  async getQcRecordDetail(
+    qcId: string,
+    no_seq: number,
+    userId: string,
+  ): Promise<QcRecordGroupedResult> {
+    const user = await this.userRepo.findOne({
+      where: { user_id: userId },
+    });
+
+    if (!user?.locationId) {
+      throw new BadRequestException(
+        'User tidak memiliki location_id, tidak dapat mengambil detail QC.',
+      );
+    }
+
+    const location_id = user.locationId;
+
+    const sequence_no = no_seq;
     // Fetch QC record and its related entities
     const record = await this.qcRecordRepo.findOne({
-      where: { qc_id: qcId },
+      where: {
+        qc_id: qcId,
+        sequence_no,
+        location_id,
+      },
       relations: ['qc_template', 'datas'],
     });
 
@@ -836,6 +917,15 @@ export class QcRecordService {
 
     // Step 2: Map existing QC record data for quick lookup
     const qcDataMap = new Map(record.datas.map((d) => [d.input_code, d]));
+
+    // console.log(
+    //   '=== QC RECORD DATAS ===',
+    //   record.datas.map((d) => ({
+    //     code: d.input_code,
+    //     value: d.input_value,
+    //     status: d.status,
+    //   })),
+    // );
 
     let template_size_name = '';
     if (template.size_id) {

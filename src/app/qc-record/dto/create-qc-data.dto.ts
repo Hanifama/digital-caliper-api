@@ -6,6 +6,8 @@ import {
   ValidateNested,
   IsObject,
   IsDateString,
+  IsNotEmpty,
+  IsNumberString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -122,6 +124,13 @@ export class AddQcRecordTablesDto {
   @IsOptional()
   @IsString()
   qc_id?: string;
+
+  @ApiProperty({
+    description: 'Nomor sequence QC',
+    example: 2,
+  })
+  @IsNotEmpty()
+  no_seq: number;
 
   @ApiPropertyOptional({ example: 'TMP-rtxtuyp' })
   @IsOptional()

@@ -81,8 +81,11 @@ export class QcRecordController {
   @ApiOperation({ summary: 'Mulai QC Record baru dari plan' })
   @ApiBody({ type: StartProcessingDto })
   @ApiResponse({ status: 201, description: 'Berhasil memulai QC Record baru' })
-  async startProcessing(@Body() dto: StartProcessingDto) {
-    return this.qcRecordService.startProcessingFromPlan(dto);
+  async startProcessing(
+    @Body() dto: StartProcessingDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.qcRecordService.startProcessingFromPlan(dto, userId);
   }
 
   /**
@@ -126,7 +129,7 @@ export class QcRecordController {
    * @param qcId ID QC Record
    * @returns Data QC Record yang sudah dikelompokkan
    */
-  @Get(':qcId')
+  @Get(':qcId/:no_seq')
   @ApiOperation({ summary: 'Ambil detail QC Record dikelompokkan' })
   @ApiParam({ name: 'qcId', description: 'ID QC Record' })
   @ApiResponse({
@@ -134,8 +137,10 @@ export class QcRecordController {
     description: 'Berhasil mengambil QC Record dikelompokkan',
   })
   async getQcRecordDetail(
+    @CurrentUser('id') userId: string,
     @Param('qcId') qcId: string,
+    @Param('no_seq') no_seq: number,
   ): Promise<QcRecordGroupedResult> {
-    return this.qcRecordService.getQcRecordDetail(qcId);
+    return this.qcRecordService.getQcRecordDetail(qcId, no_seq, userId);
   }
 }
