@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
 
 import { QcTemplate } from '../qc-template/entity/qc-template.entity';
 import { QcPlan } from '../qc-template/entity/qc-plan.entity';
@@ -100,6 +99,7 @@ export class QcListService {
     page: number = 1,
     limit: number = 10,
     search?: string,
+    fileName?: string,
     locationId?: string,
   ): Promise<IResponsePageWrapper<any>> {
     const offset = (page - 1) * limit;
@@ -136,6 +136,17 @@ export class QcListService {
           { searchText },
         );
       }
+    }
+
+    // Filter file_name
+    if (fileName && fileName.trim() !== '') {
+      const fileNameText = `%${fileName.trim().toLowerCase()}%`;
+      plansQuery.andWhere('LOWER(qp.file_name) LIKE :fileNameText', {
+        fileNameText,
+      });
+      countQuery.andWhere('LOWER(qp.file_name) LIKE :fileNameText', {
+        fileNameText,
+      });
     }
 
     // Filter location
@@ -219,52 +230,64 @@ export class QcListService {
     page: number = 1,
     limit: number = 10,
     search?: string,
+    fileName?: string,
     from_date?: string,
     end_date?: string,
   ): Promise<IResponsePageWrapper<any>> {
     const offset = (page - 1) * limit;
 
-    // ambil locationId user
+    // Ambil info user beserta role dan location
     const user = await this.userRepo.findOne({
       where: { user_id: userId },
-      select: ['locationId'],
+      relations: ['role'],
+      select: ['user_id', 'locationId', 'role'],
     });
 
-    if (!user?.locationId) {
-      throw new BadRequestException('Pengguna belum ditempatkan lokasi.');
+    if (!user) throw new BadRequestException('User tidak ditemukan.');
+
+    const isAdmin = user.role?.name?.toLowerCase() === 'admin';
+
+    const plansQuery = this.qcPlanRepo.createQueryBuilder('qp');
+    const countQuery = this.qcPlanRepo.createQueryBuilder('qp');
+
+    // Join template & location
+    plansQuery
+      .leftJoinAndSelect('qp.qc_template', 'qt')
+      .leftJoinAndSelect('qp.location', 'loc');
+    countQuery.leftJoin('qp.qc_template', 'qt');
+
+    if (isAdmin) {
+      // Admin bisa lihat semua termasuk soft delete
+      plansQuery.withDeleted();
+      countQuery.withDeleted();
+    } else {
+      // User biasa: filter location user & exclude soft deleted
+      if (!user.locationId)
+        throw new BadRequestException('Pengguna belum ditempatkan lokasi.');
+      plansQuery
+        .where('qp.deleted_at IS NULL')
+        .andWhere('qp.location_id = :locationId', {
+          locationId: user.locationId,
+        })
+        .andWhere('qp.status != :doneStatus', { doneStatus: 'Done' });
+      countQuery
+        .where('qp.deleted_at IS NULL')
+        .andWhere('qp.location_id = :locationId', {
+          locationId: user.locationId,
+        })
+        .andWhere('qp.status != :doneStatus', { doneStatus: 'Done' });
     }
 
-    const plansQuery = this.qcPlanRepo
-      .createQueryBuilder('qp')
-      .leftJoinAndSelect('qp.qc_template', 'qt')
-      .leftJoinAndSelect('qp.location', 'loc')
-      .where('qp.deleted_at IS NULL')
-      .andWhere('qp.location_id = :locationId', {
-        locationId: user.locationId,
-      })
-      .andWhere('qp.status != :doneStatus', { doneStatus: 'Done' });
-
-    const countQuery = this.qcPlanRepo
-      .createQueryBuilder('qp')
-      .leftJoin('qp.qc_template', 'qt')
-      .where('qp.deleted_at IS NULL')
-      .andWhere('qp.status != :doneStatus', { doneStatus: 'Done' })
-      .andWhere('qp.location_id = :locationId', {
-        locationId: user.locationId,
-      });
-
     // Filter search
-    if (search && search.trim() !== '' && search !== '{{search}}') {
+    if (search?.trim() && search !== '{{search}}') {
       const trimmed = search.trim();
       const searchText = `%${trimmed.toLowerCase()}%`;
       const searchNumber = Number(trimmed);
 
       if (!isNaN(searchNumber) && /^\d+$/.test(trimmed)) {
-        // Kalau input murni angka, hanya cari berdasarkan sequence_no
         plansQuery.andWhere('qp.sequence_no = :searchNumber', { searchNumber });
         countQuery.andWhere('qp.sequence_no = :searchNumber', { searchNumber });
       } else {
-        // Kalau input berupa teks, cari di qc_id, template_name, atau status
         plansQuery.andWhere(
           '(LOWER(qp.qc_id) LIKE :searchText OR LOWER(qt.name) LIKE :searchText OR LOWER(qp.status) LIKE :searchText)',
           { searchText },
@@ -276,21 +299,24 @@ export class QcListService {
       }
     }
 
+    // Filter file_name
+    if (fileName?.trim()) {
+      const fileNameText = `%${fileName.trim().toLowerCase()}%`;
+      plansQuery.andWhere('LOWER(qp.file_name) LIKE :fileNameText', {
+        fileNameText,
+      });
+      countQuery.andWhere('LOWER(qp.file_name) LIKE :fileNameText', {
+        fileNameText,
+      });
+    }
+
     // Filter tanggal
     if (from_date && end_date) {
       const from = new Date(from_date);
       const to = new Date(end_date);
-
       to.setHours(23, 59, 59, 999);
-
-      plansQuery.andWhere('qp.created_dt BETWEEN :from AND :to', {
-        from,
-        to,
-      });
-      countQuery.andWhere('qp.created_dt BETWEEN :from AND :to', {
-        from,
-        to,
-      });
+      plansQuery.andWhere('qp.created_dt BETWEEN :from AND :to', { from, to });
+      countQuery.andWhere('qp.created_dt BETWEEN :from AND :to', { from, to });
     }
 
     // Sorting & pagination
@@ -304,22 +330,24 @@ export class QcListService {
       plansQuery.getMany(),
       countQuery.getCount(),
     ]);
-
     const totalPages = Math.ceil(totalData / limit);
 
     // Ambil user map
-    const userIds = Array.from(new Set(plans.map((p) => p.created_by))).filter(
-      Boolean,
+    const userIds = Array.from(
+      new Set(
+        plans
+          .map((p) => [p.created_by, p.updated_by])
+          .flat()
+          .filter(Boolean),
+      ),
     );
     let userMap = new Map<string, string>();
-
     if (userIds.length > 0) {
       const users = await this.userRepo
         .createQueryBuilder('u')
         .select(['u.user_id', 'u.name'])
         .where('u.user_id IN (:...userIds)', { userIds })
         .getMany();
-
       userMap = new Map(users.map((u) => [u.user_id, u.name]));
     }
 
@@ -345,9 +373,11 @@ export class QcListService {
       updated_dt: p.updated_dt,
     }));
 
-    this.messageService.setMessage(
-      'Berhasil memuat semua plan QC di lokasi Anda.',
-    );
+    const msg = isAdmin
+      ? 'Berhasil memuat semua QC Plan.'
+      : 'Berhasil memuat semua QC Plan di lokasi Anda.';
+
+    this.messageService.setMessage(msg);
 
     return {
       meta: {
@@ -579,20 +609,24 @@ export class QcListService {
 
     /** ------------------------------------------------------------------
      * Step 3: Fetch seluruh qc_id yang sudah ada di DB (qc_plan & qc_record)*/
-    const existingPlanIds = await this.qcPlanRepo
+    const existingPlans = await this.qcPlanRepo
       .createQueryBuilder('plan')
-      .select('plan.qc_id')
-      .where('plan.location_id = :loc', { loc: user.locationId })
+      .select(['plan.qc_id', 'plan.sequence_no', 'plan.location_id'])
       .getMany();
 
-    const existingRecordIds = await this.qcRecordRepo
+    const existingRecords = await this.qcRecordRepo
       .createQueryBuilder('rec')
-      .select('rec.qc_id')
-      .where('rec.location_id = :loc', { loc: user.locationId })
+      .select(['rec.qc_id', 'rec.sequence_no', 'rec.location_id'])
       .getMany();
 
-    const existingPlanSet = new Set(existingPlanIds.map((p) => p.qc_id));
-    const existingRecordSet = new Set(existingRecordIds.map((r) => r.qc_id));
+    const existingPlanSet = new Set(
+      existingPlans.map((p) => `${p.qc_id}|${p.sequence_no}|${p.location_id}`),
+    );
+    const existingRecordSet = new Set(
+      existingRecords.map(
+        (r) => `${r.qc_id}|${r.sequence_no}|${r.location_id}`,
+      ),
+    );
 
     /** ------------------------------------------------------------------
      * Step 4: Identifikasi duplikat batch_id di dalam file Excel itu sendiri*/
@@ -600,14 +634,18 @@ export class QcListService {
     const duplicateExcelIds = new Set();
 
     rows.forEach((row) => {
-      let qcId = row['batch_id'] || null;
-      if (!qcId) return;
+      const qcIdRaw = row['batch_id'] || null;
+      const seqNo = row['sequence_no'] ?? null;
 
-      qcId = qcId.replace(/\s+/g, '');
-      if (excelSeen.has(qcId)) {
-        duplicateExcelIds.add(qcId);
+      if (!qcIdRaw || seqNo === null) return;
+
+      const qcId = qcIdRaw.replace(/\s+/g, '');
+      const key = `${qcId}|${seqNo}|${user.locationId}`;
+
+      if (excelSeen.has(key)) {
+        duplicateExcelIds.add(key);
       } else {
-        excelSeen.add(qcId);
+        excelSeen.add(key);
       }
     });
 
@@ -669,37 +707,41 @@ export class QcListService {
       }
 
       let qcId = row['batch_id'] || null;
+      const seqNo = row['sequence_no'] ?? null;
+
       if (!qcId) {
         skippedMissingBatch++;
         continue;
       }
+      if (seqNo === null) continue;
 
       qcId = qcId.replace(/\s+/g, '');
+      const key = `${qcId}|${seqNo}|${user.locationId}`;
 
       /** --------------------------------------------------------------
        * CEK URUTAN DUPLIKAT */
 
-      // 1️ Duplicate in Excel (should be checked first)
-      if (processedExcelIds.has(qcId)) {
+      // 1️ Duplicate in Excel
+      if (processedExcelIds.has(key)) {
         skippedDuplicateExcel++;
         continue;
       }
-      processedExcelIds.add(qcId);
+      processedExcelIds.add(key);
 
       // 2️ Duplicate in qc_plan
-      if (existingPlanSet.has(qcId)) {
+      if (existingPlanSet.has(key)) {
         skippedDuplicatePlan++;
         continue;
       }
 
       // 3️ Duplicate in qc_record
-      if (existingRecordSet.has(qcId)) {
+      if (existingRecordSet.has(key)) {
         skippedDuplicateRecord++;
         continue;
       }
 
       /** --------------------------------------------------------------
-       * Step 9: Cari template berdasarkan SIZE saja*/
+       * Step 9: Cari template berdasarkan SIZE*/
       const sizeKey = sizeName.toLowerCase().trim();
       const foundTemplate = templateMap.get(sizeKey);
 
@@ -720,7 +762,7 @@ export class QcListService {
         size: sizeName,
         specifications: row['specifications'] ?? null,
         dimension: sizeName,
-        sequence_no: row['sequence_no'] ?? null,
+        sequence_no: seqNo,
         std_grad: row['std_grade'] ?? null,
         kgm_nominal: weightMap.get(foundTemplate.qc_template_id),
         brand_merek: row['brand_merek'] ?? null,

@@ -17,8 +17,11 @@ export class QcPlan {
   @Column({ length: 25 })
   qc_template_id: string;
 
-  @Column({ length: 25, nullable: true })
+  @PrimaryColumn({ length: 25 })
   location_id: string;
+
+  @PrimaryColumn('int')
+  sequence_no: number;
 
   @Column({ length: 25, nullable: true })
   size: string;
@@ -52,9 +55,6 @@ export class QcPlan {
 
   @Column({ length: 25, nullable: true })
   campaign_no: string;
-
-  @Column('int', { nullable: true })
-  sequence_no: number;
 
   @Column({ length: 25, nullable: true })
   pattern: string;

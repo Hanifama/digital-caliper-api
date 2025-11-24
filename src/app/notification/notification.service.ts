@@ -159,7 +159,10 @@ export class NotificationService implements OnModuleInit {
       }
 
       try {
-        await this.client.sendMessage(group.id._serialized, media, { caption });
+        await this.client.sendMessage(group.id._serialized, media, {
+          caption,
+          sendMediaAsDocument: true,
+        });
         console.log(`✅ Gambar terkirim ke grup "${groupName}"`);
         results.push(groupName);
       } catch (err) {
@@ -244,6 +247,7 @@ export class NotificationService implements OnModuleInit {
 
     // Kirim ke beberapa grup sekaligus
     const targetGroups = ['GYS Production Beam Plant'];
+    // const targetGroups = ['ERP Development'];
     return this.sendImageToGroups(imageUrl, message, targetGroups);
   }
 

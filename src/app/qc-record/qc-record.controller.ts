@@ -47,6 +47,7 @@ export class QcRecordController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'file_name', required: false })
   @ApiQuery({ name: 'from_date', required: false })
   @ApiQuery({ name: 'end_date', required: false })
   @ApiResponse({
@@ -57,12 +58,14 @@ export class QcRecordController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('search') search?: string,
+    @Query('file_name') fileName?: string,
     @Query('from_date') from_date?: string,
     @Query('end_date') end_date?: string,
   ) {
     return this.qcRecordService.getAllQcRecordHistory(
       page,
       limit,
+      fileName,
       search,
       from_date,
       end_date,

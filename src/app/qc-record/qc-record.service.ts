@@ -67,6 +67,7 @@ export class QcRecordService {
     page: number = 1,
     limit: number = 10,
     search?: string,
+    fileName?: string,
     from_date?: string,
     end_date?: string,
   ): Promise<IResponsePageWrapper<any>> {
@@ -105,6 +106,17 @@ export class QcRecordService {
           { searchText },
         );
       }
+    }
+
+    // Filter file_name
+    if (fileName && fileName.trim() !== '') {
+      const fileNameText = `%${fileName.trim().toLowerCase()}%`;
+      recordsQuery.andWhere('LOWER(qc.file_name) LIKE :fileNameText', {
+        fileNameText,
+      });
+      countQuery.andWhere('LOWER(qc.file_name) LIKE :fileNameText', {
+        fileNameText,
+      });
     }
 
     // Filter tanggal
@@ -221,6 +233,7 @@ export class QcRecordService {
     };
   }
 
+  /** Get Deyaol history record QC Record */
   async getHistoryDetailRecord(qcId: string): Promise<any> {
     if (!qcId) {
       throw new BadRequestException('qc_id harus diberikan.');

@@ -49,10 +49,11 @@ export class QcListController {
    * @returns Array berisi QC Plan milik user
    */
   @Get('plans')
-  @ApiOperation({ summary: 'Ambil daftar QC Plan user' })
+  @ApiOperation({ summary: 'Ambil daftar QC Plan List' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'file_name', required: false })
   @ApiQuery({ name: 'from_date', required: false })
   @ApiQuery({ name: 'end_date', required: false })
   @ApiResponse({
@@ -64,6 +65,7 @@ export class QcListController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('search') search?: string,
+    @Query('file_name') fileName?: string,
     @Query('from_date') from_date?: string,
     @Query('end_date') end_date?: string,
   ) {
@@ -72,6 +74,7 @@ export class QcListController {
       page,
       limit,
       search,
+      fileName,
       from_date,
       end_date,
     );
@@ -112,6 +115,7 @@ export class QcListController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'file_name', required: false })
   @ApiQuery({ name: 'location_id', required: false })
   @ApiResponse({
     status: 200,
@@ -121,12 +125,14 @@ export class QcListController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('search') search?: string,
+    @Query('file_name') fileName?: string,
     @Query('location_id') locationId?: string,
   ) {
     return this.qcListService.getAllQcPlansAdmin(
       page,
       limit,
       search,
+      fileName,
       locationId,
     );
   }
