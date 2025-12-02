@@ -19,6 +19,7 @@ import { ProductTypeData } from '../product/entity/product-type-data.entity';
 import { QcTemplateMapping } from './entity/qc-template-data-mapping';
 import { ProductTypeDataMapping } from '../product/entity/product-type-data-mapping.entity';
 import { Size } from '../size/entity/size.entity';
+import { LogModule } from '../log-app/log.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { Size } from '../size/entity/size.entity';
       ProductTypeDataMapping,
     ]),
     MessageModule,
+    LogModule,
   ],
   controllers: [QcTemplateController],
   providers: [QcTemplateService],

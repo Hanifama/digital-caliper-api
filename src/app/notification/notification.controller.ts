@@ -6,6 +6,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiBody,
 } from '@nestjs/swagger';
 
 @ApiTags('Notification')
@@ -23,6 +24,20 @@ export class NotificationController {
   @ApiOperation({ summary: 'Kirim gambar QC via WhatsApp' })
   @ApiResponse({ status: 200, description: 'Berhasil mengirim gambar QC' })
   @ApiResponse({ status: 500, description: 'Gagal mengirim gambar QC' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        qc_id: { type: 'string', example: 'QC12345' },
+        image: {
+          type: 'string',
+          example:
+            'https://api-digitalcaliper.webview.cloud/uploads/2196f3cd-054b-4f78-a7b7-57d0836e291c.png',
+        },
+      },
+      required: ['qc_id', 'image'],
+    },
+  })
   async sendWaImage(@Body() body: { qc_id: string; image: string }) {
     return this.notificationService.sendQcImage(body.qc_id, body.image);
   }

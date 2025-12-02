@@ -30,6 +30,7 @@ import {
 } from './interfaces/template-grouped-data';
 import { ProductTypeDataMapping } from '../product/entity/product-type-data-mapping.entity';
 import { Size } from '../size/entity/size.entity';
+import { LogService } from '../log-app/log.service';
 
 @Injectable()
 export class QcTemplateService {
@@ -59,6 +60,7 @@ export class QcTemplateService {
     private readonly sizeRepo: Repository<Size>,
 
     private readonly messageService: MessageService,
+    private readonly logService: LogService,
   ) {}
 
   // Ambil semua Template (dengan pagination + params filter)
@@ -577,6 +579,14 @@ export class QcTemplateService {
     if (mappingEntities.length > 0) {
       await this.qcTemplateMappingRepo.save(mappingEntities);
     }
+
+    await this.logService.createLog(user, {
+      data_1: 'QC-TEMPLATE',
+      data_2: 'CREATE',
+      data_3: template.qc_template_id,
+      data_4: `PROD_TYPE:${dto.prodtype_id}`,
+      data_5: `SIZE:${dto.size_id}`,
+    });
 
     this.messageService.setMessage('QC Template berhasil dibuat.');
 

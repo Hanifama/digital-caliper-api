@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { QcRecord } from '../qc-template/entity/qc-record.entity';
 import { Repository } from 'typeorm';
 import { QcData } from '../qc-template/entity/qc-data.enity';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class NotificationService implements OnModuleInit {
@@ -22,6 +23,8 @@ export class NotificationService implements OnModuleInit {
 
     @InjectRepository(QcData)
     private readonly qcDataRepo: Repository<QcData>,
+
+    private readonly configService: ConfigService,
   ) {}
 
   onModuleInit() {
@@ -193,30 +196,37 @@ export class NotificationService implements OnModuleInit {
         't.input_code = d.input_code AND t.qc_template_id = :tplId',
         { tplId: record.qc_template_id },
       )
+      .leftJoin('product_type_data', 'p', 'p.code = d.input_code')
       .select([
         'd.input_code AS code',
         'd.input_value AS value',
         'd.status AS status',
         't.position AS position',
+        't.order_numb AS order_numb',
+        'p.alias AS alias',
       ])
       .where('d.qc_id = :qcId', { qcId })
       .orderBy('t.order_numb', 'ASC')
       .addOrderBy('d.input_code', 'ASC')
       .getRawMany();
 
-    const passed = raw.filter((r) => r.status === 'Passed');
-    const errors = raw.filter((r) => r.status === 'Not Passed');
+    const uniqueRaw = Array.from(new Map(raw.map((r) => [r.code, r])).values());
+
+    const passed = uniqueRaw.filter((r) => r.status === 'Passed');
+    const errors = uniqueRaw.filter((r) => r.status === 'Not Passed');
 
     const mappedPassed = passed.map((p) => ({
       code: p.code,
       value: p.value,
       position: p.position,
+      alias: p.alias || '',
     }));
 
     const mappedErrors = errors.map((e) => ({
       code: e.code,
       value: e.value,
       position: e.position,
+      alias: e.alias || '',
     }));
 
     // Grouping by posisi (FormRight dan tanpa position digabung ke Basic)
@@ -246,8 +256,15 @@ export class NotificationService implements OnModuleInit {
     );
 
     // Kirim ke beberapa grup sekaligus
-    const targetGroups = ['GYS Production Beam Plant'];
-    // const targetGroups = ['ERP Development'];
+    const groupsEnv = this.configService.get<string>('WHATSAPP_GROUP_NAME');
+
+    const targetGroups = groupsEnv
+      ? groupsEnv
+          .split(',')
+          .map((g) => g.trim())
+          .filter((g) => g.length > 0)
+      : [];
+    // const targetGroups = ['GYS Production Beam Plant'];
     return this.sendImageToGroups(imageUrl, message, targetGroups);
   }
 
@@ -310,7 +327,6 @@ export class NotificationService implements OnModuleInit {
       message += `✅ *Detail Passed:*\n\n`;
       let counter = 1;
 
-      // Urutkan: Basic di akhir, lainnya diurutkan alphabetically
       const sortedPassedKeys = Object.keys(groupedPassed).sort((a, b) => {
         if (a === 'Basic') return 1;
         if (b === 'Basic') return -1;
@@ -320,12 +336,10 @@ export class NotificationService implements OnModuleInit {
       for (const pos of sortedPassedKeys) {
         const items = groupedPassed[pos];
         if (items.length > 0) {
-          // Label untuk Basic & posisi lainnya
-          if (pos === 'Basic') {
-            message += `📌 *Basic*\n`;
-          } else {
-            message += `📌 *Position ${pos}*\n`;
-          }
+          // Alias cuma di header posisi
+          const alias = items[0].alias ? ` (${items[0].alias})` : '';
+          message +=
+            pos === 'Basic' ? `📌 *Basic*\n` : `📌 *Position ${pos}${alias}*\n`;
 
           items.forEach((item) => {
             message += `${counter}. [${item.code}] Value: ${item.value}\n`;
@@ -344,7 +358,6 @@ export class NotificationService implements OnModuleInit {
       message += `❌ *Detail Not Passed:*\n\n`;
       let counter = 1;
 
-      // Urutkan: Basic di akhir, lainnya diurutkan alphabetically
       const sortedErrorKeys = Object.keys(groupedErrors).sort((a, b) => {
         if (a === 'Basic') return 1;
         if (b === 'Basic') return -1;
@@ -354,12 +367,9 @@ export class NotificationService implements OnModuleInit {
       for (const pos of sortedErrorKeys) {
         const items = groupedErrors[pos];
         if (items.length > 0) {
-          // Label untuk Basic vs posisi lainnya
-          if (pos === 'Basic') {
-            message += `📌 *Basic Parameters*\n`;
-          } else {
-            message += `📌 *Position ${pos}*\n`;
-          }
+          const alias = items[0].alias ? ` (${items[0].alias})` : '';
+          message +=
+            pos === 'Basic' ? `📌 *Basic*\n` : `📌 *Position ${pos}${alias}*\n`;
 
           items.forEach((item) => {
             message += `${counter}. [${item.code}] Value: ${item.value}\n`;
