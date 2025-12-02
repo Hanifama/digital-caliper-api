@@ -254,6 +254,9 @@ export class QcTemplateService {
 
       const formRightEntry: FormRightGroup = {
         name: formRightName,
+        alias:
+          formRightProductData.find((x) => x.label === formRightName)?.alias ||
+          formRightName,
         enabled: templateFormRight?.enabled ?? false,
         tolerance: templateFormRight
           ? {
@@ -303,6 +306,7 @@ export class QcTemplateService {
       const entry: ProductField = {
         code: item.code,
         name: item.label,
+        alias: item.alias,
         type: item.type,
         isTable: isHCT,
         productType: item.productType?.name,
@@ -347,6 +351,7 @@ export class QcTemplateService {
 
       const tableGroup: TableGroup = {
         name: pos,
+        alias: tempTable[pos][0]?.alias || pos,
         fields: tempTable[pos],
         enabled: tablePositionEnabled,
       };
@@ -364,6 +369,7 @@ export class QcTemplateService {
           // Position ada di template tapi tidak di product master
           const newTableGroup: TableGroup = {
             name: templateData.position,
+            alias: templateData.position,
             fields: [], // Kosong karena tidak ada H/C/T fields
             enabled: templateData.enabled,
           };

@@ -1,6 +1,7 @@
 export interface ProductField {
   code: string;
   name: string;
+  alias: string;
   type: string;
   isTable: boolean;
   productType?: string;
@@ -9,10 +10,18 @@ export interface ProductField {
 }
 
 export interface GroupedData {
-  table: { name: string; fields: ProductField[] }[];
-  FormRight?: { name: string; fields: ProductField[] }[];
+  table: {
+    name: string;
+    alias?: string;
+    fields: ProductField[];
+  }[];
+  FormRight?: {
+    name: string;
+    alias?: string;
+    fields: ProductField[];
+  }[];
   [key: string]:
     | ProductField[]
-    | { name: string; fields: ProductField[] }[]
+    | { name: string; alias?: string; fields: ProductField[] }[]
     | undefined;
 }

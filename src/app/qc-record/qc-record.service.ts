@@ -1008,6 +1008,7 @@ export class QcRecordService {
       const entry = {
         input_code: item.code,
         label: item.label,
+        alias: item.alias ?? null,
         isFormula: item.is_formula,
         formula: item.formula,
         input_value: qcData?.input_value ?? null,
@@ -1064,9 +1065,11 @@ export class QcRecordService {
 
       grouped.table.push({
         name: pos,
+        alias: tempTable[pos][0]?.alias || pos,
         fields: tempTable[pos].map((f) => ({
           code: f.input_code,
           name: `${f.input_code[0]}(${pos})`,
+          alias: f.alias,
           isTable: true,
           isFormula: f.isFormula,
           formula: f.formula,
@@ -1112,7 +1115,8 @@ export class QcRecordService {
       );
 
       const inputCode = formRightField?.code;
-      const qcData = inputCode ? qcDataMap.get(inputCode) : null;
+      const alias = formRightField?.alias ?? null;
+      // const qcData = inputCode ? qcDataMap.get(inputCode) : null;
 
       // Dapatkan related positions dari product master mapping
       const relatedPositions = inputCode
@@ -1122,6 +1126,7 @@ export class QcRecordService {
       // Struktur FormRight yang sama dengan template
       const formRightEntry = {
         name: formRightName,
+        alias: alias,
         enabled: templateFormRight?.enabled ?? false,
         tolerance: {
           min: templateFormRight?.min_tolerance ?? 0,

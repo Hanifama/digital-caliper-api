@@ -12,6 +12,9 @@ export class ProductTypeData {
   @Column({ type: 'varchar', length: 100 })
   label: string;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  alias: string;
+
   @Column({ type: 'varchar', length: 25 })
   type: string;
 

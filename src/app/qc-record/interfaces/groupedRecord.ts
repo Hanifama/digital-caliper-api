@@ -22,6 +22,7 @@ export interface QcField {
 
 export interface QcTable {
   name: string;
+  alias: string;
   fields: QcField[];
   enabled: boolean;
 }

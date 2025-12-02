@@ -1,6 +1,7 @@
 export interface ProductField {
   code: string;
   name: string;
+  alias: string;
   type: string;
   isTable: boolean;
   productType?: string;
@@ -22,12 +23,14 @@ export interface ProductField {
 
 export interface TableGroup {
   name: string;
+  alias: string;
   fields: ProductField[];
   enabled?: boolean;
 }
 
 export interface FormRightGroup {
   name: string;
+  alias: string;
   enabled: boolean;
   tolerance: {
     min: number | null;

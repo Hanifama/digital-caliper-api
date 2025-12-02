@@ -103,6 +103,7 @@ export class ProductService {
     const tempTable: Record<string, ProductField[]> = {};
     const formRight: {
       name: string;
+      alias?: string;
       fields: (ProductField & { enabled?: boolean })[];
       relatedTablePositions?: string[];
     }[] = [];
@@ -138,6 +139,7 @@ export class ProductService {
       const entry: ProductField = {
         code: item.code,
         name: item.label,
+        alias: item.alias,
         type: item.type,
         isTable: isHCT,
         isReadonly: item.is_readonly,
@@ -172,6 +174,7 @@ export class ProductService {
               uniqueFieldsMap[m.input_code] = {
                 code: m.input_code,
                 name: m.input_label,
+                alias: item.alias,
                 type: item.type,
                 isTable: false,
                 isReadonly: item.is_readonly,
@@ -184,6 +187,7 @@ export class ProductService {
           // Tambahkan group FormRight ke response
           formRight.push({
             name: item.label,
+            alias: item.alias,
             fields: Object.values(uniqueFieldsMap),
             relatedTablePositions:
               relatedTablePositions.length > 0
@@ -206,7 +210,11 @@ export class ProductService {
           ['H', 'C', 'T'].indexOf(a.code[0]) -
           ['H', 'C', 'T'].indexOf(b.code[0]),
       );
-      grouped.table.push({ name: pos, fields: tempTable[pos] });
+      grouped.table.push({
+        name: pos,
+        alias: tempTable[pos][0]?.alias || pos,
+        fields: tempTable[pos],
+      });
     }
 
     // Step 6: Urutkan group FormRight secara alfabetis berdasarkan nama
