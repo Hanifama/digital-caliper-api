@@ -230,6 +230,7 @@ export class QcListService {
     page: number = 1,
     limit: number = 10,
     search?: string,
+    location_id?: string,
     fileName?: string,
     from_date?: string,
     end_date?: string,
@@ -245,7 +246,13 @@ export class QcListService {
 
     if (!user) throw new BadRequestException('User tidak ditemukan.');
 
-    const isAdmin = user.role?.name?.toLowerCase() === 'admin';
+    const isAdmin = user.role?.name?.toLowerCase() === 'super admin';
+
+    if (!isAdmin && location_id?.trim()) {
+      throw new BadRequestException(
+        'Anda tidak memiliki izin untuk memfilter berdasarkan lokasi.',
+      );
+    }
 
     const plansQuery = this.qcPlanRepo.createQueryBuilder('qp');
     const countQuery = this.qcPlanRepo.createQueryBuilder('qp');
@@ -257,19 +264,31 @@ export class QcListService {
     countQuery.leftJoin('qp.qc_template', 'qt');
 
     if (isAdmin) {
-      // Admin bisa lihat semua termasuk soft delete
+      // Admin bisa lihat semua
       plansQuery.withDeleted();
       countQuery.withDeleted();
+
+      // Jika admin mengirim location → filter by location
+      if (location_id && location_id.trim()) {
+        plansQuery.andWhere('qp.location_id = :filterLoc', {
+          filterLoc: location_id.trim(),
+        });
+        countQuery.andWhere('qp.location_id = :filterLoc', {
+          filterLoc: location_id.trim(),
+        });
+      }
     } else {
-      // User biasa: filter location user & exclude soft deleted
+      // User biasa hanya bisa lihat berdasarkan lokasi user sendiri
       if (!user.locationId)
         throw new BadRequestException('Pengguna belum ditempatkan lokasi.');
+
       plansQuery
         .where('qp.deleted_at IS NULL')
         .andWhere('qp.location_id = :locationId', {
           locationId: user.locationId,
         })
         .andWhere('qp.status != :doneStatus', { doneStatus: 'Done' });
+
       countQuery
         .where('qp.deleted_at IS NULL')
         .andWhere('qp.location_id = :locationId', {

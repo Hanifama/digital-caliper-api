@@ -35,7 +35,7 @@ export class QcTemplate {
   @Column({ type: 'varchar', length: 100, nullable: true })
   specification: string;
 
-  @Column({ length: 25 })
+  @Column({ length: 100 })
   name: string;
 
   @Column({ length: 25 })

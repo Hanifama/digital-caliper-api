@@ -15,6 +15,9 @@ export class QcData {
   @Column({ length: 25 })
   location_id: string;
 
+  @Column({ length: 10 })
+  piece_no: string;
+
   @Column({ length: 25 })
   input_code: string;
 
@@ -38,6 +41,7 @@ export class QcData {
   @JoinColumn([
     { name: 'qc_id', referencedColumnName: 'qc_id' },
     { name: 'sequence_no', referencedColumnName: 'sequence_no' },
+    { name: 'piece_no', referencedColumnName: 'piece_no' },
     { name: 'location_id', referencedColumnName: 'location_id' },
   ])
   qc_record: QcRecord;

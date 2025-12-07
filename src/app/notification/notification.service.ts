@@ -9,6 +9,8 @@ import { QcRecord } from '../qc-template/entity/qc-record.entity';
 import { Repository } from 'typeorm';
 import { QcData } from '../qc-template/entity/qc-data.enity';
 import { ConfigService } from '@nestjs/config';
+import { User } from '../auth/entitities/user.entity';
+import { SendWaQcDto } from './dto/notification-send-wa.dto';
 
 @Injectable()
 export class NotificationService implements OnModuleInit {
@@ -17,6 +19,9 @@ export class NotificationService implements OnModuleInit {
   private readonly logger = new Logger(NotificationService.name);
   constructor(
     private readonly messageService: MessageService,
+
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
 
     @InjectRepository(QcRecord)
     private readonly qcRecordRepo: Repository<QcRecord>,
@@ -71,12 +76,12 @@ export class NotificationService implements OnModuleInit {
   }
 
   async onQr(callback: (qr: string) => void) {
-    if (!this.client) this.onModuleInit(); // initialize kalau belum
+    if (!this.client) this.onModuleInit();
     this.client.on('qr', callback);
   }
 
   async getQrImage(): Promise<Buffer> {
-    if (!this.client) this.onModuleInit(); // initialize kalau belum
+    if (!this.client) this.onModuleInit();
 
     return new Promise((resolve, reject) => {
       const qrListener = async (qr: string) => {
@@ -86,7 +91,6 @@ export class NotificationService implements OnModuleInit {
         } catch (err) {
           reject(err);
         } finally {
-          // hapus listener supaya cuma terpanggil sekali
           this.client.removeListener('qr', qrListener);
         }
       };
@@ -178,16 +182,40 @@ export class NotificationService implements OnModuleInit {
   }
 
   // Kirim QC histori & Image ke beberapa grup
-  async sendQcImage(qcId: string, imageUrl: string) {
+  async sendQcImage(dto: SendWaQcDto, userId: string) {
+    const { qc_id, no_seq, piece_no, image } = dto;
+
     if (!this.client || !this.isReady)
       throw new Error('WhatsApp client belum siap');
 
+    /** 1. Ambil lokasi user */
+    const user = await this.userRepo.findOne({
+      where: { user_id: userId },
+    });
+
+    if (!user?.locationId) throw new Error('User tidak punya location_id');
+
+    const senderName = user.full_name ?? user.username ?? 'System';
+
+    const locationId = user.locationId;
+
+    /** 2. Ambil QC Record lengkap */
     const record = await this.qcRecordRepo.findOne({
-      where: { qc_id: qcId },
+      where: {
+        qc_id: qc_id,
+        sequence_no: no_seq,
+        piece_no: piece_no,
+        location_id: locationId,
+      },
       relations: ['location'],
     });
-    if (!record) throw new Error(`QC ID ${qcId} tidak ditemukan`);
 
+    if (!record)
+      throw new Error(
+        `QC Record tidak ditemukan untuk qc_id=${qc_id}, seq=${no_seq}, piece=${piece_no}, location=${locationId}`,
+      );
+
+    /** 3. Ambil qc_data */
     const raw = await this.qcDataRepo
       .createQueryBuilder('d')
       .leftJoin(
@@ -205,11 +233,15 @@ export class NotificationService implements OnModuleInit {
         't.order_numb AS order_numb',
         'p.alias AS alias',
       ])
-      .where('d.qc_id = :qcId', { qcId })
+      .where('d.qc_id = :qcId', { qcId: qc_id })
+      .andWhere('d.sequence_no = :seq', { seq: no_seq })
+      .andWhere('d.piece_no = :piece', { piece: piece_no })
+      .andWhere('d.location_id = :loc', { loc: locationId })
       .orderBy('t.order_numb', 'ASC')
       .addOrderBy('d.input_code', 'ASC')
       .getRawMany();
 
+    /** 4. Unique by code */
     const uniqueRaw = Array.from(new Map(raw.map((r) => [r.code, r])).values());
 
     const passed = uniqueRaw.filter((r) => r.status === 'Passed');
@@ -229,14 +261,17 @@ export class NotificationService implements OnModuleInit {
       alias: e.alias || '',
     }));
 
-    // Grouping by posisi (FormRight dan tanpa position digabung ke Basic)
+    /** Grouping */
     const groupedPassed = this.groupByPosition(mappedPassed);
     const groupedErrors = this.groupByPosition(mappedErrors);
 
+    /** 5. Generate WA message */
     const message = this.generateQcMessage({
       qcId: record.qc_id,
       noSequence: record.sequence_no,
+      pieceNo: record.piece_no,
       kgmActual: record.kg_m,
+      totalLength: record.total_length,
       size: record.size,
       location: record.location_id,
       locationName: record.location?.name ?? '-',
@@ -249,30 +284,32 @@ export class NotificationService implements OnModuleInit {
       totalErrors: errors.length,
       groupedPassed,
       groupedErrors,
+      senderName,
     });
 
     this.messageService.setMessage(
-      `Berhasil mengirim notifikasi untuk QC Batch Id ${qcId}`,
+      `Berhasil mengirim notifikasi untuk Batch Id ${qc_id} No seq ${no_seq} potongan ${piece_no}`,
     );
 
-    // Kirim ke beberapa grup sekaligus
+    /** Kirim ke grup */
     const groupsEnv = this.configService.get<string>('WHATSAPP_GROUP_NAME');
-
     const targetGroups = groupsEnv
       ? groupsEnv
           .split(',')
           .map((g) => g.trim())
           .filter((g) => g.length > 0)
       : [];
-    // const targetGroups = ['GYS Production Beam Plant'];
-    return this.sendImageToGroups(imageUrl, message, targetGroups);
+
+    return this.sendImageToGroups(image, message, targetGroups);
   }
 
   // Generate plain text message format
   generateQcMessage(data: {
     qcId: string;
     noSequence: number;
+    pieceNo: string;
     kgmActual: number;
+    totalLength: number;
     size: string;
     location: string;
     locationName: string;
@@ -285,11 +322,14 @@ export class NotificationService implements OnModuleInit {
     totalErrors: number;
     groupedPassed: Record<string, any[]>;
     groupedErrors: Record<string, any[]>;
+    senderName: string;
   }) {
     const {
       qcId,
       noSequence,
+      pieceNo,
       kgmActual,
+      totalLength,
       size,
       location,
       locationName,
@@ -303,13 +343,17 @@ export class NotificationService implements OnModuleInit {
       groupedPassed,
       groupedErrors,
     } = data;
+    const safe = (val: any) => (val === null || val === undefined ? '-' : val);
 
     let message = `📋 *QUALITY CONTROL REPORT*\n`;
     message += `──────────────────────\n`;
+    message += `*Dikirim oleh:* ${data.senderName}\n\n`;
     message += `*No Sequence* ${noSequence}\n`;
     message += `*Batch ID:* ${qcId}\n`;
     message += `*Size:* ${size}\n`;
-    message += `*Kg/m Actual* ${kgmActual}\n`;
+    message += `*Kg/m Actual:* ${safe(kgmActual)}\n`;
+    message += `*Total Panjang (m):* ${safe(totalLength)}\n`;
+    message += `*Potongan QC:* ${safe(pieceNo)}\n`;
     message += `*Lokasi:* ${locationName} (${location})\n`;
     message += `*Status QC:* ${statusQC} (${statusAllQC})\n`;
     message += `*Tanggal QC:* ${createdAt}\n`;

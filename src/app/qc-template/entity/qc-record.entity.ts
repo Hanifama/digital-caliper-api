@@ -21,6 +21,9 @@ export class QcRecord {
   @PrimaryColumn({ length: 25 })
   location_id: string;
 
+  @PrimaryColumn({ length: 10 })
+  piece_no: string;
+
   @Column({ length: 25 })
   qc_template_id: string;
 
@@ -77,6 +80,9 @@ export class QcRecord {
 
   @Column('float', { nullable: true })
   length: number;
+
+  @Column('float', { nullable: true })
+  total_length: number;
 
   @Column('float', { nullable: true })
   kg_m: number;

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -265,8 +269,11 @@ export class MasterService {
     const role = await this.roleRepo.findOne({ where: { role_id: roleId } });
     if (!role) throw new NotFoundException('Role tidak ditemukan');
 
-    await this.roleMenuRepo.delete({ role_id: roleId });
+    if (role.name?.toLowerCase() === 'super admin') {
+      throw new BadRequestException('Role Super Admin tidak dapat dihapus.');
+    }
 
+    await this.roleMenuRepo.delete({ role_id: roleId });
     await this.roleRepo.delete({ role_id: roleId });
 
     this.messageService.setMessage('Role berhasil dihapus');

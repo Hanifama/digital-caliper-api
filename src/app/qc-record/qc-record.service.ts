@@ -27,6 +27,7 @@ import { IResponsePageWrapper } from 'src/types/interface/IResPageWrapper.interf
 import { Size } from '../size/entity/size.entity';
 import { User } from '../auth/entitities/user.entity';
 import { QcTemplate } from '../qc-template/entity/qc-template.entity';
+import { FinishProcessingDto } from './dto/finish-processing.dto';
 
 @Injectable()
 export class QcRecordService {
@@ -209,6 +210,7 @@ export class QcRecordService {
       status_overall: r.status_overall,
       invalid_data: invalidMap.get(r.qc_id) || 0,
       sequence_no: r.sequence_no,
+      piece_no: r.piece_no,
       file_name: r.file_name,
       size: r.size,
       created_by: r.created_by,
@@ -283,7 +285,7 @@ export class QcRecordService {
   /** Start Status QC Record */
   @Transactional()
   async startProcessingFromPlan(dto: StartProcessingDto, userId: string) {
-    const { qc_id, no_seq, status } = dto;
+    const { qc_id, no_seq, piece_no, status } = dto;
     const sequence_no = no_seq;
 
     if (!qc_id || !sequence_no) {
@@ -326,6 +328,7 @@ export class QcRecordService {
         qc_id,
         sequence_no,
         location_id,
+        piece_no,
       },
     });
 
@@ -341,6 +344,7 @@ export class QcRecordService {
       qc_template_id: plan.qc_template_id,
       location_id: plan.location_id,
       sequence_no: plan.sequence_no,
+      piece_no: piece_no,
 
       size: plan.size,
       product: plan.product,
@@ -398,7 +402,65 @@ export class QcRecordService {
       qc_id,
       sequence_no: plan.sequence_no,
       location_id: plan.location_id,
+      piece_no,
       status: plan.status,
+    };
+  }
+
+  /** Finish Status QC Record */
+  @Transactional()
+  async finishProcessing(dto: FinishProcessingDto, userId: string) {
+    const { qc_id, no_seq } = dto;
+    const sequence_no = no_seq;
+
+    if (!qc_id || !sequence_no) {
+      throw new BadRequestException('qc_id dan no_seq wajib dikirim.');
+    }
+
+    /** 1. Ambil location_id dari user */
+    const user = await this.userRepo.findOne({
+      where: { user_id: userId },
+    });
+
+    if (!user?.locationId) {
+      throw new BadRequestException(
+        'User tidak memiliki location_id. Tidak bisa menyelesaikan QC.',
+      );
+    }
+
+    const location_id = user.locationId;
+
+    /** 2. Ambil semua QC Record untuk qc_id + seq + location */
+    const records = await this.qcRecordRepo.find({
+      where: {
+        qc_id,
+        sequence_no,
+        location_id,
+      },
+    });
+
+    if (records.length === 0) {
+      throw new BadRequestException(
+        `QC Record belum dimulai untuk qc_id "${qc_id}" seq "${sequence_no}".`,
+      );
+    }
+
+    /** 3. Update QC Plan → Done */
+    await this.qcPlanRepo.update(
+      { qc_id, sequence_no, location_id },
+      { status: 'Done' },
+    );
+
+    /** 4. Message */
+    this.messageService.setMessage(
+      `QC Plan ${qc_id} seq ${sequence_no} selesai diproses.`,
+    );
+
+    return {
+      qc_id,
+      sequence_no,
+      location_id,
+      status: 'Done',
     };
   }
 
@@ -409,6 +471,7 @@ export class QcRecordService {
       qc_id,
       qc_template_id,
       no_seq,
+      piece_no,
       basic,
       default: defaultData,
       data,
@@ -458,6 +521,7 @@ export class QcRecordService {
           qc_id,
           location_id: user.locationId,
           sequence_no,
+          piece_no,
         },
       });
       if (!record) {
@@ -477,6 +541,7 @@ export class QcRecordService {
     // Tahap 2: Update data basic & default
     if (basic) {
       record.length = basic.length ?? record.length;
+      record.total_length = basic.total_length ?? record.total_length;
       record.weight = basic.weight ?? record.weight;
       record.kg_m = basic.actual ?? record.kg_m;
       record.percent_deviasi = basic.percentDeviasi ?? record.percent_deviasi;
@@ -532,6 +597,7 @@ export class QcRecordService {
       qc_id: string;
       sequence_no: number;
       location_id: string;
+      piece_no: string;
       input_code: string;
       input_value: number;
       err_tolerance: number;
@@ -548,7 +614,7 @@ export class QcRecordService {
     let checkedPassedCount = 0;
     let checkedNotPassedCount = 0;
 
-    // --- VALIDASI BARU: Group by position dan check minimal satu field terisi ---
+    // --- VALIDASI: Group by position dan check minimal satu field terisi ---
     // Handle case ketika data tidak ada atau undefined
     if (!data || !Array.isArray(data)) {
       data = [];
@@ -556,35 +622,37 @@ export class QcRecordService {
 
     const positionGroups = new Map<string, any[]>();
 
-    // Group data by position dengan validasi
+    // Group data by position (skip kalau kosong)
     data.forEach((table) => {
-      // Validasi struktur table
-      if (!table || typeof table !== 'object') {
-        warnings.push('Struktur data table tidak valid');
-        return;
-      }
+      // Skip table null / bukan object
+      if (!table || typeof table !== 'object') return;
 
-      if (!table.position) {
-        warnings.push('Table tidak memiliki property position');
-        return;
-      }
+      // Skip kalau posisi tidak ada atau null
+      if (!table.position) return;
 
-      if (!Array.isArray(table.fields)) {
-        warnings.push(`Table ${table.position} tidak memiliki fields array`);
-        return;
-      }
+      // Skip kalau fields tidak ada atau bukan array atau array kosong
+      if (!Array.isArray(table.fields) || table.fields.length === 0) return;
 
-      // Pastikan positionGroups selalu memiliki array untuk position ini
+      // Filter hanya field yang betul2 valid
+      const validFields = table.fields.filter(
+        (field) =>
+          field &&
+          typeof field === 'object' &&
+          field.code &&
+          field.input_value !== null &&
+          field.input_value !== undefined &&
+          typeof field.input_value === 'number' &&
+          !isNaN(field.input_value),
+      );
+
+      // Kalau semua fields value null → skip
+      if (validFields.length === 0) return;
+
+      // Pastikan posisi ada
       if (!positionGroups.has(table.position)) {
         positionGroups.set(table.position, []);
       }
 
-      // Hanya push fields yang valid
-      const validFields = table.fields.filter(
-        (field) => field && typeof field === 'object' && field.code,
-      );
-
-      // Gunakan optional chaining untuk menghindari error
       positionGroups.get(table.position)?.push(...validFields);
     });
 
@@ -606,11 +674,11 @@ export class QcRecordService {
     });
 
     // Jika ada warning validasi position, throw exception
-    if (warnings.length > 0) {
-      throw new BadRequestException({
-        message: warnings,
-      });
-    }
+    // if (warnings.length > 0) {
+    //   throw new BadRequestException({
+    //     message: warnings,
+    //   });
+    // }
 
     // --- BASIC QC CHECK ---
     if (basic) {
@@ -625,6 +693,7 @@ export class QcRecordService {
             qc_id: record.qc_id,
             sequence_no: record.sequence_no,
             location_id: record.location_id,
+            piece_no: record.piece_no,
             input_code: 'radius',
             input_value: basic.radius,
             err_tolerance: status === 'Not Passed' ? basic.radius : 0,
@@ -650,6 +719,7 @@ export class QcRecordService {
             qc_id: record.qc_id,
             sequence_no: record.sequence_no,
             location_id: record.location_id,
+            piece_no: record.piece_no,
             input_code: 'os',
             input_value: basic.os,
             err_tolerance: status === 'Not Passed' ? basic.os : 0,
@@ -675,6 +745,7 @@ export class QcRecordService {
             qc_id: record.qc_id,
             sequence_no: record.sequence_no,
             location_id: record.location_id,
+            piece_no: record.piece_no,
             input_code: 'cow',
             input_value: basic.cow,
             err_tolerance: status === 'Not Passed' ? basic.cow : 0,
@@ -702,6 +773,7 @@ export class QcRecordService {
             qc_id: record.qc_id,
             sequence_no: record.sequence_no,
             location_id: record.location_id,
+            piece_no: record.piece_no,
             input_code: 'nominal',
             input_value: basic.nominal,
             err_tolerance: status === 'Not Passed' ? basic.nominal : 0,
@@ -778,6 +850,7 @@ export class QcRecordService {
           qc_id: record.qc_id,
           sequence_no: record.sequence_no,
           location_id: record.location_id,
+          piece_no: record.piece_no,
           input_code: field.code,
           input_value: field.input_value,
           err_tolerance: errTolerance,
@@ -839,14 +912,14 @@ export class QcRecordService {
       throw new Error('Kesalahan server periksa lagi.');
     }
 
-    if (record.status === 'Done') {
-      await this.qcPlanRepo
-        .createQueryBuilder()
-        .update(QcPlan)
-        .set({ status: 'Done' })
-        .where('qc_id = :qcId', { qcId: qc_id })
-        .execute();
-    }
+    // if (record.status === 'Done') {
+    //   await this.qcPlanRepo
+    //     .createQueryBuilder()
+    //     .update(QcPlan)
+    //     .set({ status: 'Done' })
+    //     .where('qc_id = :qcId', { qcId: qc_id })
+    //     .execute();
+    // }
 
     // Tahap 6: Kirim pesan sukses & response akhir
     this.messageService.setMessage(
@@ -871,6 +944,7 @@ export class QcRecordService {
   async getQcRecordDetail(
     qcId: string,
     no_seq: number,
+    piece_no: string,
     userId: string,
   ): Promise<QcRecordGroupedResult> {
     const user = await this.userRepo.findOne({
@@ -891,6 +965,7 @@ export class QcRecordService {
       where: {
         qc_id: qcId,
         sequence_no,
+        piece_no,
         location_id,
       },
       relations: ['qc_template', 'datas'],
@@ -939,6 +1014,8 @@ export class QcRecordService {
     const grouped: QcRecordGroupedResult = {
       qc_id: record.qc_id,
       qc_template_id: record.qc_template_id,
+      sequence_no: record.sequence_no,
+      piece_no: record.piece_no,
       template_prodtype_id: template.prodtype_id,
       template_profile: template.profile,
       template_name: template.name,

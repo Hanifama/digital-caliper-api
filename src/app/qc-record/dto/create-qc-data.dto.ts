@@ -7,7 +7,6 @@ import {
   IsObject,
   IsDateString,
   IsNotEmpty,
-  IsNumberString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -63,6 +62,11 @@ export class BasicQcRecordDto {
   @IsOptional()
   @IsNumber()
   length?: number;
+
+  @ApiPropertyOptional({ example: 1 })
+  @IsOptional()
+  @IsNumber()
+  total_length?: number;
 
   @ApiPropertyOptional({ example: 1 })
   @IsOptional()
@@ -131,6 +135,13 @@ export class AddQcRecordTablesDto {
   })
   @IsNotEmpty()
   no_seq: number;
+
+  @ApiProperty({
+    description: 'Nomor potongan QC',
+    example: 'p3',
+  })
+  @IsNotEmpty()
+  piece_no?: string;
 
   @ApiPropertyOptional({ example: 'TMP-rtxtuyp' })
   @IsOptional()

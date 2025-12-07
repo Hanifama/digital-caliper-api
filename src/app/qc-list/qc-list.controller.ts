@@ -39,20 +39,25 @@ export class QcListController {
   constructor(private readonly qcListService: QcListService) {}
 
   /**
-   * Ambil daftar QC Plan milik user saat ini dengan pagination
+   * Ambil daftar QC Plan dengan pagination (super admin bisa filter lokasi, user biasa otomatis pakai lokasi sendiri)
+   *
    * @param userId ID user saat ini
    * @param page Nomor halaman, default 1
    * @param limit Jumlah data per halaman, default 10
    * @param search Kata kunci pencarian (opsional)
+   * @param location_id Filter lokasi (opsional, hanya berlaku untuk super admin)
+   * @param fileName Filter berdasarkan nama file (opsional)
    * @param from_date Filter tanggal mulai (opsional)
    * @param end_date Filter tanggal akhir (opsional)
-   * @returns Array berisi QC Plan milik user
+   *
+   * @returns Daftar QC Plan sesuai filter + pagination
    */
   @Get('plans')
   @ApiOperation({ summary: 'Ambil daftar QC Plan List' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'location_id', required: false })
   @ApiQuery({ name: 'file_name', required: false })
   @ApiQuery({ name: 'from_date', required: false })
   @ApiQuery({ name: 'end_date', required: false })
@@ -65,6 +70,7 @@ export class QcListController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('search') search?: string,
+    @Query('location_id') location_id?: string,
     @Query('file_name') fileName?: string,
     @Query('from_date') from_date?: string,
     @Query('end_date') end_date?: string,
@@ -74,6 +80,7 @@ export class QcListController {
       page,
       limit,
       search,
+      location_id,
       fileName,
       from_date,
       end_date,

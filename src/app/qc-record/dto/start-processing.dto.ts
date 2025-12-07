@@ -22,6 +22,13 @@ export class StartProcessingDto {
   @IsNotEmpty()
   no_seq: number;
 
+  @ApiProperty({
+    description: 'Nomor Potongan QC',
+    example: 'p3',
+  })
+  @IsNotEmpty({ message: 'Potongan QC tidak boleh kosong' })
+  piece_no: string;
+
   @ApiPropertyOptional({
     description: 'Status awal (opsional)',
     example: 'Processing',

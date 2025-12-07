@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Res, Get } from '@nestjs/common';
+import { Controller, Post, Body, Res, Get, UseGuards } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import type { Response } from 'express';
 import {
@@ -8,9 +8,13 @@ import {
   ApiBearerAuth,
   ApiBody,
 } from '@nestjs/swagger';
+import { SendWaQcDto } from './dto/notification-send-wa.dto';
+import { CurrentUser } from 'src/decorator/user.decorator';
+import { JwtAuthGuard } from 'src/guard/jwtAuth.guard';
 
 @ApiTags('Notification')
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('notification')
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
@@ -24,22 +28,12 @@ export class NotificationController {
   @ApiOperation({ summary: 'Kirim gambar QC via WhatsApp' })
   @ApiResponse({ status: 200, description: 'Berhasil mengirim gambar QC' })
   @ApiResponse({ status: 500, description: 'Gagal mengirim gambar QC' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        qc_id: { type: 'string', example: 'QC12345' },
-        image: {
-          type: 'string',
-          example:
-            'https://api-digitalcaliper.webview.cloud/uploads/2196f3cd-054b-4f78-a7b7-57d0836e291c.png',
-        },
-      },
-      required: ['qc_id', 'image'],
-    },
-  })
-  async sendWaImage(@Body() body: { qc_id: string; image: string }) {
-    return this.notificationService.sendQcImage(body.qc_id, body.image);
+  @ApiBody({ type: SendWaQcDto })
+  async sendWaImage(
+    @Body() dto: SendWaQcDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.notificationService.sendQcImage(dto, userId);
   }
 
   /**

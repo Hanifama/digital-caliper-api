@@ -30,6 +30,8 @@ export interface QcTable {
 export interface QcRecordGroupedResult {
   qc_id: string;
   qc_template_id: string;
+  sequence_no: number;
+  piece_no: string;
   template_prodtype_id: string;
   template_name: string;
   template_profile: string; // renamed from product_name

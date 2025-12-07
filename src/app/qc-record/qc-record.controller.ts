@@ -25,6 +25,7 @@ import { AddQcRecordTablesDto } from './dto/create-qc-data.dto';
 import { StartProcessingDto } from './dto/start-processing.dto';
 import { QcRecordGroupedResult } from './interfaces/groupedRecord';
 import { CurrentUser } from 'src/decorator/user.decorator';
+import { FinishProcessingDto } from './dto/finish-processing.dto';
 
 @ApiTags('QC Records')
 @ApiBearerAuth()
@@ -88,6 +89,19 @@ export class QcRecordController {
     return this.qcRecordService.startProcessingFromPlan(dto, userId);
   }
 
+  @Post('finish-processing')
+  @ApiOperation({
+    summary: 'Selesaikan QC Record dan update QC Plan menjadi Done',
+  })
+  @ApiBody({ type: FinishProcessingDto })
+  @ApiResponse({ status: 200, description: 'QC Plan berhasil diselesaikan' })
+  async finishProcessing(
+    @Body() dto: FinishProcessingDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.qcRecordService.finishProcessing(dto, userId);
+  }
+
   /**
    * Tambah data ke QC Record
    * @param userId ID user saat ini
@@ -129,7 +143,7 @@ export class QcRecordController {
    * @param qcId ID QC Record
    * @returns Data QC Record yang sudah dikelompokkan
    */
-  @Get(':qcId/:no_seq')
+  @Get(':qcId/:no_seq/:piece_no')
   @ApiOperation({ summary: 'Ambil detail QC Record dikelompokkan' })
   @ApiParam({ name: 'qcId', description: 'ID QC Record' })
   @ApiResponse({
@@ -140,7 +154,13 @@ export class QcRecordController {
     @CurrentUser('id') userId: string,
     @Param('qcId') qcId: string,
     @Param('no_seq') no_seq: number,
+    @Param('piece_no') piece_no: string,
   ): Promise<QcRecordGroupedResult> {
-    return this.qcRecordService.getQcRecordDetail(qcId, no_seq, userId);
+    return this.qcRecordService.getQcRecordDetail(
+      qcId,
+      no_seq,
+      piece_no,
+      userId,
+    );
   }
 }
