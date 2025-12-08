@@ -34,7 +34,7 @@ export class QcTemplateData {
   @Column('float', { nullable: true })
   actual_tolerance: number;
 
-  @Column('int')
+  @Column('int', { nullable: true })
   order_numb: number;
 
   @Column({ type: 'boolean', default: true })

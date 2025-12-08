@@ -1103,7 +1103,7 @@ export class QcRecordService {
         isTolerance: item.is_tolerance ?? false,
         enabled: enabled,
         selected: selected,
-        order_numb: templateData?.order_numb ?? 0,
+        order_numb: templateData?.order_numb,
       };
 
       if (!tempTable[position]) tempTable[position] = [];
@@ -1129,8 +1129,8 @@ export class QcRecordService {
           order.indexOf(a.input_code[0]) - order.indexOf(b.input_code[0]);
         if (orderDiff !== 0) return orderDiff;
 
-        const orderNumbA = a.order_numb ?? 0;
-        const orderNumbB = b.order_numb ?? 0;
+        const orderNumbA = a.order_numb ?? null;
+        const orderNumbB = b.order_numb ?? null;
         return orderNumbA - orderNumbB;
       });
 
