@@ -36,7 +36,7 @@ import {
 
 @ApiTags('Users')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RoleGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -51,7 +51,7 @@ export class UserController {
    * @returns Data user dalam format paginasi
    */
   @Get()
-  @Roles(ERole.MANAJER)
+  // @Roles(ERole.MANAJER)
   @ApiOperation({ summary: 'Ambil semua user (Hanya Manajer)' })
   @ApiQuery({
     name: 'page',
@@ -99,7 +99,7 @@ export class UserController {
    * @returns User baru yang berhasil dibuat
    */
   @Post('create')
-  @Roles(ERole.MANAJER)
+  // @Roles(ERole.MANAJER)
   @ApiOperation({ summary: 'Buat user baru (Hanya Manajer)' })
   @ApiBody({ type: CreateUserDto })
   @ApiResponse({ status: 201, description: 'Berhasil membuat user baru' })
@@ -112,7 +112,7 @@ export class UserController {
    * @param res Response untuk mengirim file XLSX
    */
   @Get('export/xlsx')
-  @Roles(ERole.MANAJER)
+  // @Roles(ERole.MANAJER)
   @ApiOperation({ summary: 'Export user ke XLSX (Hanya Manajer)' })
   @ApiResponse({ status: 200, description: 'Berhasil mengekspor data user' })
   protected async exportUserHandler(@Res() res: Response): Promise<void> {
@@ -132,7 +132,7 @@ export class UserController {
    * @returns Detail profile user
    */
   @Get('profile')
-  @Roles(ERole.MANAJER, ERole.OPERATOR)
+  // @Roles(ERole.MANAJER, ERole.OPERATOR)
   @ApiOperation({ summary: 'Ambil profile user saat ini' })
   @ApiResponse({ status: 200, description: 'Berhasil mengambil profile user' })
   getProfile(@CurrentUser('id') userId: string) {
@@ -146,7 +146,7 @@ export class UserController {
    * @returns Profile user yang sudah diperbarui
    */
   @Put('profile')
-  @Roles(ERole.MANAJER, ERole.OPERATOR)
+  // @Roles(ERole.MANAJER, ERole.OPERATOR)
   @ApiOperation({ summary: 'Update profile user saat ini' })
   @ApiBody({ type: UpdateProfileDto })
   @ApiResponse({
@@ -166,7 +166,7 @@ export class UserController {
    * @returns Detail user
    */
   @Get(':userId')
-  @Roles(ERole.MANAJER)
+  // @Roles(ERole.MANAJER)
   @ApiOperation({ summary: 'Ambil detail user berdasarkan ID' })
   @ApiParam({ name: 'userId', description: 'ID user yang ingin diambil' })
   @ApiResponse({ status: 200, description: 'Berhasil mengambil detail user' })
@@ -181,7 +181,7 @@ export class UserController {
    * @returns User yang sudah diperbarui
    */
   @Put(':userId')
-  @Roles(ERole.MANAJER)
+  // @Roles(ERole.MANAJER)
   @ApiOperation({ summary: 'Update user berdasarkan ID (Hanya Manajer)' })
   @ApiParam({ name: 'userId', description: 'ID user yang ingin diperbarui' })
   @ApiBody({ type: UpdateUserDto })
@@ -196,7 +196,7 @@ export class UserController {
    * @param dto Data password baru
    */
   @Put('password/:userId')
-  @Roles(ERole.MANAJER)
+  // @Roles(ERole.MANAJER)
   @ApiOperation({
     summary: 'Update password user berdasarkan ID (Hanya Manajer)',
   })
@@ -221,7 +221,7 @@ export class UserController {
    * @param userId ID user
    */
   @Delete(':userId')
-  @Roles(ERole.MANAJER)
+  // @Roles(ERole.MANAJER)
   @ApiOperation({ summary: 'Hapus user berdasarkan ID (Hanya Manajer)' })
   @ApiParam({ name: 'userId', description: 'ID user yang ingin dihapus' })
   @ApiResponse({ status: 200, description: 'Berhasil menghapus user' })
