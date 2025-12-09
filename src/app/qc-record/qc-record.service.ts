@@ -1230,6 +1230,7 @@ export class QcRecordService {
     // Mapping otomatis dari productTypeData ke kolom record
     const recordFieldMapping: Record<string, keyof typeof record> = {
       length: 'length',
+      'total.length': 'total_length',
       weight: 'weight',
       'kgm.actual': 'kg_m',
       'percent.deviasi': 'percent_deviasi',
