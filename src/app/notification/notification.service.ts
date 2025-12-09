@@ -252,6 +252,7 @@ export class NotificationService implements OnModuleInit {
       value: p.value,
       position: p.position,
       alias: p.alias || '',
+      major: p.code?.includes('.') ? p.code.split('.')[0] : null,
     }));
 
     const mappedErrors = errors.map((e) => ({
@@ -259,11 +260,14 @@ export class NotificationService implements OnModuleInit {
       value: e.value,
       position: e.position,
       alias: e.alias || '',
+      major: e.code?.includes('.') ? e.code.split('.')[0] : null,
     }));
 
     /** Grouping */
     const groupedPassed = this.groupByPosition(mappedPassed);
     const groupedErrors = this.groupByPosition(mappedErrors);
+
+    const majorPos = mappedPassed[0]?.major || mappedErrors[0]?.major || '-';
 
     /** 5. Generate WA message */
     const message = this.generateQcMessage({
@@ -284,6 +288,7 @@ export class NotificationService implements OnModuleInit {
       totalErrors: errors.length,
       groupedPassed,
       groupedErrors,
+      majorPos,
       senderName,
     });
 
@@ -322,6 +327,7 @@ export class NotificationService implements OnModuleInit {
     totalErrors: number;
     groupedPassed: Record<string, any[]>;
     groupedErrors: Record<string, any[]>;
+    majorPos: string;
     senderName: string;
   }) {
     const {
@@ -342,6 +348,7 @@ export class NotificationService implements OnModuleInit {
       totalErrors,
       groupedPassed,
       groupedErrors,
+      majorPos,
     } = data;
     const safe = (val: any) => (val === null || val === undefined ? '-' : val);
 
@@ -353,7 +360,7 @@ export class NotificationService implements OnModuleInit {
     message += `*Size:* ${size}\n`;
     message += `*Kg/m Actual:* ${safe(kgmActual)}\n`;
     message += `*Total Panjang (m):* ${safe(totalLength)}\n`;
-    message += `*Potongan QC:* ${safe(pieceNo)}\n`;
+    message += `*Potongan QC:* ${majorPos} / ${safe(pieceNo)} \n`;
     message += `*Lokasi:* ${locationName} (${location})\n`;
     message += `*Status QC:* ${statusQC} (${statusAllQC})\n`;
     message += `*Tanggal QC:* ${createdAt}\n`;
