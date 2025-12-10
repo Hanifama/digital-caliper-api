@@ -78,12 +78,12 @@ INSERT INTO `qc_template_data` (`input_code`, `qc_template_id`, `label`, `input_
 ('C.t5','TMP-rtxtuyv','C(t5)','number',8.3,8.65,9,9.35,9.7,NULL,44,1,'','t5','table'),
 ('T.t5','TMP-rtxtuyv','T(t5)','number',8.3,8.65,9,9.35,9.7,NULL,45,1,'','t5','table'),
 
--- t6 (NULL) - dengan order_numb NULL
+-- t6 (NULL) - dengan order_numb NULL 
 ('H.t6','TMP-rtxtuyv','H(t6)','number',8.3,8.65,9,9.35,9.7,NULL,NULL,1,'','t6','table'),
 ('C.t6','TMP-rtxtuyv','C(t6)','number',8.3,8.65,9,9.35,9.7,NULL,NULL,1,'','t6','table'),
 ('T.t6','TMP-rtxtuyv','T(t6)','number',8.3,8.65,9,9.35,9.7,NULL,NULL,1,'','t6','table'),
 
--- t7 (NULL) - dengan order_numb NULL  
+-- t7 (NULL) - dengan order_numb NULL 
 ('H.t7','TMP-rtxtuyv','H(t7)','number',8.3,8.65,9,9.35,9.7,NULL,NULL,1,'','t7','table'),
 ('C.t7','TMP-rtxtuyv','C(t7)','number',8.3,8.65,9,9.35,9.7,NULL,NULL,1,'','t7','table'),
 ('T.t7','TMP-rtxtuyv','T(t7)','number',8.3,8.65,9,9.35,9.7,NULL,NULL,1,'','t7','table'),
