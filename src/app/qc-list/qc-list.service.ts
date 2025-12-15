@@ -1018,7 +1018,6 @@ export class QcListService {
 
         Status: record.status,
         'Status Overall': record.status_overall,
-        Remarks: record.remarks,
 
         // GANTI ID ke NAMA USER
         CreatedBy: userMap.get(record.created_by) || record.created_by,
@@ -1026,7 +1025,13 @@ export class QcListService {
       };
 
       const prodtypeId = qcTemplateMap.get(record.qc_template_id)?.prodtype_id;
-      const recordQcDatas = qcDataMap.get(record.qc_id) || [];
+      const recordQcDatas = qcDatas.filter(
+        (d) =>
+          d.qc_id === record.qc_id &&
+          d.piece_no === record.piece_no &&
+          d.sequence_no === record.sequence_no &&
+          d.location_id === record.location_id,
+      );
 
       const sortedQcData = recordQcDatas
         .map((d) => {
@@ -1042,14 +1047,16 @@ export class QcListService {
             qcData: d,
             header,
             code: d.input_code,
+            posisition: d.position,
             order: tpl?.order_numb ?? 9999,
           };
         })
         .sort((a, b) => a.order - b.order);
 
-      sortedQcData.forEach(({ qcData, header, code }) => {
-        const finalHeader = `${header} (${code})`;
-        row[finalHeader] = qcData.input_value ?? '';
+      sortedQcData.forEach(({ qcData, header, code, posisition }) => {
+        const finalHeader = `${header} (${posisition})`;
+        row[`${finalHeader}_CODE`] = code ?? '';
+        row[`${finalHeader}_VALUE`] = qcData.input_value ?? '';
         row[`${finalHeader}_STATUS`] = qcData.status ?? '';
       });
 
