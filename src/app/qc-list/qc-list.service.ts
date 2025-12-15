@@ -1018,6 +1018,9 @@ export class QcListService {
         Location: record.location?.name || record.location_id || '',
         Size: record.size || '-',
 
+        Brand: record.brand_merek || '-',
+        'STD Dimention': record.std_grad || '-',
+
         'Total Length': record.total_length,
         'Kg/m Nominal': record.kgm_nominal,
 
