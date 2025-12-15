@@ -174,7 +174,7 @@ export class QcListController {
   }
 
   /** Export QC Plan ke file XLSX */
-  @Get('plans/export/xlsx')
+  @Get('plan/export/xlsx')
   @ApiOperation({ summary: 'Export QC Plan ke XLSX' })
   @ApiResponse({
     status: 200,
@@ -182,6 +182,33 @@ export class QcListController {
   })
   async exportQcPlansHandler(@Res() res: Response): Promise<void> {
     const { buffer, filename } = await this.qcListService.exportQcPlans();
+
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.send(buffer);
+  }
+
+  /** Export QC Record ke file XLSX */
+  @Get('plans/export/xlsx')
+  @ApiOperation({ summary: 'Export QC Histori Record ke XLSX' })
+  @ApiResponse({
+    status: 200,
+    description: 'Berhasil mengekspor QC Record ke XLSX',
+  })
+  async exportQcRecordsHandler(
+    @Res() res: Response,
+    @Query('from_date') fromDate?: string,
+    @Query('end_date') endDate?: string,
+    @Query('location_id') locationId?: string,
+  ): Promise<void> {
+    const { buffer, filename } = await this.qcListService.exportQcRecords({
+      from_date: fromDate,
+      end_date: endDate,
+      location_id: locationId,
+    });
 
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader(

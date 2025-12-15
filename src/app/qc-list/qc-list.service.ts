@@ -15,6 +15,8 @@ import { User } from '../auth/entitities/user.entity';
 import { SheetService } from '../sheet/sheet.service';
 import { QcRecord } from '../qc-template/entity/qc-record.entity';
 import { QcTemplateData } from '../qc-template/entity/qc-template-data.entity';
+import { QcData } from '../qc-template/entity/qc-data.enity';
+import { ProductTypeData } from '../product/entity/product-type-data.entity';
 
 @Injectable()
 export class QcListService {
@@ -33,6 +35,12 @@ export class QcListService {
 
     @InjectRepository(QcRecord)
     private readonly qcRecordRepo: Repository<QcRecord>,
+
+    @InjectRepository(QcData)
+    private readonly qcDataRepo: Repository<QcData>,
+
+    @InjectRepository(ProductTypeData)
+    private readonly productTypeDataRepo: Repository<ProductTypeData>,
 
     private readonly sheetService: SheetService,
 
@@ -880,6 +888,201 @@ export class QcListService {
     );
 
     this.messageService.setMessage('Berhasil export QC Plan!');
+
+    return { filename, buffer };
+  }
+
+  /** Export QC Record + QC Data
+   * - Hanya QC Data yang ADA
+   * - Urutan sesuai QC Template Data (order_numb)
+   * - Header pakai alias dari Product Type Data
+   */
+  public async exportQcRecords(filter: {
+    from_date?: string;
+    end_date?: string;
+    location_id?: string;
+  }): Promise<{ filename: string; buffer: Buffer }> {
+    const { from_date, end_date, location_id } = filter;
+
+    // 1️. Ambil QC RECORD (TANPA JOIN QC DATA)
+    // ======================================
+    const qb = this.qcRecordRepo
+      .createQueryBuilder('qr')
+      .leftJoinAndSelect('qr.location', 'loc')
+      .where('qr.status_overall != :processing', {
+        processing: 'processing',
+      });
+
+    if (location_id) {
+      qb.andWhere('qr.location_id = :location_id', { location_id });
+    }
+
+    if (from_date && end_date) {
+      qb.andWhere('qr.created_dt BETWEEN :from AND :to', {
+        from: `${from_date} 00:00:00`,
+        to: `${end_date} 23:59:59`,
+      });
+    } else if (from_date) {
+      qb.andWhere('qr.created_dt >= :from', {
+        from: `${from_date} 00:00:00`,
+      });
+    } else if (end_date) {
+      qb.andWhere('qr.created_dt <= :to', {
+        to: `${end_date} 23:59:59`,
+      });
+    }
+
+    const records = await qb.getMany();
+
+    if (!records.length) {
+      return {
+        filename: `QC_Record_Empty.xlsx`,
+        buffer: this.sheetService.exportDataToExcel([], 'QC_Record'),
+      };
+    }
+
+    // 2️. Ambil QC DATA dari Repository (SATU KALI)
+    // ======================================
+    const qcIds = records.map((r) => r.qc_id);
+
+    const qcDatas = await this.qcDataRepo
+      .createQueryBuilder('qd')
+      .where('qd.qc_id IN (:...ids)', { ids: qcIds })
+      .getMany();
+
+    // Group QC DATA by qc_id
+    const qcDataMap = new Map<string, QcData[]>();
+    qcDatas.forEach((d) => {
+      if (!qcDataMap.has(d.qc_id)) {
+        qcDataMap.set(d.qc_id, []);
+      }
+      qcDataMap.get(d.qc_id)!.push(d);
+    });
+
+    // 3️. Ambil QC TEMPLATE
+    // ======================================
+    const templateIds = [...new Set(records.map((r) => r.qc_template_id))];
+
+    const qcTemplates = await this.qcTemplateRepo
+      .createQueryBuilder('qt')
+      .where('qt.qc_template_id IN (:...ids)', { ids: templateIds })
+      .getMany();
+
+    const qcTemplateMap = new Map<string, QcTemplate>();
+    qcTemplates.forEach((qt) => {
+      qcTemplateMap.set(qt.qc_template_id, qt);
+    });
+
+    // 4️. Ambil QC TEMPLATE DATA (UNTUK ORDER NUMBER)
+    // ======================================
+    const templateDatas = await this.qcTemplateDataRepo
+      .createQueryBuilder('qtd')
+      .where('qtd.qc_template_id IN (:...ids)', { ids: templateIds })
+      .andWhere('qtd.enabled = true')
+      .orderBy('qtd.order_numb', 'ASC')
+      .getMany();
+
+    const templateLookup = new Map<string, QcTemplateData>();
+    templateDatas.forEach((td) => {
+      templateLookup.set(`${td.qc_template_id}__${td.input_code}`, td);
+    });
+
+    // 5️. Ambil PRODUCT TYPE DATA (ALIAS HEADER)
+    // ======================================
+    const prodTypeIds = [
+      ...new Set(
+        records
+          .map((r) => qcTemplateMap.get(r.qc_template_id)?.prodtype_id)
+          .filter((v): v is string => !!v),
+      ),
+    ];
+
+    const productTypeDatas = await this.productTypeDataRepo
+      .createQueryBuilder('ptd')
+      .where('ptd.prodtype_id IN (:...ids)', { ids: prodTypeIds })
+      .getMany();
+
+    const prodTypeLookup = new Map<string, ProductTypeData>();
+    productTypeDatas.forEach((pt) => {
+      prodTypeLookup.set(`${pt.prodtype_id}__${pt.code}`, pt);
+    });
+
+    // 6️. Mapping ke Excel Row
+    // ======================================
+    const formatedData = records.map((record) => {
+      const row: any = {
+        No: record.sequence_no,
+        'Batch ID': record.qc_id,
+        'QC Template ID': record.qc_template_id,
+        'Piece No': record.piece_no,
+        Location: record.location?.name || record.location_id || '',
+        Size: record.size || '-',
+
+        'Total Length': record.total_length,
+        'Kg/m Nominal': record.kgm_nominal,
+
+        Length: record.length,
+        Weight: record.weight,
+        'Kg/m Actual': record.kg_m,
+        'Percent Deviasi': record.percent_deviasi,
+
+        Status: record.status,
+        'Status Overall': record.status_overall,
+        Remarks: record.remarks,
+
+        CreatedBy: record.created_by,
+        CreatedDt: record.created_dt.toISOString(),
+      };
+
+      const prodtypeId = qcTemplateMap.get(record.qc_template_id)?.prodtype_id;
+
+      const recordQcDatas = qcDataMap.get(record.qc_id) || [];
+
+      // 7️. QC DATA → ORDER + ALIAS HEADER
+      // ======================================
+      const sortedQcData = recordQcDatas
+        .map((d) => {
+          const tpl = templateLookup.get(
+            `${record.qc_template_id}__${d.input_code}`,
+          );
+
+          const prodAlias = prodtypeId
+            ? prodTypeLookup.get(`${prodtypeId}__${d.input_code}`)
+            : undefined;
+
+          const header =
+            prodAlias?.alias || prodAlias?.label || tpl?.label || d.input_code;
+
+          return {
+            qcData: d,
+            header,
+            code: d.input_code,
+            order: tpl?.order_numb ?? 9999,
+          };
+        })
+        .sort((a, b) => a.order - b.order);
+
+      sortedQcData.forEach(({ qcData, header, code }) => {
+        const finalHeader = `${header} (${code})`;
+
+        row[finalHeader] = qcData.input_value ?? '';
+        row[`${finalHeader}_STATUS`] = qcData.status ?? '';
+      });
+
+      return row;
+    });
+
+    // 8️. Generate Excel
+    // ======================================
+    const filename = `QC_Record_Full-${Date.now()}.xlsx`;
+    const buffer = this.sheetService.exportDataToExcel(
+      formatedData,
+      'QC_Record',
+    );
+
+    this.messageService.setMessage(
+      'Berhasil export QC Record + QC Data (Ordered & Alias Header)',
+    );
 
     return { filename, buffer };
   }
