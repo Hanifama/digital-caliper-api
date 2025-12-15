@@ -85,31 +85,60 @@ export class QcRecordService {
       .leftJoin('qc.location', 'loc');
 
     // Filter pencarian
-    if (search && /^\d+$/.test(search.trim())) {
-      const sequenceNo = Number(search.trim());
+    if (search && search.trim() !== '' && search !== '{{search}}') {
+      const trimmed = search.trim();
+      const searchText = `%${trimmed.toLowerCase()}%`;
+      const searchNumber = Number(trimmed);
 
-      recordsQuery.andWhere('qc.sequence_no = :sequenceNo', { sequenceNo });
-      countQuery.andWhere('qc.sequence_no = :sequenceNo', { sequenceNo });
-    } else if (search && search.trim() !== '' && search !== '{{search}}') {
-      const searchText = `%${search.trim().toLowerCase()}%`;
+      if (!isNaN(searchNumber) && /^\d+$/.test(trimmed)) {
+        // Numeric search → sequence_no
+        recordsQuery.andWhere(
+          `
+        qc.sequence_no = :searchNumber
+        AND LOWER(qc.status) != :processing
+        AND LOWER(COALESCE(qc.status_overall, '')) != :processing
+        `,
+          {
+            searchNumber,
+            processing: 'processing',
+          },
+        );
 
-      recordsQuery.andWhere(
-        `(
-      LOWER(qc.qc_id) LIKE :searchText
-      OR LOWER(qc.file_name) LIKE :searchText
-      OR LOWER(qc.status) LIKE :searchText
-    )`,
-        { searchText },
-      );
+        countQuery.andWhere(
+          `
+        qc.sequence_no = :searchNumber
+        AND LOWER(qc.status) != :processing
+        AND LOWER(COALESCE(qc.status_overall, '')) != :processing
+        `,
+          {
+            searchNumber,
+            processing: 'processing',
+          },
+        );
+      } else {
+        // Text search
+        recordsQuery.andWhere(
+          `
+        (
+          LOWER(qc.qc_id) LIKE :searchText
+          OR LOWER(template.name) LIKE :searchText
+          OR LOWER(qc.status) LIKE :searchText
+        )
+        `,
+          { searchText },
+        );
 
-      countQuery.andWhere(
-        `(
-      LOWER(qc.qc_id) LIKE :searchText
-      OR LOWER(qc.file_name) LIKE :searchText
-      OR LOWER(qc.status) LIKE :searchText
-    )`,
-        { searchText },
-      );
+        countQuery.andWhere(
+          `
+        (
+          LOWER(qc.qc_id) LIKE :searchText
+          OR LOWER(template.name) LIKE :searchText
+          OR LOWER(qc.status) LIKE :searchText
+        )
+        `,
+          { searchText },
+        );
+      }
     }
 
     // Filter file_name
@@ -137,15 +166,12 @@ export class QcRecordService {
     }
 
     // Filter agar hanya status selain Processing
-    recordsQuery.andWhere(
-      "LOWER(qc.status) != :processing AND LOWER(COALESCE(qc.status_overall, '')) != :processing",
-      { processing: 'processing' },
-    );
-
-    countQuery.andWhere(
-      "LOWER(qc.status) != :processing AND LOWER(COALESCE(qc.status_overall, '')) != :processing",
-      { processing: 'processing' },
-    );
+    recordsQuery.andWhere('qc.status IN (:...statuses)', {
+      statuses: ['Done', 'Canceled'],
+    });
+    countQuery.andWhere('qc.status IN (:...statuses)', {
+      statuses: ['Done', 'Canceled'],
+    });
 
     // Order + pagination
     recordsQuery
