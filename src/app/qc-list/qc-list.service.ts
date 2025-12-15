@@ -905,7 +905,6 @@ export class QcListService {
     const { from_date, end_date, location_id } = filter;
 
     // 1️. Ambil QC RECORD (TANPA JOIN QC DATA)
-    // ======================================
     const qb = this.qcRecordRepo
       .createQueryBuilder('qr')
       .leftJoinAndSelect('qr.location', 'loc')
@@ -913,9 +912,8 @@ export class QcListService {
         processing: 'processing',
       });
 
-    if (location_id) {
+    if (location_id)
       qb.andWhere('qr.location_id = :location_id', { location_id });
-    }
 
     if (from_date && end_date) {
       qb.andWhere('qr.created_dt BETWEEN :from AND :to', {
@@ -923,13 +921,9 @@ export class QcListService {
         to: `${end_date} 23:59:59`,
       });
     } else if (from_date) {
-      qb.andWhere('qr.created_dt >= :from', {
-        from: `${from_date} 00:00:00`,
-      });
+      qb.andWhere('qr.created_dt >= :from', { from: `${from_date} 00:00:00` });
     } else if (end_date) {
-      qb.andWhere('qr.created_dt <= :to', {
-        to: `${end_date} 23:59:59`,
-      });
+      qb.andWhere('qr.created_dt <= :to', { to: `${end_date} 23:59:59` });
     }
 
     const records = await qb.getMany();
@@ -941,54 +935,41 @@ export class QcListService {
       };
     }
 
-    // 2️. Ambil QC DATA dari Repository (SATU KALI)
-    // ======================================
+    // 2️. Ambil QC DATA dari Repository
     const qcIds = records.map((r) => r.qc_id);
-
     const qcDatas = await this.qcDataRepo
       .createQueryBuilder('qd')
       .where('qd.qc_id IN (:...ids)', { ids: qcIds })
       .getMany();
 
-    // Group QC DATA by qc_id
     const qcDataMap = new Map<string, QcData[]>();
     qcDatas.forEach((d) => {
-      if (!qcDataMap.has(d.qc_id)) {
-        qcDataMap.set(d.qc_id, []);
-      }
+      if (!qcDataMap.has(d.qc_id)) qcDataMap.set(d.qc_id, []);
       qcDataMap.get(d.qc_id)!.push(d);
     });
 
     // 3️. Ambil QC TEMPLATE
-    // ======================================
     const templateIds = [...new Set(records.map((r) => r.qc_template_id))];
-
     const qcTemplates = await this.qcTemplateRepo
       .createQueryBuilder('qt')
       .where('qt.qc_template_id IN (:...ids)', { ids: templateIds })
       .getMany();
-
     const qcTemplateMap = new Map<string, QcTemplate>();
-    qcTemplates.forEach((qt) => {
-      qcTemplateMap.set(qt.qc_template_id, qt);
-    });
+    qcTemplates.forEach((qt) => qcTemplateMap.set(qt.qc_template_id, qt));
 
-    // 4️. Ambil QC TEMPLATE DATA (UNTUK ORDER NUMBER)
-    // ======================================
+    // 4️. Ambil QC TEMPLATE DATA (ORDER)
     const templateDatas = await this.qcTemplateDataRepo
       .createQueryBuilder('qtd')
       .where('qtd.qc_template_id IN (:...ids)', { ids: templateIds })
       .andWhere('qtd.enabled = true')
       .orderBy('qtd.order_numb', 'ASC')
       .getMany();
-
     const templateLookup = new Map<string, QcTemplateData>();
-    templateDatas.forEach((td) => {
-      templateLookup.set(`${td.qc_template_id}__${td.input_code}`, td);
-    });
+    templateDatas.forEach((td) =>
+      templateLookup.set(`${td.qc_template_id}__${td.input_code}`, td),
+    );
 
     // 5️. Ambil PRODUCT TYPE DATA (ALIAS HEADER)
-    // ======================================
     const prodTypeIds = [
       ...new Set(
         records
@@ -996,19 +977,25 @@ export class QcListService {
           .filter((v): v is string => !!v),
       ),
     ];
-
     const productTypeDatas = await this.productTypeDataRepo
       .createQueryBuilder('ptd')
       .where('ptd.prodtype_id IN (:...ids)', { ids: prodTypeIds })
       .getMany();
-
     const prodTypeLookup = new Map<string, ProductTypeData>();
-    productTypeDatas.forEach((pt) => {
-      prodTypeLookup.set(`${pt.prodtype_id}__${pt.code}`, pt);
-    });
+    productTypeDatas.forEach((pt) =>
+      prodTypeLookup.set(`${pt.prodtype_id}__${pt.code}`, pt),
+    );
 
-    // 6️. Mapping ke Excel Row
-    // ======================================
+    // 6️. Ambil semua user yang ada di created_by records
+    const userIds = [...new Set(records.map((r) => r.created_by))];
+    const users = await this.userRepo
+      .createQueryBuilder('u')
+      .where('u.id IN (:...ids)', { ids: userIds })
+      .getMany();
+    const userMap = new Map<string, string>();
+    users.forEach((u) => userMap.set(u.user_id, u.name));
+
+    // 7️. Mapping ke Excel Row
     const formatedData = records.map((record) => {
       const row: any = {
         No: record.sequence_no,
@@ -1033,29 +1020,24 @@ export class QcListService {
         'Status Overall': record.status_overall,
         Remarks: record.remarks,
 
-        CreatedBy: record.created_by,
+        // GANTI ID ke NAMA USER
+        CreatedBy: userMap.get(record.created_by) || record.created_by,
         CreatedDt: record.created_dt.toISOString(),
       };
 
       const prodtypeId = qcTemplateMap.get(record.qc_template_id)?.prodtype_id;
-
       const recordQcDatas = qcDataMap.get(record.qc_id) || [];
 
-      // 7️. QC DATA → ORDER + ALIAS HEADER
-      // ======================================
       const sortedQcData = recordQcDatas
         .map((d) => {
           const tpl = templateLookup.get(
             `${record.qc_template_id}__${d.input_code}`,
           );
-
           const prodAlias = prodtypeId
             ? prodTypeLookup.get(`${prodtypeId}__${d.input_code}`)
             : undefined;
-
           const header =
             prodAlias?.alias || prodAlias?.label || tpl?.label || d.input_code;
-
           return {
             qcData: d,
             header,
@@ -1067,7 +1049,6 @@ export class QcListService {
 
       sortedQcData.forEach(({ qcData, header, code }) => {
         const finalHeader = `${header} (${code})`;
-
         row[finalHeader] = qcData.input_value ?? '';
         row[`${finalHeader}_STATUS`] = qcData.status ?? '';
       });
@@ -1076,7 +1057,6 @@ export class QcListService {
     });
 
     // 8️. Generate Excel
-    // ======================================
     const filename = `QC_Record_Full-${Date.now()}.xlsx`;
     const buffer = this.sheetService.exportDataToExcel(
       formatedData,
