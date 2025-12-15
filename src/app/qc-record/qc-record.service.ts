@@ -63,7 +63,7 @@ export class QcRecordService {
     // private readonly notificationService: NotificationService,
   ) {}
 
-  /** Get ALl history record QC Record */
+  /** Get All history record QC Record */
   async getAllQcRecordHistory(
     page: number = 1,
     limit: number = 10,
@@ -84,48 +84,49 @@ export class QcRecordService {
       .leftJoin('qc.qc_template', 'template')
       .leftJoin('qc.location', 'loc');
 
+    // Filter global: hanya QC final
+    recordsQuery.andWhere("LOWER(qc.status) IN ('done', 'canceled')");
+    countQuery.andWhere("LOWER(qc.status) IN ('done', 'canceled')");
+
+    // Deteksi numeric search
+    const trimmedSearch = search?.trim();
+    const isNumericSearch = trimmedSearch && /^\d+$/.test(trimmedSearch);
+
     // Filter pencarian
-    if (search && search.trim() !== '' && search !== '{{search}}') {
-      const trimmed = search.trim();
-
-      if (/^\d+$/.test(trimmed)) {
-        // 🔢 Numeric search → sequence_no
-        recordsQuery.andWhere('qc.sequence_no = :sequenceNo', {
-          sequenceNo: Number(trimmed),
-        });
-        countQuery.andWhere('qc.sequence_no = :sequenceNo', {
-          sequenceNo: Number(trimmed),
-        });
+    if (trimmedSearch && trimmedSearch !== '{{search}}') {
+      if (isNumericSearch) {
+        // Numeric → sequence_no
+        const sequenceNo = Number(trimmedSearch);
+        recordsQuery.andWhere('qc.sequence_no = :sequenceNo', { sequenceNo });
+        countQuery.andWhere('qc.sequence_no = :sequenceNo', { sequenceNo });
       } else {
-        // 🔤 Text search
-        const searchText = `%${trimmed.toLowerCase()}%`;
-
+        // Text search
+        const searchText = `%${trimmedSearch.toLowerCase()}%`;
         recordsQuery.andWhere(
           `
-      (
-        LOWER(qc.qc_id) LIKE :searchText
-        OR LOWER(template.name) LIKE :searchText
-        OR LOWER(qc.status) LIKE :searchText
-      )
-      `,
+        (
+          LOWER(qc.qc_id) LIKE :searchText
+          OR LOWER(template.name) LIKE :searchText
+          OR LOWER(qc.status) LIKE :searchText
+        )
+        `,
           { searchText },
         );
-
         countQuery.andWhere(
           `
-      (
-        LOWER(qc.qc_id) LIKE :searchText
-        OR LOWER(template.name) LIKE :searchText
-        OR LOWER(qc.status) LIKE :searchText
-      )
-      `,
+        (
+          LOWER(qc.qc_id) LIKE :searchText
+          OR LOWER(template.name) LIKE :searchText
+          OR LOWER(qc.status) LIKE :searchText
+        )
+        `,
           { searchText },
         );
       }
     }
 
-    // Filter file_name
-    if (fileName && fileName.trim() !== '') {
+    // Filter file_name → hanya aktif kalau bukan numeric search
+    if (!isNumericSearch && fileName && fileName.trim() !== '') {
       const fileNameText = `%${fileName.trim().toLowerCase()}%`;
       recordsQuery.andWhere('LOWER(qc.file_name) LIKE :fileNameText', {
         fileNameText,
@@ -148,13 +149,10 @@ export class QcRecordService {
       countQuery.andWhere('qc.created_dt BETWEEN :from AND :to', { from, to });
     }
 
-    // Filter agar hanya status selain Processing
-    recordsQuery.andWhere('qc.status IN (:...statuses)', {
-      statuses: ['Done', 'Canceled'],
-    });
-    countQuery.andWhere('qc.status IN (:...statuses)', {
-      statuses: ['Done', 'Canceled'],
-    });
+    // Filter status tambahan
+    const statuses = ['Done', 'Canceled'];
+    recordsQuery.andWhere('qc.status IN (:...statuses)', { statuses });
+    countQuery.andWhere('qc.status IN (:...statuses)', { statuses });
 
     // Order + pagination
     recordsQuery
@@ -170,10 +168,8 @@ export class QcRecordService {
 
     const totalPages = Math.ceil(totalData / limit);
 
-    // Ambil qc_ids
+    // Ambil qc_ids untuk invalid data
     const qcIds = records.map((r) => r.qc_id);
-
-    // Ambil invalid_data
     let invalidMap = new Map<string, number>();
 
     if (qcIds.length > 0) {
@@ -198,8 +194,8 @@ export class QcRecordService {
     const userIds = Array.from(
       new Set(records.map((r) => r.created_by)),
     ).filter(Boolean);
-
     let userMap = new Map<string, string>();
+
     if (userIds.length > 0) {
       const users = await this.userRepo
         .createQueryBuilder('u')

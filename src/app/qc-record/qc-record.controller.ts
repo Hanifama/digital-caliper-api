@@ -66,8 +66,8 @@ export class QcRecordController {
     return this.qcRecordService.getAllQcRecordHistory(
       page,
       limit,
-      fileName,
       search,
+      fileName,
       from_date,
       end_date,
     );
