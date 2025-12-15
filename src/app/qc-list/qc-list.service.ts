@@ -990,7 +990,7 @@ export class QcListService {
     const userIds = [...new Set(records.map((r) => r.created_by))];
     const users = await this.userRepo
       .createQueryBuilder('u')
-      .where('u.id IN (:...ids)', { ids: userIds })
+      .where('u.user_id IN (:...ids)', { ids: userIds })
       .getMany();
     const userMap = new Map<string, string>();
     users.forEach((u) => userMap.set(u.user_id, u.name));
