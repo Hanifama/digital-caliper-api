@@ -85,28 +85,53 @@ export class QcRecordService {
       .leftJoin('qc.location', 'loc');
 
     // Filter pencarian
+    // NOTE:
+    // - History hanya menampilkan status Done & Canceled
+    // - Search numeric (sequence_no) digabung dengan text search
     if (search && search.trim() !== '' && search !== '{{search}}') {
       const trimmed = search.trim();
       const searchText = `%${trimmed.toLowerCase()}%`;
       const searchNumber = Number(trimmed);
 
-      if (!isNaN(searchNumber) && /^\d+$/.test(trimmed)) {
-        // Kalau input murni angka, cari berdasarkan sequence_no
-        recordsQuery.andWhere('qc.sequence_no = :searchNumber', {
-          searchNumber,
-        });
-        countQuery.andWhere('qc.sequence_no = :searchNumber', { searchNumber });
-      } else {
-        // Kalau input berupa teks, cari di qc_id, template_name, atau status
-        recordsQuery.andWhere(
-          '(LOWER(qc.qc_id) LIKE :searchText OR LOWER(template.name) LIKE :searchText OR LOWER(qc.status) LIKE :searchText)',
-          { searchText },
-        );
-        countQuery.andWhere(
-          '(LOWER(qc.qc_id) LIKE :searchText OR LOWER(template.name) LIKE :searchText OR LOWER(qc.status) LIKE :searchText)',
-          { searchText },
-        );
+      recordsQuery.andWhere(
+        `(
+      LOWER(qc.qc_id) LIKE :searchText
+      OR LOWER(template.name) LIKE :searchText
+      OR LOWER(qc.status) LIKE :searchText
+      OR LOWER(qc.file_name) LIKE :searchText
+      ${
+        !isNaN(searchNumber) && /^\d+$/.test(trimmed)
+          ? 'OR qc.sequence_no = :searchNumber'
+          : ''
       }
+    )`,
+        {
+          searchText,
+          ...(!isNaN(searchNumber) && /^\d+$/.test(trimmed)
+            ? { searchNumber }
+            : {}),
+        },
+      );
+
+      countQuery.andWhere(
+        `(
+      LOWER(qc.qc_id) LIKE :searchText
+      OR LOWER(template.name) LIKE :searchText
+      OR LOWER(qc.status) LIKE :searchText
+      OR LOWER(qc.file_name) LIKE :searchText
+      ${
+        !isNaN(searchNumber) && /^\d+$/.test(trimmed)
+          ? 'OR qc.sequence_no = :searchNumber'
+          : ''
+      }
+    )`,
+        {
+          searchText,
+          ...(!isNaN(searchNumber) && /^\d+$/.test(trimmed)
+            ? { searchNumber }
+            : {}),
+        },
+      );
     }
 
     // Filter file_name
