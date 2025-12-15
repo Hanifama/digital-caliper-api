@@ -137,12 +137,15 @@ export class QcRecordService {
     }
 
     // Filter agar hanya status selain Processing
-    recordsQuery.andWhere('qc.status IN (:...statuses)', {
-      statuses: ['Done', 'Canceled'],
-    });
-    countQuery.andWhere('qc.status IN (:...statuses)', {
-      statuses: ['Done', 'Canceled'],
-    });
+    recordsQuery.andWhere(
+      "LOWER(qc.status) != :processing AND LOWER(COALESCE(qc.status_overall, '')) != :processing",
+      { processing: 'processing' },
+    );
+
+    countQuery.andWhere(
+      "LOWER(qc.status) != :processing AND LOWER(COALESCE(qc.status_overall, '')) != :processing",
+      { processing: 'processing' },
+    );
 
     // Order + pagination
     recordsQuery
