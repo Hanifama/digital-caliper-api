@@ -87,55 +87,38 @@ export class QcRecordService {
     // Filter pencarian
     if (search && search.trim() !== '' && search !== '{{search}}') {
       const trimmed = search.trim();
-      const searchText = `%${trimmed.toLowerCase()}%`;
-      const searchNumber = Number(trimmed);
 
-      if (!isNaN(searchNumber) && /^\d+$/.test(trimmed)) {
-        // Numeric search → sequence_no
-        recordsQuery.andWhere(
-          `
-        qc.sequence_no = :searchNumber
-        AND LOWER(qc.status) != :processing
-        AND LOWER(COALESCE(qc.status_overall, '')) != :processing
-        `,
-          {
-            searchNumber,
-            processing: 'processing',
-          },
-        );
-
-        countQuery.andWhere(
-          `
-        qc.sequence_no = :searchNumber
-        AND LOWER(qc.status) != :processing
-        AND LOWER(COALESCE(qc.status_overall, '')) != :processing
-        `,
-          {
-            searchNumber,
-            processing: 'processing',
-          },
-        );
+      if (/^\d+$/.test(trimmed)) {
+        // 🔢 Numeric search → sequence_no
+        recordsQuery.andWhere('qc.sequence_no = :sequenceNo', {
+          sequenceNo: Number(trimmed),
+        });
+        countQuery.andWhere('qc.sequence_no = :sequenceNo', {
+          sequenceNo: Number(trimmed),
+        });
       } else {
-        // Text search
+        // 🔤 Text search
+        const searchText = `%${trimmed.toLowerCase()}%`;
+
         recordsQuery.andWhere(
           `
-        (
-          LOWER(qc.qc_id) LIKE :searchText
-          OR LOWER(template.name) LIKE :searchText
-          OR LOWER(qc.status) LIKE :searchText
-        )
-        `,
+      (
+        LOWER(qc.qc_id) LIKE :searchText
+        OR LOWER(template.name) LIKE :searchText
+        OR LOWER(qc.status) LIKE :searchText
+      )
+      `,
           { searchText },
         );
 
         countQuery.andWhere(
           `
-        (
-          LOWER(qc.qc_id) LIKE :searchText
-          OR LOWER(template.name) LIKE :searchText
-          OR LOWER(qc.status) LIKE :searchText
-        )
-        `,
+      (
+        LOWER(qc.qc_id) LIKE :searchText
+        OR LOWER(template.name) LIKE :searchText
+        OR LOWER(qc.status) LIKE :searchText
+      )
+      `,
           { searchText },
         );
       }
