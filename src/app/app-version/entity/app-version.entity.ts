@@ -30,13 +30,13 @@ export class AppVersion {
   @Column({ name: 'version_description', type: 'text' })
   versionDescription: string;
 
-  @Column({ name: 'is_latest', type: 'tinyint', default: 0 })
+  @Column({ name: 'is_latest', type: 'boolean', default: false })
   isLatest: boolean;
 
-  @Column({ name: 'is_allowed', type: 'tinyint', default: 1 })
+  @Column({ name: 'is_allowed', type: 'boolean', default: true })
   isAllowed: boolean;
 
-  @Column({ name: 'released_date', type: 'datetime' })
+  @Column({ name: 'released_date', type: 'timestamp' })
   releasedDate: Date;
 
   @Column({ name: 'created_by', type: 'varchar', length: 100 })
@@ -48,15 +48,14 @@ export class AppVersion {
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
+    default: () => 'now()',
   })
   createdAt: Date;
 
   @UpdateDateColumn({
     name: 'updated_at',
     type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
+    default: () => 'now()',
   })
   updatedAt: Date;
 }

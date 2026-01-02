@@ -15,6 +15,7 @@ import { User } from '../auth/entitities/user.entity';
 import { SheetService } from '../sheet/sheet.service';
 import { QcRecord } from '../qc-template/entity/qc-record.entity';
 import { QcTemplateData } from '../qc-template/entity/qc-template-data.entity';
+import { LogService } from '../log-app/log.service';
 import { QcData } from '../qc-template/entity/qc-data.enity';
 import { ProductTypeData } from '../product/entity/product-type-data.entity';
 
@@ -45,6 +46,7 @@ export class QcListService {
     private readonly sheetService: SheetService,
 
     private readonly messageService: MessageService,
+    private readonly logService: LogService,
   ) {}
 
   private async insertQcPlan(plans: QcPlan[]) {
@@ -104,6 +106,7 @@ export class QcListService {
 
   /** Ambil semua QC Plan beserta template terkait admin */
   async getAllQcPlansAdmin(
+    userId: string,
     page: number = 1,
     limit: number = 10,
     search?: string,
@@ -111,6 +114,10 @@ export class QcListService {
     locationId?: string,
   ): Promise<IResponsePageWrapper<any>> {
     const offset = (page - 1) * limit;
+
+    const user = await this.userRepo.findOne({
+      where: { user_id: userId },
+    });
 
     const plansQuery = this.qcPlanRepo
       .createQueryBuilder('qp')
@@ -219,6 +226,14 @@ export class QcListService {
     }));
 
     this.messageService.setMessage('Berhasil memuat semua QC Plan.');
+
+    await this.logService.createLog(user ?? undefined, {
+      data_1: 'GET-QC-PLAN-ADMIN',
+      data_2: `page:${page}, limit:${limit}`,
+      data_3: `search:${search || '-'}, fileName:${fileName || '-'}`,
+      data_4: `totalData:${totalData}`,
+      data_5: `locationId:${locationId || '-'}`,
+    });
 
     return {
       meta: {
@@ -400,6 +415,14 @@ export class QcListService {
       updated_dt: p.updated_dt,
     }));
 
+    await this.logService.createLog(user, {
+      data_1: 'GET-QC-PLANS',
+      data_2: `page:${page}`,
+      data_3: `limit:${limit}`,
+      data_4: `search:${search || '-'}`,
+      data_5: `location:${location_id || '-'}`,
+    });
+
     const msg = isAdmin
       ? 'Berhasil memuat semua QC Plan.'
       : 'Berhasil memuat semua QC Plan di lokasi Anda.';
@@ -508,6 +531,11 @@ export class QcListService {
       this.messageService.setMessage(
         `Tidak ada QC Plan dengan status 'New Data' untuk lokasi ${user.locationId}.`,
       );
+      // await this.logService.createLog(user, {
+      //   data_1: 'SOFT-DELETE-QC-PLANS',
+      //   data_2: `location:${user.locationId}`,
+      //   data_3: 'result: no plans to delete',
+      // });
       return;
     }
 
@@ -515,7 +543,10 @@ export class QcListService {
     await this.qcPlanRepo
       .createQueryBuilder()
       .update(QcPlan)
-      .set({ status: 'Deleted', deleted_at: () => 'CURRENT_TIMESTAMP' })
+      .set({
+        status: 'Deleted',
+        deleted_at: () => 'NOW()',
+      })
       .where('location_id = :locationId AND status = :status', {
         locationId: user.locationId,
         status: 'New Data',
@@ -525,6 +556,11 @@ export class QcListService {
     this.messageService.setMessage(
       `Semua QC Plan dengan status 'New Data' untuk lokasi ${user.locationId} berhasil dihapus.`,
     );
+    // await this.logService.createLog(user, {
+    //   data_1: 'SOFT-DELETE-QC-PLANS',
+    //   data_2: `location:${user.locationId}`,
+    //   data_3: `deleted_count:${updateResult.affected}`,
+    // });
   }
 
   /** Restore semua QC Plan berdasarkan lokasi user */
@@ -540,16 +576,23 @@ export class QcListService {
       );
     }
 
-    await this.qcPlanRepo
+    const restoreResult = await this.qcPlanRepo
       .createQueryBuilder()
       .restore()
       .where('location_id = :locationId', { locationId: user.locationId })
       .andWhere('deleted_at IS NOT NULL')
       .execute();
 
+    const affectedRows = restoreResult.affected ?? 0;
+
     this.messageService.setMessage(
       `Semua QC Plan untuk lokasi ${user.locationId} berhasil direstore.`,
     );
+    await this.logService.createLog(user, {
+      data_1: 'RESTORE-QC-PLANS',
+      data_2: `location:${user.locationId}`,
+      data_3: `restored_count:${affectedRows}`,
+    });
   }
 
   /** Soft Delete 1 QC Plan berdasarkan qc_id & lokasi user */
@@ -580,7 +623,7 @@ export class QcListService {
     await this.qcPlanRepo
       .createQueryBuilder()
       .update(QcPlan)
-      .set({ status: 'Deleted', deleted_at: () => 'CURRENT_TIMESTAMP' })
+      .set({ status: 'Deleted', deleted_at: new Date() })
       .where(
         'qc_id = :qcId AND location_id = :locationId AND status = :status',
         {
@@ -594,11 +637,21 @@ export class QcListService {
     this.messageService.setMessage(
       `QC Plan dengan BATCH ID ${qcId} berhasil dihapus.`,
     );
+
+    // LOG SERVICE
+    // await this.logService.createLog(user, {
+    //   data_1: 'SOFT-DELETE-QC-PLAN',
+    //   data_2: `qc_id:${qcId}`,
+    //   data_3: `location:${user.locationId}`,
+    // });
   }
 
   /** Memberikan Catatan Terhadap QC List Plan */
-  async updatePlanNotes(qcId: string, notes: string) {
+  async updatePlanNotes(userId: string, qcId: string, notes: string) {
     const plan = await this.qcPlanRepo.findOne({ where: { qc_id: qcId } });
+    const user = await this.userRepo.findOne({
+      where: { user_id: userId },
+    });
     if (!plan) throw new Error(`QC Plan dengan qc_id ${qcId} tidak ditemukan`);
 
     plan.notes = notes;
@@ -606,6 +659,11 @@ export class QcListService {
     this.messageService.setMessage(
       `QC Plan dengan BATCH ID ${qcId} diberikan catatan.`,
     );
+    await this.logService.createLog(user ?? undefined, {
+      data_1: 'UPDATE-QC-PLAN-NOTES',
+      data_2: `qc_id:${qcId}`,
+      data_3: `notes:${notes}`,
+    });
   }
 
   /**
@@ -833,14 +891,29 @@ export class QcListService {
       `Berhasil import data sebanyak ${totalSuccess} QC`,
     );
 
+    await this.logService.createLog(user, {
+      data_1: 'IMPORT-QC-PLAN',
+      data_2: `file:${file.originalname}`,
+      data_3: `totalRows:${rows.length}`,
+      data_4: `successCount:${totalSuccess}`,
+      data_5: `missSize:${skippedMissingSize}, missBatch:${skippedMissingBatch}, dupPlan:${skippedDuplicatePlan}, dupRec:${skippedDuplicateRecord}`,
+    });
+
     return result;
   }
 
   /** Export QC Plan XLSX */
-  public async exportQcPlans(): Promise<{ filename: string; buffer: Buffer }> {
+  public async exportQcPlans(
+    userId: string,
+  ): Promise<{ filename: string; buffer: Buffer }> {
     // 1. Ambil semua QC Plan
     const plans: QcPlan[] = await this.qcPlanRepo.find({
       relations: ['qc_template', 'location'],
+    });
+
+    // 1a. Ambil userId
+    const user = await this.userRepo.findOne({
+      where: { user_id: userId },
     });
 
     // 2. Mapping ke format Excel (sesuai header yang diinginkan)
@@ -889,6 +962,13 @@ export class QcListService {
 
     this.messageService.setMessage('Berhasil export QC Plan!');
 
+    await this.logService.createLog(user ?? undefined, {
+      data_1: 'EXPORT-QC-PLAN',
+      data_2: `totalRecords:${plans.length}`,
+      data_3: `filename:${filename}`,
+      data_4: `timestamp:${new Date().toISOString()}`,
+    });
+
     return { filename, buffer };
   }
 
@@ -898,11 +978,16 @@ export class QcListService {
    * - Header pakai alias dari Product Type Data
    */
   public async exportQcRecords(filter: {
+    userId: string;
     from_date?: string;
     end_date?: string;
     location_id?: string;
   }): Promise<{ filename: string; buffer: Buffer }> {
-    const { from_date, end_date, location_id } = filter;
+    const { userId, from_date, end_date, location_id } = filter;
+
+    const user = await this.userRepo.findOne({
+      where: { user_id: userId },
+    });
 
     // 1️. Ambil QC RECORD (TANPA JOIN QC DATA)
     const qb = this.qcRecordRepo
@@ -993,7 +1078,7 @@ export class QcListService {
       .where('u.user_id IN (:...ids)', { ids: userIds })
       .getMany();
     const userMap = new Map<string, string>();
-    users.forEach((u) => userMap.set(u.user_id, u.name));
+    users.forEach((u) => userMap.set(u.user_id, u.full_name));
 
     // 7️. Mapping ke Excel Row
     const formatedData = records.map((record) => {
@@ -1070,18 +1155,36 @@ export class QcListService {
       'QC_Record',
     );
 
-    this.messageService.setMessage(
-      'Berhasil export QC Record + QC Data (Ordered & Alias Header)',
-    );
+    this.messageService.setMessage('Berhasil export Quality Control History');
+
+    await this.logService.createLog(user ?? undefined, {
+      data_1: 'EXPORT-QC',
+      data_2: `range:${from_date ?? '-'}~${end_date ?? '-'}`,
+      data_3: `total:${records.length}`,
+      data_4: `filename:${filename}`,
+      data_5: `location:${location_id ?? 'ALL'}`,
+    });
 
     return { filename, buffer };
   }
 
   /** Export QC Plan Header Only (XLSX) */
-  public async exportQcPlansHeaderOnly() {
+  public async exportQcPlansHeaderOnly(userId: string) {
+    // 1a. Ambil userId
+    const user = await this.userRepo.findOne({
+      where: { user_id: userId },
+    });
+
     const buffer = this.sheetService.exportQcPlanHeaderOnly();
     const filename = 'QC_Plan_Template.xlsx';
     this.messageService.setMessage('Berhasil mengekspor template QC Plan.');
+
+    await this.logService.createLog(user ?? undefined, {
+      data_1: 'EXPORT-QC-PLAN-HEADER',
+      data_2: `filename:${filename}`,
+      data_3: `timestamp:${new Date().toISOString()}`,
+    });
+
     return { filename, buffer };
   }
 }

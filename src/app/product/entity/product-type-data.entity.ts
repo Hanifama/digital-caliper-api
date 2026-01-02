@@ -3,7 +3,7 @@ import { ProductType } from './product-type.entity';
 
 @Entity('product_type_data')
 export class ProductTypeData {
-  @PrimaryColumn({ type: 'varchar', length: 25, collation: 'utf8mb4_bin' })
+  @PrimaryColumn({ type: 'varchar', length: 25 })
   code: string;
 
   @PrimaryColumn({ type: 'varchar', length: 25 })

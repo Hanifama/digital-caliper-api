@@ -11,6 +11,9 @@ import { QcData } from '../qc-template/entity/qc-data.enity';
 import { ConfigService } from '@nestjs/config';
 import { User } from '../auth/entitities/user.entity';
 import { SendWaQcDto } from './dto/notification-send-wa.dto';
+import { GeneratorService } from '../generator/generator.service';
+import { QcPdfDataService } from '../generator/generator-data.service';
+import { LogService } from '../log-app/log.service';
 
 @Injectable()
 export class NotificationService implements OnModuleInit {
@@ -19,6 +22,10 @@ export class NotificationService implements OnModuleInit {
   private readonly logger = new Logger(NotificationService.name);
   constructor(
     private readonly messageService: MessageService,
+
+    private readonly generatorService: GeneratorService,
+    private readonly qcPdfDataService: QcPdfDataService,
+    private readonly logService: LogService,
 
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
@@ -41,33 +48,7 @@ export class NotificationService implements OnModuleInit {
       },
     });
 
-    // === EVENT HANDLERS ===
-    this.client.on('qr', (qr) => {
-      qrcode.generate(qr, { small: true });
-      this.logger.warn('📱 Scan QR code di HP kamu untuk login WhatsApp.');
-    });
-
-    this.client.on('authenticated', () => {
-      this.logger.log('🔐 WhatsApp authenticated!');
-    });
-
-    this.client.on('auth_failure', (msg) => {
-      this.logger.error('❌ Authentication failed:', msg);
-      this.isReady = false;
-    });
-
-    this.client.on('ready', () => {
-      this.isReady = true;
-      this.logger.log('✅ WhatsApp client is ready!');
-    });
-
-    this.client.on('disconnected', (reason) => {
-      this.logger.warn(`⚠️ WhatsApp disconnected: ${reason}`);
-      this.isReady = false;
-      // auto re-init supaya bot reconnect
-      this.reconnect();
-    });
-
+    this.registerEvents();
     this.client.initialize();
   }
 
@@ -99,14 +80,61 @@ export class NotificationService implements OnModuleInit {
     });
   }
 
+  private registerEvents() {
+    this.client.on('qr', (qr) => {
+      qrcode.generate(qr, { small: true });
+      this.logger.warn('📱 Scan QR code di HP kamu untuk login WhatsApp.');
+    });
+
+    this.client.on('authenticated', () => {
+      this.logger.log('🔐 WhatsApp authenticated!');
+    });
+
+    this.client.on('auth_failure', (msg) => {
+      this.logger.error('❌ Authentication failed:', msg);
+      this.isReady = false;
+    });
+
+    this.client.on('ready', () => {
+      this.isReady = true;
+      this.logger.log('✅ WhatsApp client is ready!');
+    });
+
+    this.client.on('disconnected', (reason) => {
+      this.logger.warn(`⚠️ WhatsApp disconnected: ${reason}`);
+      this.isReady = false;
+
+      // delay biar puppeteer bener-bener idle
+      setTimeout(() => this.reconnect(), 5000);
+    });
+  }
+
   // Reconnect logic
+  private reconnecting = false;
+
   private async reconnect() {
+    if (this.reconnecting) return;
+
+    this.reconnecting = true;
+
     try {
-      this.logger.log('🔁 Trying to reconnect WhatsApp...');
-      await this.client.destroy();
+      this.logger.warn('🔁 Re-initializing WhatsApp client...');
+      this.client.removeAllListeners();
+
+      this.client = new Client({
+        authStrategy: new LocalAuth({ clientId: 'system' }),
+        puppeteer: {
+          headless: true,
+          args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        },
+      });
+
+      this.registerEvents();
       await this.client.initialize();
-    } catch (error) {
-      this.logger.error('Reconnect failed:', error);
+    } catch (err) {
+      this.logger.error('Reconnect failed', err);
+    } finally {
+      this.reconnecting = false;
     }
   }
 
@@ -128,6 +156,51 @@ export class NotificationService implements OnModuleInit {
     });
 
     return groups;
+  }
+
+  async sendPdfToGroups(
+    pdfBuffer: Buffer,
+    fileName: string,
+    caption: string,
+    groupNames: string[],
+  ) {
+    if (!this.client || !this.isReady)
+      throw new Error('WhatsApp client belum siap');
+
+    const chats = await this.client.getChats();
+
+    const media = new MessageMedia(
+      'application/pdf',
+      pdfBuffer.toString('base64'),
+      fileName,
+    );
+
+    const sent: string[] = [];
+    const failed: string[] = [];
+
+    for (const groupName of groupNames) {
+      const group = chats.find(
+        (chat) =>
+          chat.isGroup && chat.name?.toLowerCase() === groupName.toLowerCase(),
+      );
+
+      if (!group) {
+        failed.push(groupName);
+        continue;
+      }
+
+      try {
+        await this.client.sendMessage(group.id._serialized, media, {
+          caption,
+          sendMediaAsDocument: true,
+        });
+        sent.push(groupName);
+      } catch (err) {
+        failed.push(groupName);
+      }
+    }
+
+    return { sent, failed };
   }
 
   // Kirim Image ke beberapa grup sekaligus
@@ -188,7 +261,7 @@ export class NotificationService implements OnModuleInit {
     if (!this.client || !this.isReady)
       throw new Error('WhatsApp client belum siap');
 
-    /** 1. Ambil lokasi user */
+    /** 1. Ambil user */
     const user = await this.userRepo.findOne({
       where: { user_id: userId },
     });
@@ -196,15 +269,14 @@ export class NotificationService implements OnModuleInit {
     if (!user?.locationId) throw new Error('User tidak punya location_id');
 
     const senderName = user.full_name ?? user.username ?? 'System';
-
     const locationId = user.locationId;
 
-    /** 2. Ambil QC Record lengkap */
+    /** 2. Ambil QC Record */
     const record = await this.qcRecordRepo.findOne({
       where: {
-        qc_id: qc_id,
+        qc_id,
         sequence_no: no_seq,
-        piece_no: piece_no,
+        piece_no,
         location_id: locationId,
       },
       relations: ['location'],
@@ -212,7 +284,7 @@ export class NotificationService implements OnModuleInit {
 
     if (!record)
       throw new Error(
-        `QC Record tidak ditemukan untuk qc_id=${qc_id}, seq=${no_seq}, piece=${piece_no}, location=${locationId}`,
+        `QC Record tidak ditemukan qc_id=${qc_id}, seq=${no_seq}, piece=${piece_no}`,
       );
 
     /** 3. Ambil qc_data */
@@ -247,6 +319,7 @@ export class NotificationService implements OnModuleInit {
     const passed = uniqueRaw.filter((r) => r.status === 'Passed');
     const errors = uniqueRaw.filter((r) => r.status === 'Not Passed');
 
+    /** Mapping & grouping */
     const mappedPassed = passed.map((p) => ({
       code: p.code,
       value: p.value,
@@ -263,7 +336,6 @@ export class NotificationService implements OnModuleInit {
       major: e.code?.includes('.') ? e.code.split('.')[0] : null,
     }));
 
-    /** Grouping */
     const groupedPassed = this.groupByPosition(mappedPassed);
     const groupedErrors = this.groupByPosition(mappedErrors);
 
@@ -292,20 +364,52 @@ export class NotificationService implements OnModuleInit {
       senderName,
     });
 
-    this.messageService.setMessage(
-      `Berhasil mengirim notifikasi untuk Batch Id ${qc_id} No seq ${no_seq} potongan ${piece_no}`,
+    /** 6. Generate PDF */
+    const pdfData = await this.qcPdfDataService.getPdfData(
+      qc_id,
+      no_seq,
+      piece_no,
+      userId,
     );
 
-    /** Kirim ke grup */
+    const pdfBuffer = await this.generatorService.generatePdf(pdfData);
+
+    /** 7. Kirim ke grup */
     const groupsEnv = this.configService.get<string>('WHATSAPP_GROUP_NAME');
     const targetGroups = groupsEnv
       ? groupsEnv
           .split(',')
           .map((g) => g.trim())
-          .filter((g) => g.length > 0)
+          .filter(Boolean)
       : [];
 
-    return this.sendImageToGroups(image, message, targetGroups);
+    await this.sendPdfToGroups(
+      pdfBuffer,
+      `${qc_id}-${no_seq}-${piece_no}.pdf`,
+      `QC Report ${qc_id}-${no_seq}-${piece_no}.pdf`,
+      targetGroups,
+    );
+
+    const sendResult = await this.sendImageToGroups(
+      image,
+      message,
+      targetGroups,
+    );
+
+    /** 🔥 8. LOG SERVICE (SETELAH SUKSES) */
+    await this.logService.createLog(user, {
+      data_1: 'QC-SEND-WA',
+      data_2: `qc_id:${qc_id} seq:${no_seq} piece:${piece_no}`,
+      data_3: `status:${record.status_overall}`,
+      data_4: `passed:${passed.length} notPassed:${errors.length}`,
+      data_5: `targetGroup:${targetGroups.join(',') || '-'}`,
+    });
+
+    this.messageService.setMessage(
+      `Berhasil mengirim QC WA untuk Batch ${qc_id} Seq ${no_seq} Piece ${piece_no}`,
+    );
+
+    return sendResult;
   }
 
   // Generate plain text message format

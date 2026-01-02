@@ -13,14 +13,10 @@ export class Role {
   @Column({ type: 'varchar', length: 15, default: '1' })
   status: string;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ type: 'timestamp', default: () => 'now()' })
   created_dt: Date;
 
-  @Column({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
+  @Column({ type: 'timestamp', default: () => 'now()' })
   updated_dt: Date;
 
   @OneToMany(() => User, (user) => user.role)

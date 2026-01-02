@@ -28,6 +28,7 @@ import { Size } from '../size/entity/size.entity';
 import { User } from '../auth/entitities/user.entity';
 import { QcTemplate } from '../qc-template/entity/qc-template.entity';
 import { FinishProcessingDto } from './dto/finish-processing.dto';
+import { LogService } from '../log-app/log.service';
 
 @Injectable()
 export class QcRecordService {
@@ -60,11 +61,13 @@ export class QcRecordService {
     private readonly sizeRepo: Repository<Size>,
 
     private readonly messageService: MessageService,
+    private readonly logService: LogService,
     // private readonly notificationService: NotificationService,
   ) {}
 
-  /** Get All history record QC Record */
+  /** Get ALl history record QC Record */
   async getAllQcRecordHistory(
+    userId: string,
     page: number = 1,
     limit: number = 10,
     search?: string,
@@ -73,6 +76,10 @@ export class QcRecordService {
     end_date?: string,
   ): Promise<IResponsePageWrapper<any>> {
     const offset = (page - 1) * limit;
+
+    const user = await this.userRepo.findOne({
+      where: { user_id: userId },
+    });
 
     const recordsQuery = this.qcRecordRepo
       .createQueryBuilder('qc')
@@ -84,49 +91,33 @@ export class QcRecordService {
       .leftJoin('qc.qc_template', 'template')
       .leftJoin('qc.location', 'loc');
 
-    // Filter global: hanya QC final
-    recordsQuery.andWhere("LOWER(qc.status) IN ('done', 'canceled')");
-    countQuery.andWhere("LOWER(qc.status) IN ('done', 'canceled')");
-
-    // Deteksi numeric search
-    const trimmedSearch = search?.trim();
-    const isNumericSearch = trimmedSearch && /^\d+$/.test(trimmedSearch);
-
     // Filter pencarian
-    if (trimmedSearch && trimmedSearch !== '{{search}}') {
-      if (isNumericSearch) {
-        // Numeric → sequence_no
-        const sequenceNo = Number(trimmedSearch);
-        recordsQuery.andWhere('qc.sequence_no = :sequenceNo', { sequenceNo });
-        countQuery.andWhere('qc.sequence_no = :sequenceNo', { sequenceNo });
+    if (search && search.trim() !== '' && search !== '{{search}}') {
+      const trimmed = search.trim();
+      const searchText = `%${trimmed.toLowerCase()}%`;
+      const searchNumber = Number(trimmed);
+
+      if (!isNaN(searchNumber) && /^\d+$/.test(trimmed)) {
+        // Kalau input murni angka, cari berdasarkan sequence_no
+        recordsQuery.andWhere('qc.sequence_no = :searchNumber', {
+          searchNumber,
+        });
+        countQuery.andWhere('qc.sequence_no = :searchNumber', { searchNumber });
       } else {
-        // Text search
-        const searchText = `%${trimmedSearch.toLowerCase()}%`;
+        // Kalau input berupa teks, cari di qc_id, template_name, status, atau piece_no
         recordsQuery.andWhere(
-          `
-        (
-          LOWER(qc.qc_id) LIKE :searchText
-          OR LOWER(template.name) LIKE :searchText
-          OR LOWER(qc.status) LIKE :searchText
-        )
-        `,
+          '(LOWER(qc.qc_id) LIKE :searchText OR LOWER(template.name) LIKE :searchText OR LOWER(qc.status) LIKE :searchText OR LOWER(qc.piece_no) LIKE :searchText)',
           { searchText },
         );
         countQuery.andWhere(
-          `
-        (
-          LOWER(qc.qc_id) LIKE :searchText
-          OR LOWER(template.name) LIKE :searchText
-          OR LOWER(qc.status) LIKE :searchText
-        )
-        `,
+          '(LOWER(qc.qc_id) LIKE :searchText OR LOWER(template.name) LIKE :searchText OR LOWER(qc.status) LIKE :searchText OR LOWER(qc.piece_no) LIKE :searchText)',
           { searchText },
         );
       }
     }
 
-    // Filter file_name → hanya aktif kalau bukan numeric search
-    if (!isNumericSearch && fileName && fileName.trim() !== '') {
+    // Filter file_name
+    if (fileName && fileName.trim() !== '') {
       const fileNameText = `%${fileName.trim().toLowerCase()}%`;
       recordsQuery.andWhere('LOWER(qc.file_name) LIKE :fileNameText', {
         fileNameText,
@@ -149,10 +140,13 @@ export class QcRecordService {
       countQuery.andWhere('qc.created_dt BETWEEN :from AND :to', { from, to });
     }
 
-    // Filter status tambahan
-    const statuses = ['Done', 'Canceled'];
-    recordsQuery.andWhere('qc.status IN (:...statuses)', { statuses });
-    countQuery.andWhere('qc.status IN (:...statuses)', { statuses });
+    // Filter agar hanya status selain Processing
+    recordsQuery.andWhere('qc.status IN (:...statuses)', {
+      statuses: ['Done', 'Canceled'],
+    });
+    countQuery.andWhere('qc.status IN (:...statuses)', {
+      statuses: ['Done', 'Canceled'],
+    });
 
     // Order + pagination
     recordsQuery
@@ -168,8 +162,10 @@ export class QcRecordService {
 
     const totalPages = Math.ceil(totalData / limit);
 
-    // Ambil qc_ids untuk invalid data
+    // Ambil qc_ids
     const qcIds = records.map((r) => r.qc_id);
+
+    // Ambil invalid_data
     let invalidMap = new Map<string, number>();
 
     if (qcIds.length > 0) {
@@ -194,16 +190,16 @@ export class QcRecordService {
     const userIds = Array.from(
       new Set(records.map((r) => r.created_by)),
     ).filter(Boolean);
-    let userMap = new Map<string, string>();
 
+    let userMap = new Map<string, string>();
     if (userIds.length > 0) {
       const users = await this.userRepo
         .createQueryBuilder('u')
-        .select(['u.user_id', 'u.name'])
+        .select(['u.user_id', 'u.full_name'])
         .where('u.user_id IN (:...userIds)', { userIds })
         .getMany();
 
-      userMap = new Map(users.map((u) => [u.user_id, u.name]));
+      userMap = new Map(users.map((u) => [u.user_id, u.full_name]));
     }
 
     // Format hasil
@@ -234,6 +230,14 @@ export class QcRecordService {
 
     this.messageService.setMessage('Berhasil memuat histori QC.');
 
+    await this.logService.createLog(user ?? undefined, {
+      data_1: 'GET-QC-RECORD-HISTORY',
+      data_2: `page:${page}`,
+      data_3: `limit:${limit}`,
+      data_4: `search:${search || '-'}`,
+      data_5: `file:${fileName || '-'}`,
+    });
+
     return {
       meta: {
         page,
@@ -246,7 +250,7 @@ export class QcRecordService {
     };
   }
 
-  /** Get Deyaol history record QC Record */
+  /** Get Detail history record QC Record */
   async getHistoryDetailRecord(qcId: string): Promise<any> {
     if (!qcId) {
       throw new BadRequestException('qc_id harus diberikan.');
@@ -404,6 +408,15 @@ export class QcRecordService {
     plan.status = status || 'Processing';
     await this.qcPlanRepo.save(plan);
 
+    /** 5a. Update Log Service */
+    await this.logService.createLog(user ?? undefined, {
+      data_1: 'START-QC-RECORD',
+      data_2: `qc_id:${qc_id}`,
+      data_3: `sequence_no:${sequence_no}`,
+      data_4: `piece_no:${piece_no}`,
+      data_5: `status:${plan.status}`,
+    });
+
     /** 6. Message sukses */
     this.messageService.setMessage(
       `QC Plan ${qc_id} (seq: ${plan.sequence_no}) berstatus ${plan.status}.`,
@@ -461,6 +474,15 @@ export class QcRecordService {
       { qc_id, sequence_no, location_id },
       { status: 'Done' },
     );
+
+    /** 4a. Log service */
+    await this.logService.createLog(user ?? undefined, {
+      data_1: 'FINISH-QC-RECORD',
+      data_2: `qc_id:${qc_id}`,
+      data_3: `sequence_no:${sequence_no}`,
+      data_4: `location_id:${location_id}`,
+      data_5: `total_records:${records.length}`,
+    });
 
     /** 4. Message */
     this.messageService.setMessage(
@@ -901,6 +923,14 @@ export class QcRecordService {
       (f) => f.status === 'Not Passed',
     ).length;
 
+    await this.logService.createLog(user ?? undefined, {
+      data_1: 'CREATE-QC-RECORD',
+      data_2: `qc_id:${qc_id}`,
+      data_3: `sequence_no:${sequence_no}`,
+      data_4: `location_id:${location_id}`,
+      data_5: `total_fields:${processedFields.length}`,
+    });
+
     // Jika tidak ada field yang diproses, status overall = "Not Passed"
     const statusOverall =
       processedFields.length === 0
@@ -957,6 +987,7 @@ export class QcRecordService {
     no_seq: number,
     piece_no: string,
     userId: string,
+    statusQc?: 'Passed' | 'Not Passed',
   ): Promise<QcRecordGroupedResult> {
     const user = await this.userRepo.findOne({
       where: { user_id: userId },
@@ -986,6 +1017,11 @@ export class QcRecordService {
       throw new NotFoundException(`QC Record ${qcId} tidak ditemukan`);
     }
 
+    let filteredDatas = record.datas;
+    if (statusQc) {
+      filteredDatas = record.datas.filter((d) => d.status === statusQc);
+    }
+
     const template = record.qc_template;
 
     // Step 1: Ambil semua data yang diperlukan (sama seperti getTemplate)
@@ -1002,7 +1038,7 @@ export class QcRecordService {
     });
 
     // Step 2: Map existing QC record data for quick lookup
-    const qcDataMap = new Map(record.datas.map((d) => [d.input_code, d]));
+    const qcDataMap = new Map(filteredDatas.map((d) => [d.input_code, d]));
 
     // console.log(
     //   '=== QC RECORD DATAS ===',
@@ -1241,7 +1277,6 @@ export class QcRecordService {
     // Mapping otomatis dari productTypeData ke kolom record
     const recordFieldMapping: Record<string, keyof typeof record> = {
       length: 'length',
-      'total.length': 'total_length',
       weight: 'weight',
       'kgm.actual': 'kg_m',
       'percent.deviasi': 'percent_deviasi',
@@ -1273,6 +1308,14 @@ export class QcRecordService {
 
     grouped.basic = makeGroupFromRecord(basicFields);
     grouped.default = makeGroupFromRecord(defaultFields);
+
+    await this.logService.createLog(user ?? undefined, {
+      data_1: 'GET-QC-DETAIL',
+      data_2: `qc_id:${qcId}`,
+      data_3: `sequence_no:${sequence_no}`,
+      data_4: `piece_no:${piece_no}`,
+      data_5: `location_id:${location_id}`,
+    });
 
     this.messageService.setMessage(`Berhasil memuat QC Record ${qcId}`);
     return grouped;

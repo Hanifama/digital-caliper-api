@@ -12,6 +12,7 @@ import { SheetModule } from '../sheet/sheet.module';
 import { ProductTypeData } from '../product/entity/product-type-data.entity';
 import { Location } from '../location/entity/location.entity';
 import { User } from '../auth/entitities/user.entity';
+import { LogModule } from '../log-app/log.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { User } from '../auth/entitities/user.entity';
     ]),
     MessageModule,
     SheetModule,
+    LogModule,
   ],
   controllers: [QcListController],
   providers: [QcListService],

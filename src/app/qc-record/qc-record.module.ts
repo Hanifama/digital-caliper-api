@@ -17,6 +17,7 @@ import { Size } from '../size/entity/size.entity';
 
 import { ProductTypeData } from '../product/entity/product-type-data.entity';
 import { ProductTypeDataMapping } from '../product/entity/product-type-data-mapping.entity';
+import { LogModule } from '../log-app/log.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { ProductTypeDataMapping } from '../product/entity/product-type-data-mapp
       Size,
     ]),
     MessageModule,
+    LogModule,
     // NotificationModule,
   ],
   controllers: [QcRecordController],

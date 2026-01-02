@@ -15,8 +15,8 @@ import {
 import type { Response } from 'express';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../../guard/jwtAuth.guard';
-import { RoleGuard } from '../../guard/role.guard';
-import { Roles } from '../../decorator/roles.decorator';
+// import { RoleGuard } from '../../guard/role.guard';
+// import { Roles } from '../../decorator/roles.decorator';
 import { ERole } from '../../types/enum/ERole.enum';
 import { User } from '../auth/entitities/user.entity';
 import { UpdatePasswordDto, UpdateUserDto } from './dto/updateUser.dto';
@@ -83,14 +83,22 @@ export class UserController {
     description: 'Status user',
   })
   @ApiResponse({ status: 200, description: 'Berhasil mengambil semua user' })
-  getAllUsers(
+  async getAllUsers(
+    @CurrentUser('id') userId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('role') role?: ERole,
     @Query('search') search?: string,
     @Query('status') status?: number,
   ): Promise<IResponsePageWrapper<User>> {
-    return this.userService.getAllUser(page, limit, role, search, status);
+    return this.userService.getAllUser(
+      userId,
+      page,
+      limit,
+      role,
+      search,
+      status,
+    );
   }
 
   /**
@@ -103,8 +111,11 @@ export class UserController {
   @ApiOperation({ summary: 'Buat user baru (Hanya Manajer)' })
   @ApiBody({ type: CreateUserDto })
   @ApiResponse({ status: 201, description: 'Berhasil membuat user baru' })
-  async register(@Body() dto: CreateUserDto) {
-    return this.userService.register(dto);
+  async register(
+    @CurrentUser('id') userId: string,
+    @Body() dto: CreateUserDto,
+  ) {
+    return this.userService.register(dto, userId);
   }
 
   /**
@@ -112,11 +123,15 @@ export class UserController {
    * @param res Response untuk mengirim file XLSX
    */
   @Get('export/xlsx')
+  @UseGuards(JwtAuthGuard)
   // @Roles(ERole.MANAJER)
   @ApiOperation({ summary: 'Export user ke XLSX (Hanya Manajer)' })
   @ApiResponse({ status: 200, description: 'Berhasil mengekspor data user' })
-  protected async exportUserHandler(@Res() res: Response): Promise<void> {
-    const { buffer, filename } = await this.userService.exportUser();
+  protected async exportUserHandler(
+    @CurrentUser('id') userId: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const { buffer, filename } = await this.userService.exportUser(userId);
 
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader(
@@ -166,12 +181,16 @@ export class UserController {
    * @returns Detail user
    */
   @Get(':userId')
+  @UseGuards(JwtAuthGuard)
   // @Roles(ERole.MANAJER)
   @ApiOperation({ summary: 'Ambil detail user berdasarkan ID' })
   @ApiParam({ name: 'userId', description: 'ID user yang ingin diambil' })
   @ApiResponse({ status: 200, description: 'Berhasil mengambil detail user' })
-  getUser(@Param('userId') userId: string): Promise<User> {
-    return this.userService.getUser(userId);
+  getUser(
+    @CurrentUser('id') ownerId: string,
+    @Param('userId') userId: string,
+  ): Promise<User> {
+    return this.userService.getUser(userId, ownerId);
   }
 
   /**
@@ -181,13 +200,18 @@ export class UserController {
    * @returns User yang sudah diperbarui
    */
   @Put(':userId')
+  @UseGuards(JwtAuthGuard)
   // @Roles(ERole.MANAJER)
   @ApiOperation({ summary: 'Update user berdasarkan ID (Hanya Manajer)' })
   @ApiParam({ name: 'userId', description: 'ID user yang ingin diperbarui' })
   @ApiBody({ type: UpdateUserDto })
   @ApiResponse({ status: 200, description: 'Berhasil memperbarui user' })
-  updateUser(@Param('userId') userId: string, @Body() dto: UpdateUserDto) {
-    return this.userService.updateUser(userId, dto);
+  updateUser(
+    @CurrentUser('id') ownerId: string,
+    @Param('userId') userId: string,
+    @Body() dto: UpdateUserDto,
+  ) {
+    return this.userService.updateUser(ownerId, userId, dto);
   }
 
   /**
@@ -196,6 +220,7 @@ export class UserController {
    * @param dto Data password baru
    */
   @Put('password/:userId')
+  @UseGuards(JwtAuthGuard)
   // @Roles(ERole.MANAJER)
   @ApiOperation({
     summary: 'Update password user berdasarkan ID (Hanya Manajer)',
@@ -210,10 +235,11 @@ export class UserController {
     description: 'Berhasil memperbarui password user',
   })
   updatePassword(
+    @CurrentUser('id') ownerId: string,
     @Param('userId') userId: string,
     @Body() dto: UpdatePasswordDto,
   ): Promise<void> {
-    return this.userService.updatePassword(userId, dto.newPassword);
+    return this.userService.updatePassword(ownerId, userId, dto.newPassword);
   }
 
   /**
@@ -221,11 +247,15 @@ export class UserController {
    * @param userId ID user
    */
   @Delete(':userId')
+  @UseGuards(JwtAuthGuard)
   // @Roles(ERole.MANAJER)
   @ApiOperation({ summary: 'Hapus user berdasarkan ID (Hanya Manajer)' })
   @ApiParam({ name: 'userId', description: 'ID user yang ingin dihapus' })
   @ApiResponse({ status: 200, description: 'Berhasil menghapus user' })
-  async deleteUser(@Param('userId') userId: string): Promise<void> {
-    return this.userService.deleteUser(userId);
+  async deleteUser(
+    @CurrentUser('id') ownerId: string,
+    @Param('userId') userId: string,
+  ): Promise<void> {
+    return this.userService.deleteUser(userId, ownerId);
   }
 }

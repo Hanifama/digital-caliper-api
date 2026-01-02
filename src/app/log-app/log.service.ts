@@ -15,8 +15,8 @@ export class LogService {
   ) {}
 
   async createLog(
-    user: User,
-    data: {
+    user?: User,
+    data?: {
       data_1?: string;
       data_2?: string;
       data_3?: string;
@@ -25,12 +25,12 @@ export class LogService {
     },
   ) {
     const log = new Log();
-    log.user = user;
-    log.data_1 = data.data_1 ?? '';
-    log.data_2 = data.data_2 ?? '';
-    log.data_3 = data.data_3 ?? '';
-    log.data_4 = data.data_4 ?? '';
-    log.data_5 = data.data_5 ?? '';
+    log.user = user ?? null;
+    log.data_1 = data?.data_1 ?? '';
+    log.data_2 = data?.data_2 ?? '';
+    log.data_3 = data?.data_3 ?? '';
+    log.data_4 = data?.data_4 ?? '';
+    log.data_5 = data?.data_5 ?? '';
 
     return await this.logRepo.save(log);
   }

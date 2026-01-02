@@ -23,70 +23,70 @@ INSERT INTO `qc_template_data` (`input_code`, `qc_template_id`, `label`, `input_
 ('C.B2','TMP-rtxtuyt','C(B2)','number',197,198.5,200,201.5,203,NULL,11,1,'','B2','table'),
 ('T.B2','TMP-rtxtuyt','T(B2)','number',197,198.5,200,201.5,203,NULL,12,1,'','B2','table'),
 
--- b1 (13-15)
-('H.b1','TMP-rtxtuyt','H(b1)','number',11,11.5,12,12.5,13,NULL,13,1,'','b1','table'),
-('C.b1','TMP-rtxtuyt','C(b1)','number',11,11.5,12,12.5,13,NULL,14,1,'','b1','table'),
-('T.b1','TMP-rtxtuyt','T(b1)','number',11,11.5,12,12.5,13,NULL,15,1,'','b1','table'),
+-- t1 (13-15)
+('H.t1','TMP-rtxtuyt','H(t1)','number',11,11.5,12,12.5,13,NULL,13,1,'','t1','table'),
+('C.t1','TMP-rtxtuyt','C(t1)','number',11,11.5,12,12.5,13,NULL,14,1,'','t1','table'),
+('T.t1','TMP-rtxtuyt','T(t1)','number',11,11.5,12,12.5,13,NULL,15,1,'','t1','table'),
 
--- b3 (16-18)
-('H.b3','TMP-rtxtuyt','H(b3)','number',11,11.5,12,12.5,13,NULL,16,1,'','b3','table'),
-('C.b3','TMP-rtxtuyt','C(b3)','number',11,11.5,12,12.5,13,NULL,17,1,'','b3','table'),
-('T.b3','TMP-rtxtuyt','T(b3)','number',11,11.5,12,12.5,13,NULL,18,1,'','b3','table'),
+-- t3 (16-18)
+('H.t3','TMP-rtxtuyt','H(t3)','number',11,11.5,12,12.5,13,NULL,16,1,'','t3','table'),
+('C.t3','TMP-rtxtuyt','C(t3)','number',11,11.5,12,12.5,13,NULL,17,1,'','t3','table'),
+('T.t3','TMP-rtxtuyt','T(t3)','number',11,11.5,12,12.5,13,NULL,18,1,'','t3','table'),
 
--- b2 (19-21)
-('H.b2','TMP-rtxtuyt','H(b2)','number',11,11.5,12,12.5,13,NULL,19,1,'','b2','table'),
-('C.b2','TMP-rtxtuyt','C(b2)','number',11,11.5,12,12.5,13,NULL,20,1,'','b2','table'),
-('T.b2','TMP-rtxtuyt','T(b2)','number',11,11.5,12,12.5,13,NULL,21,1,'','b2','table'),
+-- t2 (19-21)
+('H.t2','TMP-rtxtuyt','H(t2)','number',11,11.5,12,12.5,13,NULL,19,1,'','t2','table'),
+('C.t2','TMP-rtxtuyt','C(t2)','number',11,11.5,12,12.5,13,NULL,20,1,'','t2','table'),
+('T.t2','TMP-rtxtuyt','T(t2)','number',11,11.5,12,12.5,13,NULL,21,1,'','t2','table'),
 
--- b4 (22-24)
-('H.b4','TMP-rtxtuyt','H(b4)','number',11,11.5,12,12.5,13,NULL,22,1,'','b4','table'),
-('C.b4','TMP-rtxtuyt','C(b4)','number',11,11.5,12,12.5,13,NULL,23,1,'','b4','table'),
-('T.b4','TMP-rtxtuyt','T(b4)','number',11,11.5,12,12.5,13,NULL,24,1,'','b4','table'),
+-- t4 (22-24)
+('H.t4','TMP-rtxtuyt','H(t4)','number',11,11.5,12,12.5,13,NULL,22,1,'','t4','table'),
+('C.t4','TMP-rtxtuyt','C(t4)','number',11,11.5,12,12.5,13,NULL,23,1,'','t4','table'),
+('T.t4','TMP-rtxtuyt','T(t4)','number',11,11.5,12,12.5,13,NULL,24,1,'','t4','table'),
 
--- b1-b2/2 (25-27)
-('H.b1-b2/2','TMP-rtxtuyt','H(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,25,1,'','b1-b2/2','table'),
-('C.b1-b2/2','TMP-rtxtuyt','C(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,26,1,'','b1-b2/2','table'),
-('T.b1-b2/2','TMP-rtxtuyt','T(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,27,1,'','b1-b2/2','table'),
+-- t5 (25-27)
+('H.t5','TMP-rtxtuyt','H(t5)','number',7.3,7.65,8,8.35,8.7,NULL,25,1,'','t5','table'),
+('C.t5','TMP-rtxtuyt','C(t5)','number',7.3,7.65,8,8.35,8.7,NULL,26,1,'','t5','table'),
+('T.t5','TMP-rtxtuyt','T(t5)','number',7.3,7.65,8,8.35,8.7,NULL,27,1,'','t5','table'),
 
--- b3-b4/2 (28-30)
-('H.b3-b4/2','TMP-rtxtuyt','H(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,28,1,'','b3-b4/2','table'),
-('C.b3-b4/2','TMP-rtxtuyt','C(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,29,1,'','b3-b4/2','table'),
-('T.b3-b4/2','TMP-rtxtuyt','T(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,30,1,'','b3-b4/2','table'),
+-- t6 (28-30)
+('H.t6','TMP-rtxtuyt','H(t6)','number',7.3,7.65,8,8.35,8.7,NULL,28,1,'','t6','table'),
+('C.t6','TMP-rtxtuyt','C(t6)','number',7.3,7.65,8,8.35,8.7,NULL,29,1,'','t6','table'),
+('T.t6','TMP-rtxtuyt','T(t6)','number',7.3,7.65,8,8.35,8.7,NULL,30,1,'','t6','table'),
 
--- t1 (31-33)
-('H.t1','TMP-rtxtuyt','H(t1)','number',11,11.5,12,12.5,13,NULL,31,1,'','t1','table'),
-('C.t1','TMP-rtxtuyt','C(t1)','number',11,11.5,12,12.5,13,NULL,32,1,'','t1','table'),
-('T.t1','TMP-rtxtuyt','T(t1)','number',11,11.5,12,12.5,13,NULL,33,1,'','t1','table'),
+-- t7 (31-33)
+('H.t7','TMP-rtxtuyt','H(t7)','number',7.3,7.65,8,8.35,8.7,NULL,31,1,'','t7','table'),
+('C.t7','TMP-rtxtuyt','C(t7)','number',7.3,7.65,8,8.35,8.7,NULL,32,1,'','t7','table'),
+('T.t7','TMP-rtxtuyt','T(t7)','number',7.3,7.65,8,8.35,8.7,NULL,33,1,'','t7','table'),
 
--- t3 (34-36)
-('H.t3','TMP-rtxtuyt','H(t3)','number',11,11.5,12,12.5,13,NULL,34,1,'','t3','table'),
-('C.t3','TMP-rtxtuyt','C(t3)','number',11,11.5,12,12.5,13,NULL,35,1,'','t3','table'),
-('T.t3','TMP-rtxtuyt','T(t3)','number',11,11.5,12,12.5,13,NULL,36,1,'','t3','table'),
+-- b1 (34-36)
+('H.b1','TMP-rtxtuyt','H(b1)','number',11,11.5,12,12.5,13,NULL,34,1,'','b1','table'),
+('C.b1','TMP-rtxtuyt','C(b1)','number',11,11.5,12,12.5,13,NULL,35,1,'','b1','table'),
+('T.b1','TMP-rtxtuyt','T(b1)','number',11,11.5,12,12.5,13,NULL,36,1,'','b1','table'),
 
--- t2 (37-39)
-('H.t2','TMP-rtxtuyt','H(t2)','number',11,11.5,12,12.5,13,NULL,37,1,'','t2','table'),
-('C.t2','TMP-rtxtuyt','C(t2)','number',11,11.5,12,12.5,13,NULL,38,1,'','t2','table'),
-('T.t2','TMP-rtxtuyt','T(t2)','number',11,11.5,12,12.5,13,NULL,39,1,'','t2','table'),
+-- b3 (37-39)
+('H.b3','TMP-rtxtuyt','H(b3)','number',11,11.5,12,12.5,13,NULL,37,1,'','b3','table'),
+('C.b3','TMP-rtxtuyt','C(b3)','number',11,11.5,12,12.5,13,NULL,38,1,'','b3','table'),
+('T.b3','TMP-rtxtuyt','T(b3)','number',11,11.5,12,12.5,13,NULL,39,1,'','b3','table'),
 
--- t4 (40-42)
-('H.t4','TMP-rtxtuyt','H(t4)','number',11,11.5,12,12.5,13,NULL,40,1,'','t4','table'),
-('C.t4','TMP-rtxtuyt','C(t4)','number',11,11.5,12,12.5,13,NULL,41,1,'','t4','table'),
-('T.t4','TMP-rtxtuyt','T(t4)','number',11,11.5,12,12.5,13,NULL,42,1,'','t4','table'),
+-- b2 (40-42)
+('H.b2','TMP-rtxtuyt','H(b2)','number',11,11.5,12,12.5,13,NULL,40,1,'','b2','table'),
+('C.b2','TMP-rtxtuyt','C(b2)','number',11,11.5,12,12.5,13,NULL,41,1,'','b2','table'),
+('T.b2','TMP-rtxtuyt','T(b2)','number',11,11.5,12,12.5,13,NULL,42,1,'','b2','table'),
 
--- t5 (43-45)
-('H.t5','TMP-rtxtuyt','H(t5)','number',7.3,7.65,8,8.35,8.7,NULL,43,1,'','t5','table'),
-('C.t5','TMP-rtxtuyt','C(t5)','number',7.3,7.65,8,8.35,8.7,NULL,44,1,'','t5','table'),
-('T.t5','TMP-rtxtuyt','T(t5)','number',7.3,7.65,8,8.35,8.7,NULL,45,1,'','t5','table'),
+-- b4 (43-45)
+('H.b4','TMP-rtxtuyt','H(b4)','number',11,11.5,12,12.5,13,NULL,43,1,'','b4','table'),
+('C.b4','TMP-rtxtuyt','C(b4)','number',11,11.5,12,12.5,13,NULL,44,1,'','b4','table'),
+('T.b4','TMP-rtxtuyt','T(b4)','number',11,11.5,12,12.5,13,NULL,45,1,'','b4','table'),
 
--- t6 (46-48)
-('H.t6','TMP-rtxtuyt','H(t6)','number',7.3,7.65,8,8.35,8.7,NULL,46,1,'','t6','table'),
-('C.t6','TMP-rtxtuyt','C(t6)','number',7.3,7.65,8,8.35,8.7,NULL,47,1,'','t6','table'),
-('T.t6','TMP-rtxtuyt','T(t6)','number',7.3,7.65,8,8.35,8.7,NULL,48,1,'','t6','table'),
+-- b1-b2/2 (46-48)
+('H.b1-b2/2','TMP-rtxtuyt','H(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,46,1,'','b1-b2/2','table'),
+('C.b1-b2/2','TMP-rtxtuyt','C(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,47,1,'','b1-b2/2','table'),
+('T.b1-b2/2','TMP-rtxtuyt','T(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,48,1,'','b1-b2/2','table'),
 
--- t7 (49-51)
-('H.t7','TMP-rtxtuyt','H(t7)','number',7.3,7.65,8,8.35,8.7,NULL,49,1,'','t7','table'),
-('C.t7','TMP-rtxtuyt','C(t7)','number',7.3,7.65,8,8.35,8.7,NULL,50,1,'','t7','table'),
-('T.t7','TMP-rtxtuyt','T(t7)','number',7.3,7.65,8,8.35,8.7,NULL,51,1,'','t7','table'),
+-- b3-b4/2 (49-51)
+('H.b3-b4/2','TMP-rtxtuyt','H(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,49,1,'','b3-b4/2','table'),
+('C.b3-b4/2','TMP-rtxtuyt','C(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,50,1,'','b3-b4/2','table'),
+('T.b3-b4/2','TMP-rtxtuyt','T(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,51,1,'','b3-b4/2','table'),
 
 -- FormRight (52-60)
 ('height.of.flange','TMP-rtxtuyt','Height of Flange','number',197,198.5,200,201.5,203,0,52,1,'','FormRight','Height of Flange'),

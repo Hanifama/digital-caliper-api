@@ -17,6 +17,7 @@ import { User } from './entitities/user.entity';
 import { Role } from './entitities/role.entity';
 import { Menu } from './entitities/menu.entity';
 import { RoleMenu } from './entitities/role-menu.entity';
+import { LogModule } from '../log-app/log.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { RoleMenu } from './entitities/role-menu.entity';
       }),
     }),
     MessageModule,
+    LogModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, TokenManagerService, PasswordService, JwtStrategy],

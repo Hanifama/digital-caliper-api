@@ -38,7 +38,7 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: true })
   image: string;
 
-  @Column({ type: 'datetime', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   last_login: Date;
 
   @Column({ type: 'int', default: 1 })

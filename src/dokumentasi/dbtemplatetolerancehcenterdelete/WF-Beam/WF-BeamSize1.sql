@@ -23,81 +23,81 @@ INSERT INTO `qc_template_data` (`input_code`, `qc_template_id`, `label`, `input_
 ('C.B2','TMP-wfagxqpk','C(B2)','number',48,49,50,51,52,NULL,11,1,'','B2','table'),
 ('T.B2','TMP-wfagxqpk','T(B2)','number',48,49,50,51,52,NULL,12,1,'','B2','table'),
 
--- b1 (13-15) - Flange Thickness
-('H.b1','TMP-wfagxqpk','H(b1)','number',5.5,6.25,7,7.75,8.5,NULL,13,1,'','b1','table'),
-('C.b1','TMP-wfagxqpk','C(b1)','number',5.5,6.25,7,7.75,8.5,NULL,14,1,'','b1','table'),
-('T.b1','TMP-wfagxqpk','T(b1)','number',5.5,6.25,7,7.75,8.5,NULL,15,1,'','b1','table'),
+-- t1 (13-15) - Flange Thickness
+('H.t1','TMP-wfagxqpk','H(t1)','number',5.5,6.25,7,7.75,8.5,NULL,13,1,'','t1','table'),
+('C.t1','TMP-wfagxqpk','C(t1)','number',5.5,6.25,7,7.75,8.5,NULL,14,1,'','t1','table'),
+('T.t1','TMP-wfagxqpk','T(t1)','number',5.5,6.25,7,7.75,8.5,NULL,15,1,'','t1','table'),
 
--- b3 (16-18) - Flange Thickness
-('H.b3','TMP-wfagxqpk','H(b3)','number',5.5,6.25,7,7.75,8.5,NULL,16,1,'','b3','table'),
-('C.b3','TMP-wfagxqpk','C(b3)','number',5.5,6.25,7,7.75,8.5,NULL,17,1,'','b3','table'),
-('T.b3','TMP-wfagxqpk','T(b3)','number',5.5,6.25,7,7.75,8.5,NULL,18,1,'','b3','table'),
+-- t3 (16-18) - Flange Thickness
+('H.t3','TMP-wfagxqpk','H(t3)','number',5.5,6.25,7,7.75,8.5,NULL,16,1,'','t3','table'),
+('C.t3','TMP-wfagxqpk','C(t3)','number',5.5,6.25,7,7.75,8.5,NULL,17,1,'','t3','table'),
+('T.t3','TMP-wfagxqpk','T(t3)','number',5.5,6.25,7,7.75,8.5,NULL,18,1,'','t3','table'),
 
--- b2 (19-21) - Flange Thickness
-('H.b2','TMP-wfagxqpk','H(b2)','number',5.5,6.25,7,7.75,8.5,NULL,19,1,'','b2','table'),
-('C.b2','TMP-wfagxqpk','C(b2)','number',5.5,6.25,7,7.75,8.5,NULL,20,1,'','b2','table'),
-('T.b2','TMP-wfagxqpk','T(b2)','number',5.5,6.25,7,7.75,8.5,NULL,21,1,'','b2','table'),
+-- t2 (19-21) - Flange Thickness
+('H.t2','TMP-wfagxqpk','H(t2)','number',5.5,6.25,7,7.75,8.5,NULL,19,1,'','t2','table'),
+('C.t2','TMP-wfagxqpk','C(t2)','number',5.5,6.25,7,7.75,8.5,NULL,20,1,'','t2','table'),
+('T.t2','TMP-wfagxqpk','T(t2)','number',5.5,6.25,7,7.75,8.5,NULL,21,1,'','t2','table'),
 
--- b4 (22-24) - Flange Thickness
-('H.b4','TMP-wfagxqpk','H(b4)','number',5.5,6.25,7,7.75,8.5,NULL,22,1,'','b4','table'),
-('C.b4','TMP-wfagxqpk','C(b4)','number',5.5,6.25,7,7.75,8.5,NULL,23,1,'','b4','table'),
-('T.b4','TMP-wfagxqpk','T(b4)','number',5.5,6.25,7,7.75,8.5,NULL,24,1,'','b4','table'),
+-- t4 (22-24) - Flange Thickness
+('H.t4','TMP-wfagxqpk','H(t4)','number',5.5,6.25,7,7.75,8.5,NULL,22,1,'','t4','table'),
+('C.t4','TMP-wfagxqpk','C(t4)','number',5.5,6.25,7,7.75,8.5,NULL,23,1,'','t4','table'),
+('T.t4','TMP-wfagxqpk','T(t4)','number',5.5,6.25,7,7.75,8.5,NULL,24,1,'','t4','table'),
 
--- b1-b2/2 (25-27) - Web Off Center 
-('H.b1-b2/2','TMP-wfagxqpk','H(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,25,1,'','b1-b2/2','table'),
-('C.b1-b2/2','TMP-wfagxqpk','C(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,26,1,'','b1-b2/2','table'),
-('T.b1-b2/2','TMP-wfagxqpk','T(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,27,1,'','b1-b2/2','table'),
+-- t5 (25-27) - Web Thickness
+('H.t5','TMP-wfagxqpk','H(t5)','number',4,4.65,5.3,5.95,6.6,NULL,25,1,'','t5','table'),
+('C.t5','TMP-wfagxqpk','C(t5)','number',4,4.65,5.3,5.95,6.6,NULL,26,1,'','t5','table'),
+('T.t5','TMP-wfagxqpk','T(t5)','number',4,4.65,5.3,5.95,6.6,NULL,27,1,'','t5','table'),
 
--- b3-b4/2 (28-30) - Web Off Center 
-('H.b3-b4/2','TMP-wfagxqpk','H(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,28,1,'','b3-b4/2','table'),
-('C.b3-b4/2','TMP-wfagxqpk','C(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,29,1,'','b3-b4/2','table'),
-('T.b3-b4/2','TMP-wfagxqpk','T(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,30,1,'','b3-b4/2','table'),
+-- t6 (28-30) - Web Thickness
+('H.t6','TMP-wfagxqpk','H(t6)','number',4,4.65,5.3,5.95,6.6,NULL,28,1,'','t6','table'),
+('C.t6','TMP-wfagxqpk','C(t6)','number',4,4.65,5.3,5.95,6.6,NULL,29,1,'','t6','table'),
+('T.t6','TMP-wfagxqpk','T(t6)','number',4,4.65,5.3,5.95,6.6,NULL,30,1,'','t6','table'),
 
--- t1 (31-33) - Flange Thickness
-('H.t1','TMP-wfagxqpk','H(t1)','number',5.5,6.25,7,7.75,8.5,NULL,31,1,'','t1','table'),
-('C.t1','TMP-wfagxqpk','C(t1)','number',5.5,6.25,7,7.75,8.5,NULL,32,1,'','t1','table'),
-('T.t1','TMP-wfagxqpk','T(t1)','number',5.5,6.25,7,7.75,8.5,NULL,33,1,'','t1','table'),
+-- t7 (31-33) - Web Thickness
+('H.t7','TMP-wfagxqpk','H(t7)','number',4,4.65,5.3,5.95,6.6,NULL,31,1,'','t7','table'),
+('C.t7','TMP-wfagxqpk','C(t7)','number',4,4.65,5.3,5.95,6.6,NULL,32,1,'','t7','table'),
+('T.t7','TMP-wfagxqpk','T(t7)','number',4,4.65,5.3,5.95,6.6,NULL,33,1,'','t7','table'),
 
--- t3 (34-36) - Flange Thickness
-('H.t3','TMP-wfagxqpk','H(t3)','number',5.5,6.25,7,7.75,8.5,NULL,34,1,'','t3','table'),
-('C.t3','TMP-wfagxqpk','C(t3)','number',5.5,6.25,7,7.75,8.5,NULL,35,1,'','t3','table'),
-('T.t3','TMP-wfagxqpk','T(t3)','number',5.5,6.25,7,7.75,8.5,NULL,36,1,'','t3','table'),
+-- b1 (34-36) - Flange Thickness 
+('H.b1','TMP-wfagxqpk','H(b1)','number',5.5,6.25,7,7.75,8.5,NULL,34,1,'','b1','table'),
+('C.b1','TMP-wfagxqpk','C(b1)','number',5.5,6.25,7,7.75,8.5,NULL,35,1,'','b1','table'),
+('T.b1','TMP-wfagxqpk','T(b1)','number',5.5,6.25,7,7.75,8.5,NULL,36,1,'','b1','table'),
 
--- t2 (37-39) - Flange Thickness
-('H.t2','TMP-wfagxqpk','H(t2)','number',5.5,6.25,7,7.75,8.5,NULL,37,1,'','t2','table'),
-('C.t2','TMP-wfagxqpk','C(t2)','number',5.5,6.25,7,7.75,8.5,NULL,38,1,'','t2','table'),
-('T.t2','TMP-wfagxqpk','T(t2)','number',5.5,6.25,7,7.75,8.5,NULL,39,1,'','t2','table'),
+-- b3 (37-39) - Flange Thickness 
+('H.b3','TMP-wfagxqpk','H(b3)','number',5.5,6.25,7,7.75,8.5,NULL,37,1,'','b3','table'),
+('C.b3','TMP-wfagxqpk','C(b3)','number',5.5,6.25,7,7.75,8.5,NULL,38,1,'','b3','table'),
+('T.b3','TMP-wfagxqpk','T(b3)','number',5.5,6.25,7,7.75,8.5,NULL,39,1,'','b3','table'),
 
--- t4 (40-42) - Flange Thickness
-('H.t4','TMP-wfagxqpk','H(t4)','number',5.5,6.25,7,7.75,8.5,NULL,40,1,'','t4','table'),
-('C.t4','TMP-wfagxqpk','C(t4)','number',5.5,6.25,7,7.75,8.5,NULL,41,1,'','t4','table'),
-('T.t4','TMP-wfagxqpk','T(t4)','number',5.5,6.25,7,7.75,8.5,NULL,42,1,'','t4','table'),
+-- b2 (40-42) - Flange Thickness 
+('H.b2','TMP-wfagxqpk','H(b2)','number',5.5,6.25,7,7.75,8.5,NULL,40,1,'','b2','table'),
+('C.b2','TMP-wfagxqpk','C(b2)','number',5.5,6.25,7,7.75,8.5,NULL,41,1,'','b2','table'),
+('T.b2','TMP-wfagxqpk','T(b2)','number',5.5,6.25,7,7.75,8.5,NULL,42,1,'','b2','table'),
 
--- t5 (43-45) - Web Thickness
-('H.t5','TMP-wfagxqpk','H(t5)','number',4,4.65,5.3,5.95,6.6,NULL,43,1,'','t5','table'),
-('C.t5','TMP-wfagxqpk','C(t5)','number',4,4.65,5.3,5.95,6.6,NULL,44,1,'','t5','table'),
-('T.t5','TMP-wfagxqpk','T(t5)','number',4,4.65,5.3,5.95,6.6,NULL,45,1,'','t5','table'),
+-- b4 (43-45) - Flange Thickness 
+('H.b4','TMP-wfagxqpk','H(b4)','number',5.5,6.25,7,7.75,8.5,NULL,43,1,'','b4','table'),
+('C.b4','TMP-wfagxqpk','C(b4)','number',5.5,6.25,7,7.75,8.5,NULL,44,1,'','b4','table'),
+('T.b4','TMP-wfagxqpk','T(b4)','number',5.5,6.25,7,7.75,8.5,NULL,45,1,'','b4','table'),
 
--- t6 (NULL) - Web Thickness
-('H.t6','TMP-wfagxqpk','H(t6)','number',4,4.65,5.3,5.95,6.6,NULL,NULL,1,'','t6','table'),
-('C.t6','TMP-wfagxqpk','C(t6)','number',4,4.65,5.3,5.95,6.6,NULL,NULL,1,'','t6','table'),
-('T.t6','TMP-wfagxqpk','T(t6)','number',4,4.65,5.3,5.95,6.6,NULL,NULL,1,'','t6','table'),
+-- b1-b2/2 (46-48) - Web Off Center 
+('H.b1-b2/2','TMP-wfagxqpk','H(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,46,1,'','b1-b2/2','table'),
+('C.b1-b2/2','TMP-wfagxqpk','C(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,47,1,'','b1-b2/2','table'),
+('T.b1-b2/2','TMP-wfagxqpk','T(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,48,1,'','b1-b2/2','table'),
 
--- t7 (NULL) - Web Thickness  
-('H.t7','TMP-wfagxqpk','H(t7)','number',4,4.65,5.3,5.95,6.6,NULL,NULL,1,'','t7','table'),
-('C.t7','TMP-wfagxqpk','C(t7)','number',4,4.65,5.3,5.95,6.6,NULL,NULL,1,'','t7','table'),
-('T.t7','TMP-wfagxqpk','T(t7)','number',4,4.65,5.3,5.95,6.6,NULL,NULL,1,'','t7','table'),
+-- b3-b4/2 (49-51) - Web Off Center 
+('H.b3-b4/2','TMP-wfagxqpk','H(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,49,1,'','b3-b4/2','table'),
+('C.b3-b4/2','TMP-wfagxqpk','C(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,50,1,'','b3-b4/2','table'),
+('T.b3-b4/2','TMP-wfagxqpk','T(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,51,1,'','b3-b4/2','table'),
 
--- FormRight (46-54) 
-('height.of.flange','TMP-wfagxqpk','Height of Flange','number',48,49,50,51,52,0,46,1,'','FormRight','Height of Flange'),
-('flange.thickness','TMP-wfagxqpk','Flange Thickness','number',5.5,6.25,7,7.75,8.5,0,47,1,'','FormRight','Flange Thickness'),
-('width.of.web','TMP-wfagxqpk','Width of Web','number',98,99,100,101,102,0,48,1,'','FormRight','Width of Web'),
-('web.thickness','TMP-wfagxqpk','Web Thickness','number',4,4.65,5.3,5.95,6.6,0,49,1,'','FormRight','Web Thickness'),
-('unit.weight','TMP-wfagxqpk','Unit Weight (Kgm)','number',8.6,9.05,9.5,9.95,10.4,0,50,1,'','FormRight','Unit Weight (Kgm)'),
-('radius','TMP-wfagxqpk','Radius','number',0,0,8,0,0,0,51,1,'','FormRight','Radius'),
-('web.off.center','TMP-wfagxqpk','Web Off Center','number',-2.5,-1.25,0,1.25,2.5,0,52,1,'','FormRight','Web Off Center'),
-('os','TMP-wfagxqpk','OS','number',0,0,1.5,0,0,0,53,1,'','FormRight','OS'),
-('cow','TMP-wfagxqpk','CoW','number',0,0,0,0,0,2,54,1,'','FormRight','CoW');
+-- FormRight (52-60) 
+('height.of.flange','TMP-wfagxqpk','Height of Flange','number',48,49,50,51,52,0,52,1,'','FormRight','Height of Flange'),
+('flange.thickness','TMP-wfagxqpk','Flange Thickness','number',5.5,6.25,7,7.75,8.5,0,53,1,'','FormRight','Flange Thickness'),
+('width.of.web','TMP-wfagxqpk','Width of Web','number',98,99,100,101,102,0,54,1,'','FormRight','Width of Web'),
+('web.thickness','TMP-wfagxqpk','Web Thickness','number',4,4.65,5.3,5.95,6.6,0,55,1,'','FormRight','Web Thickness'),
+('unit.weight','TMP-wfagxqpk','Unit Weight (Kgm)','number',8.6,9.05,9.5,9.95,10.4,0,56,1,'','FormRight','Unit Weight (Kgm)'),
+('radius','TMP-wfagxqpk','Radius','number',0,0,8,0,0,0,57,1,'','FormRight','Radius'),
+('web.off.center','TMP-wfagxqpk','Web Off Center','number',-2.5,-1.25,0,1.25,2.5,0,58,1,'','FormRight','Web Off Center'),
+('os','TMP-wfagxqpk','OS','number',0,0,1.5,0,0,0,59,1,'','FormRight','OS'),
+('cow','TMP-wfagxqpk','CoW','number',0,0,0,0,0,2,60,1,'','FormRight','CoW');
 
 INSERT INTO `qc_template_mapping` (`mapping_id`, `qc_template_id`, `group_name`, `position`, `order_numb`) VALUES
 (CONCAT('MAP', LEFT(UUID(),8)), 'TMP-wfagxqpk', 'Width of Web', 'H-Top', 0),

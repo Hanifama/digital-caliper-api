@@ -1,27 +1,18 @@
-import {
-  Injectable,
-  BadRequestException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { User } from './entitities/user.entity';
-import { Role } from './entitities/role.entity';
 
-import { RegisterUserDto } from './dto/registerUser.dto';
 import { LoginUserDto } from './dto/loginUser.dto';
-import {
-  IRefreshTokenResponse,
-  RefreshTokenDto,
-  UserResponseDto,
-} from './dto/token.dto';
+import { IRefreshTokenResponse, RefreshTokenDto } from './dto/token.dto';
 
 import { PasswordService } from './password.service';
 import { TokenManagerService } from './tokenManager.service';
 import { MessageService } from '../message/message.service';
 
 import { IJwtPayload } from 'src/types/interface/IJwtPayload.interface';
+import { LogService } from '../log-app/log.service';
 
 @Injectable()
 export class AuthService {
@@ -32,6 +23,7 @@ export class AuthService {
     private readonly tokenManager: TokenManagerService,
     private readonly messageService: MessageService,
     private readonly tokenManagerService: TokenManagerService,
+    private readonly logService: LogService,
   ) {}
 
   /**
@@ -82,7 +74,7 @@ export class AuthService {
     // Membuat payload JWT
     const payload: IJwtPayload = {
       id: user.user_id,
-      name: user.name,
+      name: user.full_name,
       email: user.email,
       role: user.role?.name,
     };
@@ -92,6 +84,14 @@ export class AuthService {
     const refreshToken = await this.tokenManager.generateRefreshToken(payload);
 
     this.messageService.setMessage('Login berhasil.');
+
+    await this.logService.createLog(user, {
+      data_1: 'LOGIN-USER',
+      data_2: `user_id:${user.user_id}`,
+      data_3: `email:${user.email}`,
+      data_4: `role:${user.role?.name || '-'}`,
+      data_5: `last_login:${user.last_login.toISOString()}`,
+    });
 
     return {
       accessToken,

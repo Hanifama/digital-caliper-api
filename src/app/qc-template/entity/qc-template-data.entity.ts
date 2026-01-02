@@ -3,7 +3,7 @@ import { QcTemplate } from './qc-template.entity';
 
 @Entity('qc_template_data')
 export class QcTemplateData {
-  @PrimaryColumn({ length: 25, collation: 'utf8mb4_bin' })
+  @PrimaryColumn({ length: 25 })
   input_code: string;
 
   @PrimaryColumn({ length: 25 })

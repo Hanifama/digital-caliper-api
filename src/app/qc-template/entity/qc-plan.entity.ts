@@ -113,10 +113,10 @@ export class QcPlan {
   @Column('float', { nullable: true })
   finish_temp: number;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'timestamp' })
   charging_time: Date;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'timestamp' })
   discharging_time: Date;
 
   @Column('float', { nullable: true })
@@ -131,7 +131,7 @@ export class QcPlan {
   @Column({ length: 50 })
   created_by: string;
 
-  @Column()
+  @Column({ type: 'timestamp', default: () => 'now()' })
   created_dt: Date;
 
   @Column({ length: 50, nullable: true })

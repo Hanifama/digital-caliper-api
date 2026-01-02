@@ -20,7 +20,7 @@ import { AppLoggerMiddleware } from './middleware/Logger.middleware';
 import { ExceptionFilter } from './filter/exception.filter';
 import { ResponseInterceptor } from './interceptor/response.interceptor';
 
-import { datasourceMySQL } from './config/database.config';
+import { datasourcePostgres } from './config/database.config';
 
 import { MessageModule } from './app/message/message.module';
 import { AuthModule } from './app/auth/auth.module';
@@ -37,6 +37,7 @@ import { QcRecordModule } from './app/qc-record/qc-record.module';
 import { AppVersionModule } from './app/app-version/app-version.module';
 import { LogModule } from './app/log-app/log.module';
 import { NotificationModule } from './app/notification/notification.module';
+import { GeneratorModule } from './app/generator/generator.module';
 
 let transactionalDS: DataSource;
 
@@ -49,7 +50,7 @@ let transactionalDS: DataSource;
     TypeOrmModule.forRootAsync({
       useFactory() {
         return {
-          ...datasourceMySQL.options,
+          ...datasourcePostgres.options,
           autoLoadEntities: true,
         };
       },
@@ -69,6 +70,7 @@ let transactionalDS: DataSource;
     AppVersionModule,
     LogModule,
     NotificationModule,
+    GeneratorModule,
     UploadModule,
     MasterModule,
     SizeModule,

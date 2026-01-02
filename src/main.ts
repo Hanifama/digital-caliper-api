@@ -105,7 +105,7 @@ import compression from 'compression';
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api-docs', app, document);
+  SwaggerModule.setup('Documentation', app, document);
 
   await app.listen(port, '0.0.0.0');
   Logger.log(`✅ Application is running on: http://0.0.0.0:${port}`);

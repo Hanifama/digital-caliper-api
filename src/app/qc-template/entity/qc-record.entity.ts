@@ -120,10 +120,10 @@ export class QcRecord {
   @Column('float', { nullable: true })
   finish_temp: number;
 
-  @Column({ nullable: true, type: 'datetime' })
+  @Column({ nullable: true, type: 'timestamp' })
   charging_time: Date;
 
-  @Column({ nullable: true, type: 'datetime' })
+  @Column({ nullable: true, type: 'timestamp' })
   discharging_time: Date;
 
   @Column('float', { nullable: true })
@@ -153,13 +153,13 @@ export class QcRecord {
   @Column({ length: 20, nullable: true })
   status_overall: string;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ type: 'timestamp', default: () => 'now()' })
   start_dt: Date;
 
   @Column({ length: 50, nullable: true })
   created_by: string;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ type: 'timestamp', default: () => 'now()' })
   created_dt: Date;
 
   @Column({ length: 50, nullable: true })

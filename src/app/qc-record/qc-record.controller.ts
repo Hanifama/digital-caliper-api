@@ -56,6 +56,7 @@ export class QcRecordController {
     description: 'Berhasil mengambil histori QC Record',
   })
   async getAllQcRecordHistory(
+    @CurrentUser('id') userId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('search') search?: string,
@@ -64,6 +65,7 @@ export class QcRecordController {
     @Query('end_date') end_date?: string,
   ) {
     return this.qcRecordService.getAllQcRecordHistory(
+      userId,
       page,
       limit,
       search,
@@ -145,6 +147,12 @@ export class QcRecordController {
    */
   @Get(':qcId/:no_seq/:piece_no')
   @ApiOperation({ summary: 'Ambil detail QC Record dikelompokkan' })
+  @ApiQuery({
+    name: 'status_qc',
+    required: false,
+    enum: ['Passed', 'Not Passed'],
+    description: 'Filter data QC berdasarkan status (optional)',
+  })
   @ApiParam({ name: 'qcId', description: 'ID QC Record' })
   @ApiResponse({
     status: 200,
@@ -155,12 +163,14 @@ export class QcRecordController {
     @Param('qcId') qcId: string,
     @Param('no_seq') no_seq: number,
     @Param('piece_no') piece_no: string,
+    @Query('status_qc') statusQc?: 'Passed' | 'Not Passed',
   ): Promise<QcRecordGroupedResult> {
     return this.qcRecordService.getQcRecordDetail(
       qcId,
       no_seq,
       piece_no,
       userId,
+      statusQc,
     );
   }
 }

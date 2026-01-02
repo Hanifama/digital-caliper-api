@@ -24,6 +24,7 @@ import { CreateUserDto } from './dto/createUser.dto';
 import { UserResponseDto } from './interface/userResponse';
 import { Location } from '../location/entity/location.entity';
 import { UpdateProfileDto } from './dto/updateProfile.dto';
+import { LogService } from '../log-app/log.service';
 
 @Injectable()
 export class UserService {
@@ -39,6 +40,7 @@ export class UserService {
 
     private readonly passwordService: PasswordService,
     private readonly messageService: MessageService,
+    private readonly logService: LogService,
 
     private readonly sheetService: SheetService,
   ) {}
@@ -110,6 +112,7 @@ export class UserService {
    * Mendapatkan list pengguna
    */
   public async getAllUser(
+    userId: string,
     page: number = 1,
     limit: number = 10,
     role?: ERole,
@@ -117,6 +120,13 @@ export class UserService {
     status?: number,
   ): Promise<IResponsePageWrapper<any>> {
     const offset = (page - 1) * limit;
+
+    const user = await this.userRepo.findOne({ where: { user_id: userId } });
+    if (!user) {
+      throw new BadRequestException(
+        `User dengan ID ${userId} tidak ditemukan.`,
+      );
+    }
 
     // Query utama: ambil user + role + location
     const usersQuery = this.userRepo
@@ -131,8 +141,8 @@ export class UserService {
     if (search) {
       const searchLower = `%${search.toLowerCase()}%`;
       usersQuery.andWhere(
-        '(LOWER(user.name) LIKE :search OR LOWER(user.email) LIKE :search OR LOWER(user.departement) LIKE :search)',
-        { search: searchLower },
+        '(user.name ILIKE :search OR user.email ILIKE :search OR user.departement ILIKE :search)',
+        { search: `%${search}%` },
       );
     }
 
@@ -163,6 +173,14 @@ export class UserService {
 
     this.messageService.setMessage('Berhasil memuat daftar user');
 
+    await this.logService.createLog(user, {
+      data_1: 'GET-ALL-USER',
+      data_2: `page:${page}`,
+      data_3: `limit:${limit}`,
+      data_4: `search:${search || '-'}`,
+      data_5: `role:${role || '-'}`,
+    });
+
     return {
       meta: {
         page,
@@ -178,11 +196,20 @@ export class UserService {
   /**
    * Export XLSX list pengguna
    */
-  public async exportUser(): Promise<{ filename: string; buffer: Buffer }> {
+  public async exportUser(
+    userId?: string,
+  ): Promise<{ filename: string; buffer: Buffer }> {
     // ambil semua user
     const users: User[] = await this.userRepo.find({
       relations: ['role'],
     });
+
+    const user = await this.userRepo.findOne({ where: { user_id: userId } });
+    if (!user) {
+      throw new BadRequestException(
+        `User dengan ID ${userId} tidak ditemukan.`,
+      );
+    }
 
     // mapping ke format Excel
     const formatedData = users.map((user) => ({
@@ -203,21 +230,42 @@ export class UserService {
 
     this.messageService.setMessage('Berhasil export user!');
 
+    await this.logService.createLog(user, {
+      data_1: 'EXPORT-USER',
+      data_2: `total:${users.length}`,
+    });
+
     return { filename, buffer };
   }
 
   /**
    * Mendapatkan list pengguna by userId
    */
-  public async getUser(userId: string): Promise<any> {
-    const user = await this.userRepo.findOne({
+  public async getUser(userId: string, ownerId: string): Promise<any> {
+    const getUser = await this.userRepo.findOne({
       where: { user_id: userId },
       relations: ['role', 'location'],
     });
 
-    if (!user) throw new NotFoundException('User tidak ditemukan');
+    const user = await this.userRepo.findOne({ where: { user_id: ownerId } });
+    if (!user) {
+      throw new BadRequestException(
+        `User dengan ID ${ownerId} tidak ditemukan.`,
+      );
+    }
+
+    if (!getUser) throw new NotFoundException('User tidak ditemukan');
 
     this.messageService.setMessage('Berhasil memuat detail user.');
+
+    const currentUser = await this.userRepo.findOne({
+      where: { user_id: userId },
+    });
+
+    await this.logService.createLog(user, {
+      data_1: 'GET-USER',
+      data_2: `user_id:${userId}`,
+    });
 
     return {
       user_id: user.user_id,
@@ -259,6 +307,11 @@ export class UserService {
     const safeUser = this.safeUser(user);
 
     this.messageService.setMessage('Berhasil mengambil profil user');
+
+    await this.logService.createLog(user, {
+      data_1: 'GET-PROFILE',
+      data_2: 'Berhasil mengambil profil user',
+    });
 
     return {
       ...safeUser,
@@ -302,28 +355,52 @@ export class UserService {
 
     await this.userRepo.save(user);
     this.messageService.setMessage('Profile berhasil diperbarui');
+
+    function truncate(value: string, length = 50) {
+      return value.length > length ? value.slice(0, length) : value;
+    }
+
+    await this.logService.createLog(user, {
+      data_1: truncate('UPDATE-PROFILE'),
+      data_2: truncate(`user_id:${userId}`),
+      data_3: truncate(`fields:${Object.keys(dto).slice(0, 1).join(',')}`),
+      data_4: truncate(`fields:${Object.keys(dto).slice(1, 2).join(',')}`),
+      data_5: truncate(`fields:${Object.keys(dto).slice(2, 3).join(',')}`),
+    });
   }
 
   /**
    * Mengedit list pengguna
    */
   @Transactional()
-  public async updateUser(userId: string, dto: UpdateUserDto): Promise<void> {
+  public async updateUser(
+    ownerId: string,
+    userId: string,
+    dto: UpdateUserDto,
+  ): Promise<void> {
     // Ambil user beserta relasi role dan location
-    const user = await this.userRepo.findOne({
+    const updateUser = await this.userRepo.findOne({
       where: { user_id: userId },
       relations: ['role', 'location'],
     });
-    if (!user) throw new NotFoundException('User tidak ditemukan');
+
+    const user = await this.userRepo.findOne({ where: { user_id: ownerId } });
+    if (!user) {
+      throw new BadRequestException(
+        `User dengan ID ${ownerId} tidak ditemukan.`,
+      );
+    }
+
+    if (!updateUser) throw new NotFoundException('User tidak ditemukan');
 
     // Update name
-    if (dto.name !== undefined) user.name = dto.name;
+    if (dto.name !== undefined) updateUser.name = dto.name;
 
     // Update full_name
-    if (dto.full_name !== undefined) user.full_name = dto.full_name;
+    if (dto.full_name !== undefined) updateUser.full_name = dto.full_name;
 
     // Update email dengan validasi uniqueness
-    if (dto.email !== undefined && dto.email !== user.email) {
+    if (dto.email !== undefined && dto.email !== updateUser.email) {
       const existing = await this.userRepo.findOne({
         where: { email: dto.email },
       });
@@ -333,20 +410,20 @@ export class UserService {
     }
 
     // Update departement
-    if (dto.departement !== undefined) user.departement = dto.departement;
+    if (dto.departement !== undefined) updateUser.departement = dto.departement;
 
     // Update NIK
-    if (dto.NIK !== undefined && dto.NIK !== user.NIK) {
+    if (dto.NIK !== undefined && dto.NIK !== updateUser.NIK) {
       const existing = await this.userRepo.findOne({
         where: { NIK: dto.NIK },
       });
       if (existing && existing.user_id !== userId)
         throw new BadRequestException('NIK sudah digunakan');
-      user.NIK = dto.NIK;
+      updateUser.NIK = dto.NIK;
     }
 
     // Update role
-    if (dto.roleId !== undefined && dto.roleId !== user.role.role_id) {
+    if (dto.roleId !== undefined && dto.roleId !== updateUser.role.role_id) {
       const role = await this.roleRepo.findOne({
         where: { role_id: dto.roleId },
       });
@@ -357,7 +434,7 @@ export class UserService {
     // Update location
     if (
       dto.locationId !== undefined &&
-      dto.locationId !== user.location?.location_id
+      dto.locationId !== updateUser.location?.location_id
     ) {
       const location = await this.locationRepo.findOne({
         where: { location_id: dto.locationId },
@@ -367,22 +444,55 @@ export class UserService {
     }
 
     // Update status
-    if (dto.status !== undefined) user.status = dto.status;
+    if (dto.status !== undefined) updateUser.status = dto.status;
 
     // Simpan perubahan
     await this.userRepo.save(user);
     this.messageService.setMessage('User berhasil diperbarui.');
+
+    function truncate(value: string, length = 50) {
+      return value.length > length ? value.slice(0, length) : value;
+    }
+
+    await this.logService.createLog(user, {
+      data_1: truncate('UPDATE-USER'),
+      data_2: truncate(`user_id:${userId}`),
+      data_3: truncate(
+        `updated_fields:${Object.keys(dto).slice(0, 1).join(',')}`,
+      ),
+      data_4: truncate(
+        `updated_fields:${Object.keys(dto).slice(1, 2).join(',')}`,
+      ),
+      data_5: truncate(
+        `updated_fields:${Object.keys(dto).slice(2, 3).join(',')}`,
+      ),
+    });
   }
 
   /**
    * Membuat pengguna baru
    */
   @Transactional()
-  async register(dto: CreateUserDto): Promise<UserResponseDto> {
+  async register(dto: CreateUserDto, userId: string): Promise<UserResponseDto> {
     try {
       const savedUser = await this.createUser(dto);
 
+      const user = await this.userRepo.findOne({ where: { user_id: userId } });
+      if (!user) {
+        throw new BadRequestException(
+          `User dengan ID ${userId} tidak ditemukan.`,
+        );
+      }
+
       this.messageService.setMessage('Register akun berhasil.');
+
+      await this.logService.createLog(user, {
+        data_1: 'REGISTER-USER',
+        data_2: `user_id:${savedUser.user_id}`,
+        data_3: `email:${savedUser.email}`,
+        data_4: `role:${savedUser.role?.name || '-'}`,
+        data_5: `status:${savedUser.status}`,
+      });
 
       return {
         id: savedUser.user_id,
@@ -397,7 +507,7 @@ export class UserService {
         status: savedUser.status,
       };
     } catch (error) {
-      // Tangani error duplicate email (MySQL)
+      // Tangani error duplicate email
       if (error.code === 'ER_DUP_ENTRY') {
         throw new BadRequestException(
           'Email sudah terdaftar, silakan gunakan email lain.',
@@ -417,17 +527,32 @@ export class UserService {
    * Menghapus pengguna
    */
   @Transactional()
-  public async deleteUser(userId: string): Promise<void> {
-    const user = await this.userRepo.findOne({
+  public async deleteUser(userId: string, ownerId: string): Promise<void> {
+    const deleteUser = await this.userRepo.findOne({
       where: { user_id: userId },
       relations: ['role'],
     });
 
+    const user = await this.userRepo.findOne({ where: { user_id: ownerId } });
     if (!user) {
+      throw new BadRequestException(
+        `User dengan ID ${ownerId} tidak ditemukan.`,
+      );
+    }
+
+    if (!deleteUser) {
       throw new NotFoundException('User tidak ditemukan.');
     }
 
-    await this.userRepo.remove(user);
+    await this.logService.createLog(user, {
+      data_1: 'DELETE-USER',
+      data_2: `user_id:${user.user_id}`,
+      data_3: `role:${user.role?.name || '-'}`,
+      data_4: `status:${user.status}`,
+      data_5: `deleted_at:${new Date().toISOString()}`,
+    });
+
+    await this.userRepo.remove(deleteUser);
 
     this.messageService.setMessage('User berhasil dihapus.');
   }
@@ -436,11 +561,31 @@ export class UserService {
    * Update Password pengguna
    */
   public async updatePassword(
+    ownerId: string,
     userId: string,
     newPassword: string,
   ): Promise<void> {
-    const user = await this.userRepo.findOne({ where: { user_id: userId } });
-    if (!user) throw new NotFoundException('User tidak ditemukan.');
+    const updatePasswordUser = await this.userRepo.findOne({
+      where: { user_id: userId },
+    });
+
+    const user = await this.userRepo.findOne({ where: { user_id: ownerId } });
+    if (!user) {
+      throw new BadRequestException(
+        `User dengan ID ${ownerId} tidak ditemukan.`,
+      );
+    }
+
+    if (!updatePasswordUser)
+      throw new NotFoundException('User tidak ditemukan.');
+
+    await this.logService.createLog(user, {
+      data_1: 'UPDATE-PASSWORD',
+      data_2: `user_id:${user.user_id}`,
+      data_3: `updated_at:${new Date().toISOString()}`,
+      data_4: '-',
+      data_5: '-',
+    });
 
     user.password = await this.passwordService.hashPassword(newPassword);
     await this.userRepo.save(user);

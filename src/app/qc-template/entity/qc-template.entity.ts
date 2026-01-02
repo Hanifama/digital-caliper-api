@@ -44,7 +44,7 @@ export class QcTemplate {
   @Column({ length: 25 })
   created_by: string;
 
-  @Column()
+  @Column({ type: 'timestamp', default: () => 'now()' })
   created_dt: Date;
 
   @Column({ length: 25, nullable: true })

@@ -129,6 +129,7 @@ export class QcListController {
     description: 'Berhasil mengambil semua QC Plan admin',
   })
   async getAllPlansAdmin(
+    @CurrentUser('id') userId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('search') search?: string,
@@ -136,6 +137,7 @@ export class QcListController {
     @Query('location_id') locationId?: string,
   ) {
     return this.qcListService.getAllQcPlansAdmin(
+      userId,
       page,
       limit,
       search,
@@ -174,37 +176,21 @@ export class QcListController {
   }
 
   /** Export QC Plan ke file XLSX */
-  @Get('plan/export/xlsx')
+  @Get('plans/export/xlsx')
   @ApiOperation({ summary: 'Export QC Plan ke XLSX' })
   @ApiResponse({
     status: 200,
     description: 'Berhasil mengekspor QC Plan ke XLSX',
   })
-  async exportQcPlansHandler(@Res() res: Response): Promise<void> {
-    const { buffer, filename } = await this.qcListService.exportQcPlans();
-
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    );
-    res.send(buffer);
-  }
-
-  /** Export QC Record ke file XLSX */
-  @Get('plans/export/xlsx')
-  @ApiOperation({ summary: 'Export QC Histori Record ke XLSX' })
-  @ApiResponse({
-    status: 200,
-    description: 'Berhasil mengekspor QC Record ke XLSX',
-  })
-  async exportQcRecordsHandler(
+  async exportQcPlansHandler(
     @Res() res: Response,
+    @CurrentUser('id') userId: string,
     @Query('from_date') fromDate?: string,
     @Query('end_date') endDate?: string,
     @Query('location_id') locationId?: string,
   ): Promise<void> {
     const { buffer, filename } = await this.qcListService.exportQcRecords({
+      userId,
       from_date: fromDate,
       end_date: endDate,
       location_id: locationId,
@@ -225,9 +211,12 @@ export class QcListController {
     status: 200,
     description: 'Berhasil mengekspor template header QC Plan',
   })
-  async exportQcPlansHeaderHandler(@Res() res: Response): Promise<void> {
+  async exportQcPlansHeaderHandler(
+    @CurrentUser('id') userId: string,
+    @Res() res: Response,
+  ): Promise<void> {
     const { buffer, filename } =
-      await this.qcListService.exportQcPlansHeaderOnly();
+      await this.qcListService.exportQcPlansHeaderOnly(userId);
 
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader(
@@ -258,8 +247,12 @@ export class QcListController {
     status: 200,
     description: 'Berhasil memperbarui notes QC Plan',
   })
-  async updateNotes(@Param('qcId') qcId: string, @Body('notes') notes: string) {
-    return this.qcListService.updatePlanNotes(qcId, notes);
+  async updateNotes(
+    @CurrentUser('id') userId: string,
+    @Param('qcId') qcId: string,
+    @Body('notes') notes: string,
+  ) {
+    return this.qcListService.updatePlanNotes(userId, qcId, notes);
   }
 
   /** Hapus QC Plan berdasarkan ID */
