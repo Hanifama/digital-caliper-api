@@ -105,7 +105,13 @@ import compression from 'compression';
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('documentation', app, document);
+  SwaggerModule.setup('api/documentation', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+      docExpansion: 'none',
+      url: '/api/documentation-json',
+    },
+  });
 
   await app.listen(port, '0.0.0.0');
   Logger.log(`✅ Application is running on: http://0.0.0.0:${port}`);
