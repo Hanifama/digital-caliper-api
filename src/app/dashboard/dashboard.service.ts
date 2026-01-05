@@ -133,7 +133,7 @@ export class DashboardService {
 
     const totalTemplate = await this.qcTemplateRepo.count();
 
-    this.messageService.setMessage(`Berhasil memuat data hari ini`);
+    this.messageService.setMessage(`Berhasil memuat data hari ini.`);
 
     /** 6. Logging (non-blocking) */
     try {
@@ -435,8 +435,6 @@ export class DashboardService {
       });
     });
 
-    this.messageService.setMessage(`Berhasil memuat data rangkuman QC.`);
-
     /** 8. Final response */
     const data = records.map((r) => {
       const key = `${r.qc_id}_${r.sequence_no}_${r.location_id}_${r.piece_no}`;
@@ -461,6 +459,8 @@ export class DashboardService {
         },
       };
     });
+
+    this.messageService.setMessage(`Berhasil memuat data rangkuman QC.`);
 
     return {
       data,
