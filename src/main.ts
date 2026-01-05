@@ -41,6 +41,7 @@ import compression from 'compression';
         'http://localhost:4173', // staging frontend
         'https://digitalcaliper.webview.cloud', // prod dev
         'http://172.16.22.170', // prod www
+        'http://172.16.22.170/api', // prod www
         'http://localhost:8085', // Swagger UI
       ];
 
