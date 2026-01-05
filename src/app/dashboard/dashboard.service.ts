@@ -133,6 +133,8 @@ export class DashboardService {
 
     const totalTemplate = await this.qcTemplateRepo.count();
 
+    this.messageService.setMessage(`Berhasil memuat data hari ini`);
+
     /** 6. Logging (non-blocking) */
     try {
       await this.logService.createLog(user, {
@@ -286,6 +288,8 @@ export class DashboardService {
       };
     });
 
+    this.messageService.setMessage(`Berhasil memuat data analisa dashboard.`);
+
     /** 7. Logging */
     try {
       await this.logService.createLog(user ?? undefined, {
@@ -430,6 +434,8 @@ export class DashboardService {
         not_passed: Number(d.not_passed_count),
       });
     });
+
+    this.messageService.setMessage(`Berhasil memuat data rangkuman QC.`);
 
     /** 8. Final response */
     const data = records.map((r) => {
