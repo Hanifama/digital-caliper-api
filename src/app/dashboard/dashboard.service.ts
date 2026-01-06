@@ -10,6 +10,8 @@ import { QcRecord } from '../qc-template/entity/qc-record.entity';
 import { DashboardSummaryParams } from './interfaces/dashboard-summary-params';
 import { LogService } from '../log-app/log.service';
 import { MessageService } from '../message/message.service';
+import { DashboardSummaryBySizeParamsDto } from './dto/dashboard-bysize.dto';
+import { Size } from '../size/entity/size.entity';
 
 @Injectable()
 export class DashboardService {
@@ -22,6 +24,9 @@ export class DashboardService {
     private readonly qcDataRepo: Repository<QcData>,
     @InjectRepository(QcTemplate)
     private readonly qcTemplateRepo: Repository<QcTemplate>,
+
+    @InjectRepository(Size)
+    private readonly sizeRepo: Repository<Size>,
 
     private readonly logService: LogService,
     private readonly messageService: MessageService,
@@ -40,7 +45,6 @@ export class DashboardService {
     }
 
     const normalizeRole = (role?: string) => role?.trim().toLowerCase();
-
     const isSuperAdmin = normalizeRole(user.role?.name) === 'superadmin';
 
     if (!isSuperAdmin && !user.locationId) {
@@ -57,15 +61,9 @@ export class DashboardService {
       start = new Date(from_date);
       start.setHours(0, 0, 0, 0);
 
-      if (end_date) {
-        end = new Date(end_date);
-        end.setHours(0, 0, 0, 0);
-      } else {
-        end = new Date(from_date);
-        end.setHours(0, 0, 0, 0);
-      }
+      end = end_date ? new Date(end_date) : new Date(from_date);
+      end.setHours(0, 0, 0, 0);
     } else {
-      // default hari ini
       start.setHours(0, 0, 0, 0);
       end = new Date(start);
     }
@@ -86,8 +84,9 @@ export class DashboardService {
       return qb;
     };
 
-    /** 4. Summary counts */
-    const dailyTotalQC = await baseQcQuery()
+    /** 4. Summary counts (ONLY status = Done) */
+    const qcDone = await baseQcQuery()
+      .andWhere('r.status = :done', { done: 'Done' })
       .andWhere('r.created_dt >= :start AND r.created_dt < :end', {
         start,
         end,
@@ -95,8 +94,8 @@ export class DashboardService {
       .getCount();
 
     const qcPassed = await baseQcQuery()
-      .andWhere('r.status_overall = :passed', { passed: 'Passed' })
       .andWhere('r.status = :done', { done: 'Done' })
+      .andWhere('r.status_overall = :passed', { passed: 'Passed' })
       .andWhere('r.created_dt >= :start AND r.created_dt < :end', {
         start,
         end,
@@ -104,38 +103,25 @@ export class DashboardService {
       .getCount();
 
     const qcNotPassed = await baseQcQuery()
-      .andWhere('r.status_overall = :notPassed', {
-        notPassed: 'Not Passed',
-      })
       .andWhere('r.status = :done', { done: 'Done' })
+      .andWhere('r.status_overall = :notPassed', { notPassed: 'Not Passed' })
       .andWhere('r.created_dt >= :start AND r.created_dt < :end', {
         start,
         end,
       })
       .getCount();
 
-    const qcProcessing = await baseQcQuery()
-      .andWhere('(r.status IS NULL OR r.status = :processing)', {
-        processing: 'Processing',
-      })
-      .andWhere('r.created_dt >= :start AND r.created_dt < :end', {
-        start,
-        end,
-      })
-      .getCount();
+    /** 5. Hitung persentase */
+    let percentPassed = 0;
+    let percentNotPassed = 0;
+    if (qcDone > 0) {
+      percentPassed = Math.round((qcPassed / qcDone) * 100);
+      percentNotPassed = 100 - percentPassed;
+    }
 
-    /** 5. Global info */
-    const totalQC = isSuperAdmin
-      ? await this.qcRecordRepo.count()
-      : await this.qcRecordRepo.count({
-          where: { location_id: user.locationId },
-        });
+    this.messageService.setMessage(`Berhasil memuat ringkasan dashboard.`);
 
-    const totalTemplate = await this.qcTemplateRepo.count();
-
-    this.messageService.setMessage(`Berhasil memuat data hari ini.`);
-
-    /** 6. Logging (non-blocking) */
+    /** 6. Logging */
     try {
       await this.logService.createLog(user, {
         data_1: 'DASHBOARD-SUMMARY',
@@ -144,29 +130,50 @@ export class DashboardService {
         )
           .toISOString()
           .slice(0, 10)} location:${isSuperAdmin ? 'ALL' : user.locationId}`,
-        data_3: `totalQC:${dailyTotalQC}`,
-        data_4: `passed:${qcPassed} notPassed:${qcNotPassed} processing:${qcProcessing}`,
+        data_3: `done:${qcDone}`,
+        data_4: `passed:${qcPassed} notPassed:${qcNotPassed} percentPassed:${percentPassed} percentNotPassed:${percentNotPassed}`,
         data_5: `viewer:${user.full_name}`,
       });
     } catch (err) {
-      // jangan bikin dashboard gagal
       console.error('Failed to create dashboard log', err);
     }
 
-    /** 7. Response */
+    /** 7. Response (FINAL) */
     return {
-      dailyTotalQC,
-      qcProcessing,
+      qcDone,
       qcPassed,
       qcNotPassed,
-      totalQC,
-      totalTemplate,
-      lastUpdated: new Date(),
+      percentPassed,
+      percentNotPassed,
     };
   }
 
-  // === Analysis dashboard ===
-  async getDashboardAnalysis(userId?: string) {
+  // === Master Dashboard Counts ===
+  async getCountMasterDashboard() {
+    try {
+      /** 1. Hitung total size */
+      const totalSize = await this.sizeRepo.count();
+
+      /** 2. Hitung total template QC */
+      const totalTemplate = await this.qcTemplateRepo.count();
+
+      /** 3. Hitung total user */
+      const totalUser = await this.userRepo.count();
+
+      /** 4. Response */
+      return {
+        totalSize,
+        totalTemplate,
+        totalUser,
+      };
+    } catch (err) {
+      console.error('Failed to get master dashboard counts', err);
+      throw new Error('Gagal memuat data master dashboard.');
+    }
+  }
+
+  // === Weekly Analysis dashboard ===
+  async getDashboardWeeklyAnalysis(userId?: string) {
     /** 1. Ambil user + role */
     const user = userId
       ? await this.userRepo.findOne({
@@ -195,26 +202,23 @@ export class DashboardService {
       return qb;
     };
 
-    /** 3. Query weekly + status breakdown */
+    /** 3. Query weekly (hanya status = Done) */
     const weeklyRaw = await baseQcQuery()
       .select(
         `to_char(r.created_dt AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD')`,
         'date',
       )
-      .addSelect(`COUNT(r.qc_id)`, 'total')
       .addSelect(
-        `SUM(CASE WHEN r.status_overall = 'Passed' THEN 1 ELSE 0 END)`,
+        `SUM(CASE WHEN r.status = 'Done' THEN 1 ELSE 0 END)`,
+        'total_qc',
+      )
+      .addSelect(
+        `SUM(CASE WHEN r.status = 'Done' AND r.status_overall = 'Passed' THEN 1 ELSE 0 END)`,
         'passed',
       )
       .addSelect(
-        `SUM(CASE WHEN r.status_overall = 'Not Passed' THEN 1 ELSE 0 END)`,
+        `SUM(CASE WHEN r.status = 'Done' AND r.status_overall = 'Not Passed' THEN 1 ELSE 0 END)`,
         'not_passed',
-      )
-      .addSelect(
-        `SUM(CASE 
-        WHEN r.status_overall = 'Processing' OR r.status_overall IS NULL 
-        THEN 1 ELSE 0 END)`,
-        'processing',
       )
       .andWhere(
         `
@@ -229,15 +233,14 @@ export class DashboardService {
     /** 4. Map date → data */
     const weeklyMap = new Map<
       string,
-      { total: number; passed: number; notPassed: number; processing: number }
+      { totalQc: number; passed: number; notPassed: number }
     >();
 
     weeklyRaw.forEach((r) => {
       weeklyMap.set(r.date, {
-        total: Number(r.total),
+        totalQc: Number(r.total_qc),
         passed: Number(r.passed),
         notPassed: Number(r.not_passed),
-        processing: Number(r.processing),
       });
     });
 
@@ -273,37 +276,236 @@ export class DashboardService {
       const dayIndex = getDayIndexFromDate(date);
 
       const data = weeklyMap.get(date) ?? {
-        total: 0,
+        totalQc: 0,
         passed: 0,
         notPassed: 0,
-        processing: 0,
       };
+
+      // 7. Hitung persentase dengan total 100%
+      let percentPassed = 0;
+      let percentNotPassed = 0;
+      if (data.totalQc > 0) {
+        percentPassed = Math.round((data.passed / data.totalQc) * 100);
+        percentNotPassed = 100 - percentPassed;
+      }
 
       return {
         dayIndex,
         dayName: days[dayIndex],
         date,
         ...data,
-        hasQcInspection: data.total > 0,
+        percentPassed,
+        percentNotPassed,
+        hasQcInspection: data.totalQc > 0,
       };
     });
 
     this.messageService.setMessage(`Berhasil memuat data analisa dashboard.`);
 
-    /** 7. Logging */
+    /** 8. Logging */
     try {
       await this.logService.createLog(user ?? undefined, {
-        data_1: 'DASHBOARD-ANALYSIS',
+        data_1: 'DASHBOARD-ANALYSIS-WEEKLY',
         data_2: `range:${weekly[0].date}~${weekly[6].date}`,
-        data_3: `total:${weekly.reduce((s, d) => s + d.total, 0)}`,
+        data_3: `totalQc:${weekly.reduce((s, d) => s + d.totalQc, 0)}`,
         data_4: `passed:${weekly.reduce((s, d) => s + d.passed, 0)}`,
         data_5: `viewer:${user?.full_name ?? 'system'}`,
       });
     } catch (err) {
-      console.error('Failed to create dashboard analysis log', err);
+      console.error('Failed to create weekly dashboard analysis log', err);
     }
 
     return { weekly };
+  }
+
+  // === Monthly Analysis Dashboard ===
+  async getDashboardMonthlyAnalysis(
+    userId?: string,
+    year?: number,
+    month?: number,
+  ) {
+    /** 1. Ambil user + role */
+    const user = userId
+      ? await this.userRepo.findOne({
+          where: { user_id: userId },
+          relations: ['role'],
+        })
+      : null;
+
+    const normalizeRole = (role?: string) => role?.trim().toLowerCase();
+    const isSuperAdmin = normalizeRole(user?.role?.name) === 'superadmin';
+
+    if (user && !isSuperAdmin && !user.locationId) {
+      throw new Error('User belum mempunyai lokasi.');
+    }
+
+    /** 2. Validasi month */
+    if (month && (month < 1 || month > 12)) {
+      throw new Error('Parameter month harus antara 1 sampai 12.');
+    }
+
+    const targetYear = year ?? new Date().getFullYear();
+
+    /** 3. Base Query */
+    const baseQcQuery = () => {
+      const qb = this.qcRecordRepo.createQueryBuilder('r');
+
+      if (user && !isSuperAdmin) {
+        qb.andWhere('r.location_id = :locationId', {
+          locationId: user.locationId,
+        });
+      }
+
+      return qb;
+    };
+
+    /** 4. Tentukan range waktu */
+    let startDate: Date;
+    let endDate: Date;
+
+    if (month) {
+      startDate = new Date(Date.UTC(targetYear, month - 1, 1));
+      endDate = new Date(Date.UTC(targetYear, month, 1));
+    } else {
+      startDate = new Date(Date.UTC(targetYear, 0, 1));
+      endDate = new Date(Date.UTC(targetYear + 1, 0, 1));
+    }
+
+    /** 5. Query (HANYA STATUS = DONE) */
+    const monthlyRaw = await baseQcQuery()
+      .select(
+        `to_char(r.created_dt AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM')`,
+        'month',
+      )
+      .addSelect(
+        `SUM(CASE WHEN r.status = 'Done' THEN 1 ELSE 0 END)`,
+        'total_qc',
+      )
+      .addSelect(
+        `SUM(
+        CASE WHEN r.status = 'Done' AND r.status_overall = 'Passed' THEN 1 ELSE 0 END
+      )`,
+        'passed',
+      )
+      .addSelect(
+        `SUM(
+        CASE WHEN r.status = 'Done' AND r.status_overall = 'Not Passed' THEN 1 ELSE 0 END
+      )`,
+        'not_passed',
+      )
+      .andWhere(`r.created_dt >= :start AND r.created_dt < :end`, {
+        start: startDate,
+        end: endDate,
+      })
+      .groupBy('month')
+      .orderBy('month', 'ASC')
+      .getRawMany();
+
+    /** 6. Map */
+    const monthlyMap = new Map<
+      string,
+      { totalQc: number; passed: number; notPassed: number }
+    >();
+
+    monthlyRaw.forEach((r) => {
+      monthlyMap.set(r.month, {
+        totalQc: Number(r.total_qc),
+        passed: Number(r.passed),
+        notPassed: Number(r.not_passed),
+      });
+    });
+
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+
+    /** 7. Build response dengan persentase fixed */
+    const monthly = month
+      ? (() => {
+          const monthKey = `${targetYear}-${String(month).padStart(2, '0')}`;
+          const data = monthlyMap.get(monthKey) ?? {
+            totalQc: 0,
+            passed: 0,
+            notPassed: 0,
+          };
+
+          let percentPassed = 0;
+          let percentNotPassed = 0;
+          if (data.totalQc > 0) {
+            percentPassed = Math.round((data.passed / data.totalQc) * 100);
+            percentNotPassed = 100 - percentPassed; // dijamin total 100%
+          }
+
+          return [
+            {
+              monthIndex: month,
+              monthName: months[month - 1],
+              month: monthKey,
+              ...data,
+              percentPassed,
+              percentNotPassed,
+              hasQcInspection: data.totalQc > 0,
+            },
+          ];
+        })()
+      : Array.from({ length: 12 }).map((_, i) => {
+          const m = i + 1;
+          const monthKey = `${targetYear}-${String(m).padStart(2, '0')}`;
+          const data = monthlyMap.get(monthKey) ?? {
+            totalQc: 0,
+            passed: 0,
+            notPassed: 0,
+          };
+
+          let percentPassed = 0;
+          let percentNotPassed = 0;
+          if (data.totalQc > 0) {
+            percentPassed = Math.round((data.passed / data.totalQc) * 100);
+            percentNotPassed = 100 - percentPassed;
+          }
+
+          return {
+            monthIndex: m,
+            monthName: months[i],
+            month: monthKey,
+            ...data,
+            percentPassed,
+            percentNotPassed,
+            hasQcInspection: data.totalQc > 0,
+          };
+        });
+
+    this.messageService.setMessage('Berhasil memuat data analisa.');
+
+    /** 8. Logging */
+    try {
+      await this.logService.createLog(user ?? undefined, {
+        data_1: 'DASHBOARD-ANALYSIS-MONTHLY',
+        data_2: `year:${targetYear}${month ? ` month:${month}` : ''}`,
+        data_3: `totalQc:${monthly.reduce((s, m) => s + m.totalQc, 0)}`,
+        data_4: `passed:${monthly.reduce((s, m) => s + m.passed, 0)}`,
+        data_5: `viewer:${user?.full_name ?? 'system'}`,
+      });
+    } catch (err) {
+      console.error('Failed to create monthly dashboard analysis log', err);
+    }
+
+    return {
+      year: targetYear,
+      month: month ?? null,
+      monthly,
+    };
   }
 
   // === Summary Recent dashboard ===
@@ -471,5 +673,231 @@ export class DashboardService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  // === Summary Recent User dashboard ===
+  async getRecentQcDashboardByUser(
+    userId?: string,
+    page = 1,
+    limit = 10,
+    params?: { from_date?: string; end_date?: string; locationId?: number },
+  ) {
+    /** 1. Ambil user  */
+    const user = userId
+      ? await this.userRepo.findOne({
+          where: { user_id: userId },
+          relations: ['role'],
+        })
+      : null;
+
+    const normalizeRole = (role?: string) => role?.trim().toLowerCase();
+    const isSuperAdmin = normalizeRole(user?.role?.name) === 'superadmin';
+
+    if (user && !isSuperAdmin && !user.locationId) {
+      throw new Error('User belum mempunyai lokasi.');
+    }
+
+    /** 🔒 Validasi akses location filter */
+    const { from_date, end_date, locationId } = params || {};
+    if (locationId && !isSuperAdmin) {
+      throw new Error(
+        'Mohon maaf, anda tidak mempunyai akses untuk filter ini.',
+      );
+    }
+
+    /** 🔒 Validasi tanggal */
+    if (from_date && end_date && new Date(from_date) > new Date(end_date)) {
+      throw new Error('from_date tidak boleh lebih besar dari end_date');
+    }
+
+    const offset = (page - 1) * limit;
+
+    /** 2. Base query (QC Done semua user) */
+    const qb = this.qcRecordRepo
+      .createQueryBuilder('r')
+      .select('r.created_by', 'created_by')
+      .addSelect('u.full_name', 'user_name')
+      .addSelect('COUNT(*)', 'total_check')
+      .addSelect(
+        `SUM(CASE WHEN r.status_overall = 'Passed' THEN 1 ELSE 0 END)`,
+        'passed_count',
+      )
+      .addSelect(
+        `SUM(CASE WHEN r.status_overall = 'Not Passed' THEN 1 ELSE 0 END)`,
+        'not_passed_count',
+      )
+      .leftJoin('user', 'u', 'u.user_id = r.created_by')
+      .where('r.status = :done', { done: 'Done' });
+
+    // Filter lokasi untuk superadmin
+    if (isSuperAdmin && locationId) {
+      qb.andWhere('r.location_id = :locationId', { locationId });
+    }
+
+    // User biasa pakai lokasi sendiri
+    if (!isSuperAdmin && user?.locationId) {
+      qb.andWhere('r.location_id = :locationId', {
+        locationId: user.locationId,
+      });
+    }
+
+    /** Filter tanggal */
+    if (from_date) {
+      qb.andWhere('r.created_dt >= (:fromDate)::date', { fromDate: from_date });
+    }
+    if (end_date) {
+      qb.andWhere("r.created_dt < ((:endDate)::date + INTERVAL '1 day')", {
+        endDate: end_date,
+      });
+    }
+
+    /** Group by user untuk leaderboard */
+    qb.groupBy('r.created_by, u.full_name')
+      .orderBy('total_check', 'DESC')
+      .offset(offset)
+      .limit(limit);
+
+    /** Ambil total user untuk pagination */
+    const totalUsers = await qb.getCount();
+
+    /** Ambil data */
+    const rawData = await qb.getRawMany();
+
+    /** Mapping data ke format tabel */
+    const data = rawData.map((r, index) => ({
+      no: offset + index + 1,
+      qc_by: r.user_name,
+      total_check: Number(r.total_check),
+      passed: Number(r.passed_count),
+      not_passed: Number(r.not_passed_count),
+    }));
+
+    /** Logging */
+    if (user) {
+      try {
+        await this.logService.createLog(user, {
+          data_1: 'DASHBOARD-LEADERBOARD',
+          data_2: `range:${from_date || 'ALL'}~${end_date || 'ALL'} location:${isSuperAdmin && locationId ? locationId : 'ALL'}`,
+          data_3: `totalUsers:${totalUsers}`,
+          data_4: `viewer:${user.full_name}`,
+        });
+      } catch (err) {
+        console.error('Failed to create leaderboard log', err);
+      }
+    }
+
+    return {
+      data,
+      meta: {
+        page,
+        limit,
+        total: totalUsers,
+        totalPages: Math.ceil(totalUsers / limit),
+      },
+    };
+  }
+
+  // === Summary BySize dashboard ===
+  async getDashboardSummaryBySize(
+    params: DashboardSummaryBySizeParamsDto,
+    userId: string,
+  ) {
+    /** 1. Ambil user */
+    const user = await this.userRepo.findOne({
+      where: { user_id: userId },
+      relations: ['role'],
+    });
+
+    if (!user) throw new Error('User tidak ditemukan.');
+
+    const normalizeRole = (role?: string) => role?.trim().toLowerCase();
+    const isSuperAdmin = normalizeRole(user.role?.name) === 'superadmin';
+
+    if (!isSuperAdmin && !user.locationId)
+      throw new Error('User belum mempunyai lokasi.');
+
+    /** 2. Handle date range */
+    const { from_date, end_date, size } = params;
+    let start = from_date ? new Date(from_date) : new Date();
+    let end = end_date ? new Date(end_date) : start;
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    end.setDate(end.getDate() + 1); // end exclusive
+
+    /** 3. Base Query (role-aware location filter) */
+    const baseQcQuery = () => {
+      const qb = this.qcRecordRepo.createQueryBuilder('r');
+
+      if (!isSuperAdmin) {
+        qb.andWhere('r.location_id = :locationId', {
+          locationId: user.locationId,
+        });
+      }
+
+      qb.andWhere('r.created_dt >= :start AND r.created_dt < :end', {
+        start,
+        end,
+      });
+
+      // Filter by size jika ada
+      if (size) {
+        qb.andWhere('r.size = :size', { size });
+      }
+
+      return qb;
+    };
+
+    /** 4. Ambil data summary per size */
+    const rawData = await baseQcQuery()
+      .select('r.size', 'size')
+      .addSelect(`COUNT(CASE WHEN r.status = 'Done' THEN 1 END)`, 'qcDone')
+      .addSelect(
+        `COUNT(CASE WHEN r.status_overall = 'Passed' THEN 1 END)`,
+        'passed',
+      )
+      .addSelect(
+        `COUNT(CASE WHEN r.status_overall = 'Not Passed' THEN 1 END)`,
+        'notPassed',
+      )
+      .groupBy('r.size')
+      .getRawMany();
+
+    /** 5. Mapping ke response format */
+    const result = rawData.map((r) => {
+      const qcDone = Number(r.qcDone);
+      const passed = Number(r.passed);
+      const notPassed = Number(r.notPassed);
+
+      return {
+        size: r.size || 'Unknown',
+        qcDone,
+        passed,
+        notPassed,
+        percentPassed: qcDone ? Math.round((passed / qcDone) * 100) : 0,
+        percentNotPassed: qcDone ? Math.round((notPassed / qcDone) * 100) : 0,
+        hasQcInspection: qcDone > 0,
+      };
+    });
+
+    /** 6. Logging */
+    try {
+      await this.logService.createLog(user, {
+        data_1: 'DASHBOARD-SUMMARY-BY-SIZE',
+        data_2: `range:${start.toISOString().slice(0, 10)}~${new Date(
+          end.getTime() - 1,
+        )
+          .toISOString()
+          .slice(
+            0,
+            10,
+          )} location:${isSuperAdmin ? 'ALL' : user.locationId} size:${size || 'ALL'}`,
+        data_3: `sizes:${result.length}`,
+        data_4: `viewer:${user.full_name}`,
+      });
+    } catch (err) {
+      console.error('Failed to create dashboard log', err);
+    }
+
+    return result;
   }
 }
