@@ -71,16 +71,35 @@ export class QcRecordService {
     page: number = 1,
     limit: number = 10,
     search?: string,
+    location_id?: string,
     fileName?: string,
     from_date?: string,
     end_date?: string,
+    status_qc?: 'Passed' | 'Not Passed',
   ): Promise<IResponsePageWrapper<any>> {
     const offset = (page - 1) * limit;
 
+    /** 1. Ambil user + role + location*/
     const user = await this.userRepo.findOne({
       where: { user_id: userId },
+      relations: ['role'],
+      select: ['user_id', 'locationId', 'role'],
     });
 
+    if (!user) {
+      throw new BadRequestException('User tidak ditemukan.');
+    }
+
+    const isAdmin = user.role?.name?.toLowerCase() === 'super admin';
+
+    /** 2. Validasi akses filter location */
+    if (!isAdmin && location_id?.trim()) {
+      throw new BadRequestException(
+        'Anda tidak memiliki izin untuk memfilter berdasarkan lokasi.',
+      );
+    }
+
+    /** 3. Base Query */
     const recordsQuery = this.qcRecordRepo
       .createQueryBuilder('qc')
       .leftJoinAndSelect('qc.qc_template', 'template')
@@ -91,33 +110,65 @@ export class QcRecordService {
       .leftJoin('qc.qc_template', 'template')
       .leftJoin('qc.location', 'loc');
 
-    // Filter pencarian
+    /** 4. Filter lokasi (ROLE BASED) */
+    if (isAdmin) {
+      // Super admin → semua lokasi
+      if (location_id?.trim()) {
+        recordsQuery.andWhere('qc.location_id = :loc', {
+          loc: location_id.trim(),
+        });
+        countQuery.andWhere('qc.location_id = :loc', {
+          loc: location_id.trim(),
+        });
+      }
+    } else {
+      // User biasa → hanya lokasi sendiri
+      if (!user.locationId) {
+        throw new BadRequestException('Pengguna belum ditempatkan lokasi.');
+      }
+
+      recordsQuery.andWhere('qc.location_id = :loc', {
+        loc: user.locationId,
+      });
+      countQuery.andWhere('qc.location_id = :loc', {
+        loc: user.locationId,
+      });
+    }
+
+    /** 5. Filter search */
     if (search && search.trim() !== '' && search !== '{{search}}') {
       const trimmed = search.trim();
       const searchText = `%${trimmed.toLowerCase()}%`;
       const searchNumber = Number(trimmed);
 
       if (!isNaN(searchNumber) && /^\d+$/.test(trimmed)) {
-        // Kalau input murni angka, cari berdasarkan sequence_no
         recordsQuery.andWhere('qc.sequence_no = :searchNumber', {
           searchNumber,
         });
-        countQuery.andWhere('qc.sequence_no = :searchNumber', { searchNumber });
+        countQuery.andWhere('qc.sequence_no = :searchNumber', {
+          searchNumber,
+        });
       } else {
-        // Kalau input berupa teks, cari di qc_id, template_name, status, atau piece_no
         recordsQuery.andWhere(
-          '(LOWER(qc.qc_id) LIKE :searchText OR LOWER(template.name) LIKE :searchText OR LOWER(qc.status) LIKE :searchText OR LOWER(qc.piece_no) LIKE :searchText)',
+          `(LOWER(qc.qc_id) LIKE :searchText 
+          OR LOWER(template.name) LIKE :searchText 
+          OR LOWER(qc.status) LIKE :searchText 
+          OR LOWER(qc.piece_no) LIKE :searchText)`,
           { searchText },
         );
+
         countQuery.andWhere(
-          '(LOWER(qc.qc_id) LIKE :searchText OR LOWER(template.name) LIKE :searchText OR LOWER(qc.status) LIKE :searchText OR LOWER(qc.piece_no) LIKE :searchText)',
+          `(LOWER(qc.qc_id) LIKE :searchText 
+          OR LOWER(template.name) LIKE :searchText 
+          OR LOWER(qc.status) LIKE :searchText 
+          OR LOWER(qc.piece_no) LIKE :searchText)`,
           { searchText },
         );
       }
     }
 
-    // Filter file_name
-    if (fileName && fileName.trim() !== '') {
+    /** 6. Filter file_name */
+    if (fileName?.trim()) {
       const fileNameText = `%${fileName.trim().toLowerCase()}%`;
       recordsQuery.andWhere('LOWER(qc.file_name) LIKE :fileNameText', {
         fileNameText,
@@ -127,7 +178,7 @@ export class QcRecordService {
       });
     }
 
-    // Filter tanggal
+    /** 7. Filter tanggal */
     if (from_date && end_date) {
       const from = new Date(from_date);
       const to = new Date(end_date);
@@ -137,10 +188,19 @@ export class QcRecordService {
         from,
         to,
       });
-      countQuery.andWhere('qc.created_dt BETWEEN :from AND :to', { from, to });
+      countQuery.andWhere('qc.created_dt BETWEEN :from AND :to', {
+        from,
+        to,
+      });
     }
 
-    // Filter agar hanya status selain Processing
+    /** 8. Filter status overall (Passed / Not Passed) */
+    if (status_qc && ['Passed', 'Not Passed'].includes(status_qc)) {
+      recordsQuery.andWhere('qc.status_overall = :status_qc', { status_qc });
+      countQuery.andWhere('qc.status_overall = :status_qc', { status_qc });
+    }
+
+    /** 9. Filter status QC (Done / Canceled) */
     recordsQuery.andWhere('qc.status IN (:...statuses)', {
       statuses: ['Done', 'Canceled'],
     });
@@ -148,7 +208,7 @@ export class QcRecordService {
       statuses: ['Done', 'Canceled'],
     });
 
-    // Order + pagination
+    /** 10. Sorting & pagination */
     recordsQuery
       .orderBy('qc.sequence_no', 'ASC')
       .addOrderBy('qc.created_dt', 'DESC')
@@ -162,10 +222,8 @@ export class QcRecordService {
 
     const totalPages = Math.ceil(totalData / limit);
 
-    // Ambil qc_ids
+    /** 11. Ambil invalid data */
     const qcIds = records.map((r) => r.qc_id);
-
-    // Ambil invalid_data
     let invalidMap = new Map<string, number>();
 
     if (qcIds.length > 0) {
@@ -186,7 +244,7 @@ export class QcRecordService {
       );
     }
 
-    // Ambil semua user_id dari created_by
+    /** 12. Ambil user map */
     const userIds = Array.from(
       new Set(records.map((r) => r.created_by)),
     ).filter(Boolean);
@@ -202,7 +260,7 @@ export class QcRecordService {
       userMap = new Map(users.map((u) => [u.user_id, u.full_name]));
     }
 
-    // Format hasil
+    /** 13. Format response */
     const result = records.map((r) => ({
       qc_id: r.qc_id,
       qc_template_id: r.qc_template_id,
@@ -228,14 +286,19 @@ export class QcRecordService {
       updated_dt: r.updated_dt,
     }));
 
-    this.messageService.setMessage('Berhasil memuat histori QC.');
+    /** 14. Logging & message */
+    const msg = isAdmin
+      ? 'Berhasil memuat histori QC semua lokasi.'
+      : 'Berhasil memuat histori QC di lokasi Anda.';
 
-    await this.logService.createLog(user ?? undefined, {
+    this.messageService.setMessage(msg);
+
+    await this.logService.createLog(user, {
       data_1: 'GET-QC-RECORD-HISTORY',
       data_2: `page:${page}`,
       data_3: `limit:${limit}`,
       data_4: `search:${search || '-'}`,
-      data_5: `file:${fileName || '-'}`,
+      data_5: `location:${location_id || user.locationId || '-'}`,
     });
 
     return {
@@ -251,47 +314,131 @@ export class QcRecordService {
   }
 
   /** Get Detail history record QC Record */
-  async getHistoryDetailRecord(qcId: string): Promise<any> {
-    if (!qcId) {
-      throw new BadRequestException('qc_id harus diberikan.');
+  async getHistoryDetailRecord(
+    userId: string,
+    qcId: string,
+    no_seq: number,
+    piece_no: string,
+    status_qc?: 'Passed' | 'Not Passed',
+  ): Promise<any> {
+    if (!qcId || !no_seq || !piece_no) {
+      throw new BadRequestException(
+        'qc_id, no_seq, dan piece_no wajib diberikan.',
+      );
     }
 
-    // Ambil semua data qc_data untuk qc_id tertentu
-    const qcDataRecords = await this.qcDataRepo
+    /** 1. Ambil user + role + location  */
+    const user = await this.userRepo.findOne({
+      where: { user_id: userId },
+      relations: ['role'],
+      select: ['user_id', 'locationId', 'role'],
+    });
+
+    if (!user) {
+      throw new BadRequestException('User tidak ditemukan.');
+    }
+
+    const isAdmin = user.role?.name?.toLowerCase() === 'super admin';
+
+    /** 2. Ambil header QC Record (VALIDASI + LOCATION CHECK)  */
+    const qcRecordQuery = this.qcRecordRepo
+      .createQueryBuilder('qc')
+      .where('qc.qc_id = :qcId', { qcId })
+      .andWhere('qc.sequence_no = :no_seq', { no_seq })
+      .andWhere('qc.piece_no = :piece_no', { piece_no });
+
+    if (!isAdmin) {
+      if (!user.locationId) {
+        throw new BadRequestException('Pengguna belum ditempatkan lokasi.');
+      }
+
+      qcRecordQuery.andWhere('qc.location_id = :loc', {
+        loc: user.locationId,
+      });
+    }
+
+    const qcRecord = await qcRecordQuery.getOne();
+
+    if (!qcRecord) {
+      throw new BadRequestException(
+        'Data QC Record tidak ditemukan atau Anda tidak memiliki akses.',
+      );
+    }
+
+    /** 3. Ambil QC Data (KECUALI FormRight) */
+    const allQcData = await this.qcDataRepo
       .createQueryBuilder('qd')
       .where('qd.qc_id = :qcId', { qcId })
+      .andWhere('qd.position != :pos', { pos: 'FormRight' }) // ⬅️ PENTING
       .orderBy('qd.qc_data_id', 'ASC')
       .getMany();
 
-    // Hitung valid dan invalid
-    const invalidCount = qcDataRecords.filter(
+    /** 4. Hitung summary status (DARI DATA TANPA FormRight) */
+    const passedCount = allQcData.filter((r) => r.status === 'Passed').length;
+    const notPassedCount = allQcData.filter(
       (r) => r.status === 'Not Passed',
     ).length;
-    const validCount = qcDataRecords.filter(
-      (r) => r.status === 'Passed',
+    const notCheckedCount = allQcData.filter(
+      (r) => r.status === 'Not Checked',
     ).length;
 
-    // Format hasil
-    const result = qcDataRecords.map((r) => ({
-      qc_data_id: r.qc_data_id,
-      qc_id: r.qc_id,
-      input_code: r.input_code,
-      input_value: r.input_value,
-      err_tolerance: r.err_tolerance,
-      status: r.status,
-      notified: r.notified,
-      position: r.position,
-    }));
+    /** 5. Filter status_qc (OPSIONAL) */
+    let qcDataRecords = allQcData;
 
-    this.messageService.setMessage(
-      `Berhasil memuat summary record QC ${qcId}.`,
-    );
+    if (
+      status_qc &&
+      ['Passed', 'Not Passed', 'Not Checked'].includes(status_qc)
+    ) {
+      qcDataRecords = qcDataRecords.filter((r) => r.status === status_qc);
+    }
+
+    /** 6. Ambil QC Template Data (TOLERANCE) */
+    const inputCodes = [...new Set(qcDataRecords.map((d) => d.input_code))];
+
+    const templateDatas = await this.qcTemplateDataRepo
+      .createQueryBuilder('qtd')
+      .where('qtd.qc_template_id = :templateId', {
+        templateId: qcRecord.qc_template_id,
+      })
+      .andWhere('qtd.input_code IN (:...inputCodes)', { inputCodes })
+      .getMany();
+
+    const templateMap = new Map(templateDatas.map((t) => [t.input_code, t]));
+
+    /** 7. Format response */
+    const result = qcDataRecords.map((r) => {
+      const template = templateMap.get(r.input_code);
+
+      return {
+        qc_data_id: r.qc_data_id,
+        qc_id: r.qc_id,
+        input_code: r.input_code,
+        input_value: r.input_value,
+        err_tolerance: r.err_tolerance,
+        status: r.status,
+        position: r.position,
+
+        min_tolerance: template?.min_tolerance ?? null,
+        t_lt_50_tolerance: template?.t_lt_50_tolerance ?? null,
+        nominal_tolerance: template?.nominal_tolerance ?? null,
+        t_gt_50_tolerance: template?.t_gt_50_tolerance ?? null,
+        max_tolerance: template?.max_tolerance ?? null,
+        order_numb: template?.order_numb ?? null,
+      };
+    });
+
+    this.messageService.setMessage(`Berhasil memuat detail QC Record ${qcId}.`);
 
     return {
       meta: {
-        invalid_data: invalidCount,
-        valid_data: validCount,
-        total_data: qcDataRecords.length,
+        qc_id: qcId,
+        sequence_no: no_seq,
+        piece_no,
+        location_id: qcRecord.location_id,
+        passed: passedCount,
+        not_passed: notPassedCount,
+        not_checked: notCheckedCount,
+        total_data: allQcData.length,
       },
       data: result,
     };

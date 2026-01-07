@@ -48,9 +48,15 @@ export class QcRecordController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'location_id', required: false })
   @ApiQuery({ name: 'file_name', required: false })
   @ApiQuery({ name: 'from_date', required: false })
   @ApiQuery({ name: 'end_date', required: false })
+  @ApiQuery({
+    name: 'status_qc',
+    required: false,
+    enum: ['Passed', 'Not Passed'],
+  })
   @ApiResponse({
     status: 200,
     description: 'Berhasil mengambil histori QC Record',
@@ -60,18 +66,22 @@ export class QcRecordController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('search') search?: string,
+    @Query('location_id') location_id?: string,
     @Query('file_name') fileName?: string,
     @Query('from_date') from_date?: string,
     @Query('end_date') end_date?: string,
+    @Query('status_qc') status_qc?: 'Passed' | 'Not Passed',
   ) {
     return this.qcRecordService.getAllQcRecordHistory(
       userId,
       page,
       limit,
       search,
+      location_id,
       fileName,
       from_date,
       end_date,
+      status_qc,
     );
   }
 
@@ -125,19 +135,36 @@ export class QcRecordController {
   }
 
   /**
-   * Ambil detail histori QC Record berdasarkan ID
-   * @param qcId ID QC Record
-   * @returns Detail histori QC Record
+   * Ambil detail histori QC Record
    */
-  @Get('history/:qcId')
-  @ApiOperation({ summary: 'Ambil detail histori QC Record berdasarkan ID' })
-  @ApiParam({ name: 'qcId', description: 'ID QC Record' })
+  @Get('history/:qcId/:no_seq/:piece_no')
+  @ApiOperation({ summary: 'Ambil detail histori QC Record' })
+  @ApiParam({ name: 'qcId', description: 'Batch Id' })
+  @ApiParam({ name: 'no_seq', description: 'No Sequence' })
+  @ApiParam({ name: 'piece_no', description: 'Piece No' })
+  @ApiQuery({
+    name: 'status_qc',
+    required: false,
+    enum: ['Passed', 'Not Passed'],
+  })
   @ApiResponse({
     status: 200,
     description: 'Berhasil mengambil detail histori QC Record',
   })
-  async getHistoryDetailRecord(@Param('qcId') qcId: string) {
-    return this.qcRecordService.getHistoryDetailRecord(qcId);
+  async getHistoryDetailRecord(
+    @CurrentUser('id') userId: string,
+    @Param('qcId') qcId: string,
+    @Param('no_seq', ParseIntPipe) no_seq: number,
+    @Param('piece_no') piece_no: string,
+    @Query('status_qc') status_qc?: 'Passed' | 'Not Passed',
+  ) {
+    return this.qcRecordService.getHistoryDetailRecord(
+      userId,
+      qcId,
+      no_seq,
+      piece_no,
+      status_qc,
+    );
   }
 
   /**
