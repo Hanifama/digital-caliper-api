@@ -104,6 +104,13 @@ export class QcPdfDataService {
       return normalized === 'passed' ? 'passed' : 'not passed';
     };
 
+    const normalizeOverallStatus = (
+      status?: string,
+    ): 'passed' | 'not passed' => {
+      if (!status) return 'not passed';
+      return status.trim().toLowerCase() === 'passed' ? 'passed' : 'not passed';
+    };
+
     /** 5️ NORMALISASI DATA */
     const dataMap = new Map<
       string,
@@ -181,6 +188,9 @@ export class QcPdfDataService {
       potongan: record.piece_no,
       batchId: record.qc_id,
       lokasi: record.location?.name ?? '-',
+
+      qcPrefix: prefix,
+      statusOverall: normalizeOverallStatus(record.status_overall),
     };
   }
 }

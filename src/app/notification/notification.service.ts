@@ -287,6 +287,15 @@ export class NotificationService implements OnModuleInit {
         `QC Record tidak ditemukan qc_id=${qc_id}, seq=${no_seq}, piece=${piece_no}`,
       );
 
+    /** VALIDASI NAMA WA GROUP */
+    const waGroupRaw = record.location?.wa_group;
+
+    if (!waGroupRaw) {
+      throw new Error(
+        `WA group belum diset untuk location ${record.location?.name || locationId}`,
+      );
+    }
+
     /** 3. Ambil qc_data */
     const raw = await this.qcDataRepo
       .createQueryBuilder('d')
@@ -375,18 +384,21 @@ export class NotificationService implements OnModuleInit {
     const pdfBuffer = await this.generatorService.generatePdf(pdfData);
 
     /** 7. Kirim ke grup */
-    const groupsEnv = this.configService.get<string>('WHATSAPP_GROUP_NAME');
-    const targetGroups = groupsEnv
-      ? groupsEnv
-          .split(',')
-          .map((g) => g.trim())
-          .filter(Boolean)
-      : [];
+    const targetGroups = waGroupRaw
+      .split(',')
+      .map((g) => g.trim())
+      .filter(Boolean);
+
+    if (!targetGroups.length) {
+      throw new Error(
+        `WA group kosong / tidak valid untuk location ${record.location?.name}`,
+      );
+    }
 
     await this.sendPdfToGroups(
       pdfBuffer,
-      `${qc_id}-${no_seq}-${piece_no}.pdf`,
-      `QC Report ${qc_id}-${no_seq}-${piece_no}.pdf`,
+      `${qc_id}-${no_seq}-${majorPos}/${piece_no}.pdf`,
+      `QC Report ${qc_id}-${no_seq}-${majorPos}/${piece_no}.pdf`,
       targetGroups,
     );
 
@@ -396,7 +408,7 @@ export class NotificationService implements OnModuleInit {
       targetGroups,
     );
 
-    /** 🔥 8. LOG SERVICE (SETELAH SUKSES) */
+    /** 8. LOG SERVICE (SETELAH SUKSES) */
     await this.logService.createLog(user, {
       data_1: 'QC-SEND-WA',
       data_2: `qc_id:${qc_id} seq:${no_seq} piece:${piece_no}`,

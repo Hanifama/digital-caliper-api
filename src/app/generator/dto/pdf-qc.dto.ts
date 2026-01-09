@@ -9,11 +9,13 @@ export interface PdfDataDto {
   qcDate: string;
   startTime: string;
   endTime: string;
+
   weight: PdfValue;
   weightUnit: string;
   length: PdfValue;
   lengthUnit: string;
   size: string;
+
   dimensions: {
     topLeft: PdfDimension;
     topCenter: PdfDimension;
@@ -33,8 +35,12 @@ export interface PdfDataDto {
     webCenter: PdfDimension;
     webRight: PdfDimension;
   };
+
   sequenceNo: string;
   potongan: string;
   batchId: string;
   lokasi: string;
+
+  qcPrefix: 'H' | 'C' | 'T';
+  statusOverall: 'passed' | 'not passed';
 }

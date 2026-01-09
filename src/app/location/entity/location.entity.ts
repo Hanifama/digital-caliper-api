@@ -27,6 +27,9 @@ export class Location {
   @Column({ type: 'text', nullable: true })
   detail: string;
 
+  @Column({ length: 100, nullable: true })
+  wa_group: string;
+
   @Column({ length: 10, default: 'active' })
   status: string;
 

@@ -1,0 +1,123 @@
+-- Template wf-beam WF 700X300X13X24
+INSERT INTO qc_template (qc_template_id, prodtype_id, size_id, profile, std_dimention, brand_merek, specification, name, status, created_by, created_dt, updated_by, updated_dt) VALUES
+('TMP-wfwmmjcn','WF-BEAM','WF 700X300X13X24','WF 700X300X13X24','700X300X13X24','WF-BEAM 700X300X13X24','WF 700X300X13X24','Template WF-BEAM 700X300X13X24','active','Akun Testing Manajer','2025-11-08 13:00:00','Akun Testing Manajer','2025-11-08 13:00:00');
+
+INSERT INTO qc_template_data (input_code, qc_template_id, label, input_type, min_tolerance, t_lt_50_tolerance, nominal_tolerance, t_gt_50_tolerance, max_tolerance, actual_tolerance, order_numb, enabled, sound, position, group_name) VALUES
+-- H-Top (1-3)
+('H.H-top','TMP-wfwmmjcn','H(H-top)','number',696,698,700,702,704,NULL,1,true,NULL,'H-Top','table'),
+('C.H-top','TMP-wfwmmjcn','C(H-top)','number',696,698,700,702,704,NULL,2,true,NULL,'H-Top','table'),
+('T.H-top','TMP-wfwmmjcn','T(H-top)','number',696,698,700,702,704,NULL,3,true,NULL,'H-Top','table'),
+
+-- H-Bottom (4-6)
+('H.H-bottom','TMP-wfwmmjcn','H(H-bottom)','number',696,698,700,702,704,NULL,4,true,NULL,'H-Bottom','table'),
+('C.H-bottom','TMP-wfwmmjcn','C(H-bottom)','number',696,698,700,702,704,NULL,5,true,NULL,'H-Bottom','table'),
+('T.H-bottom','TMP-wfwmmjcn','T(H-bottom)','number',696,698,700,702,704,NULL,6,true,NULL,'H-Bottom','table'),
+
+-- B1 (7-9)
+('H.B1','TMP-wfwmmjcn','H(B1)','number',297,298.5,300,301.5,303,NULL,7,true,NULL,'B1','table'),
+('C.B1','TMP-wfwmmjcn','C(B1)','number',297,298.5,300,301.5,303,NULL,8,true,NULL,'B1','table'),
+('T.B1','TMP-wfwmmjcn','T(B1)','number',297,298.5,300,301.5,303,NULL,9,true,NULL,'B1','table'),
+
+-- B2 (10-12)
+('H.B2','TMP-wfwmmjcn','H(B2)','number',297,298.5,300,301.5,303,NULL,10,true,NULL,'B2','table'),
+('C.B2','TMP-wfwmmjcn','C(B2)','number',297,298.5,300,301.5,303,NULL,11,true,NULL,'B2','table'),
+('T.B2','TMP-wfwmmjcn','T(B2)','number',297,298.5,300,301.5,303,NULL,12,true,NULL,'B2','table'),
+
+-- b1 (13-15) - PERUBAHAN: tolerance mengikuti Flange Thickness (22.5, 23.25, 24, 24.75, 25.5)
+('H.b1','TMP-wfwmmjcn','H(b1)','number',22.5,23.25,24,24.75,25.5,NULL,13,true,NULL,'b1','table'),
+('C.b1','TMP-wfwmmjcn','C(b1)','number',22.5,23.25,24,24.75,25.5,NULL,14,true,NULL,'b1','table'),
+('T.b1','TMP-wfwmmjcn','T(b1)','number',22.5,23.25,24,24.75,25.5,NULL,15,true,NULL,'b1','table'),
+
+-- b3 (16-18) - PERUBAHAN: tolerance mengikuti Flange Thickness (22.5, 23.25, 24, 24.75, 25.5)
+('H.b3','TMP-wfwmmjcn','H(b3)','number',22.5,23.25,24,24.75,25.5,NULL,16,true,NULL,'b3','table'),
+('C.b3','TMP-wfwmmjcn','C(b3)','number',22.5,23.25,24,24.75,25.5,NULL,17,true,NULL,'b3','table'),
+('T.b3','TMP-wfwmmjcn','T(b3)','number',22.5,23.25,24,24.75,25.5,NULL,18,true,NULL,'b3','table'),
+
+-- b2 (19-21) - PERUBAHAN: tolerance mengikuti Flange Thickness (22.5, 23.25, 24, 24.75, 25.5)
+('H.b2','TMP-wfwmmjcn','H(b2)','number',22.5,23.25,24,24.75,25.5,NULL,19,true,NULL,'b2','table'),
+('C.b2','TMP-wfwmmjcn','C(b2)','number',22.5,23.25,24,24.75,25.5,NULL,20,true,NULL,'b2','table'),
+('T.b2','TMP-wfwmmjcn','T(b2)','number',22.5,23.25,24,24.75,25.5,NULL,21,true,NULL,'b2','table'),
+
+-- b4 (22-24) - PERUBAHAN: tolerance mengikuti Flange Thickness (22.5, 23.25, 24, 24.75, 25.5)
+('H.b4','TMP-wfwmmjcn','H(b4)','number',22.5,23.25,24,24.75,25.5,NULL,22,true,NULL,'b4','table'),
+('C.b4','TMP-wfwmmjcn','C(b4)','number',22.5,23.25,24,24.75,25.5,NULL,23,true,NULL,'b4','table'),
+('T.b4','TMP-wfwmmjcn','T(b4)','number',22.5,23.25,24,24.75,25.5,NULL,24,true,NULL,'b4','table'),
+
+-- b1-b2/2 (25-27) - tetap pakai tolerance Web Off Center (-3.5, -1.75, 0, 1.75, 3.5)
+('H.b1-b2/2','TMP-wfwmmjcn','H(b1-b2/2)','number',-3.5,-1.75,0,1.75,3.5,NULL,25,true,NULL,'b1-b2/2','table'),
+('C.b1-b2/2','TMP-wfwmmjcn','C(b1-b2/2)','number',-3.5,-1.75,0,1.75,3.5,NULL,26,true,NULL,'b1-b2/2','table'),
+('T.b1-b2/2','TMP-wfwmmjcn','T(b1-b2/2)','number',-3.5,-1.75,0,1.75,3.5,NULL,27,true,NULL,'b1-b2/2','table'),
+
+-- b3-b4/2 (28-30) - tetap pakai tolerance Web Off Center (-3.5, -1.75, 0, 1.75, 3.5)
+('H.b3-b4/2','TMP-wfwmmjcn','H(b3-b4/2)','number',-3.5,-1.75,0,1.75,3.5,NULL,28,true,NULL,'b3-b4/2','table'),
+('C.b3-b4/2','TMP-wfwmmjcn','C(b3-b4/2)','number',-3.5,-1.75,0,1.75,3.5,NULL,29,true,NULL,'b3-b4/2','table'),
+('T.b3-b4/2','TMP-wfwmmjcn','T(b3-b4/2)','number',-3.5,-1.75,0,1.75,3.5,NULL,30,true,NULL,'b3-b4/2','table'),
+
+-- t1 (31-33)
+('H.t1','TMP-wfwmmjcn','H(t1)','number',22.5,23.25,24,24.75,25.5,NULL,31,true,NULL,'t1','table'),
+('C.t1','TMP-wfwmmjcn','C(t1)','number',22.5,23.25,24,24.75,25.5,NULL,32,true,NULL,'t1','table'),
+('T.t1','TMP-wfwmmjcn','T(t1)','number',22.5,23.25,24,24.75,25.5,NULL,33,true,NULL,'t1','table'),
+
+-- t3 (34-36)
+('H.t3','TMP-wfwmmjcn','H(t3)','number',22.5,23.25,24,24.75,25.5,NULL,34,true,NULL,'t3','table'),
+('C.t3','TMP-wfwmmjcn','C(t3)','number',22.5,23.25,24,24.75,25.5,NULL,35,true,NULL,'t3','table'),
+('T.t3','TMP-wfwmmjcn','T(t3)','number',22.5,23.25,24,24.75,25.5,NULL,36,true,NULL,'t3','table'),
+
+-- t2 (37-39)
+('H.t2','TMP-wfwmmjcn','H(t2)','number',22.5,23.25,24,24.75,25.5,NULL,37,true,NULL,'t2','table'),
+('C.t2','TMP-wfwmmjcn','C(t2)','number',22.5,23.25,24,24.75,25.5,NULL,38,true,NULL,'t2','table'),
+('T.t2','TMP-wfwmmjcn','T(t2)','number',22.5,23.25,24,24.75,25.5,NULL,39,true,NULL,'t2','table'),
+
+-- t4 (40-42)
+('H.t4','TMP-wfwmmjcn','H(t4)','number',22.5,23.25,24,24.75,25.5,NULL,40,true,NULL,'t4','table'),
+('C.t4','TMP-wfwmmjcn','C(t4)','number',22.5,23.25,24,24.75,25.5,NULL,41,true,NULL,'t4','table'),
+('T.t4','TMP-wfwmmjcn','T(t4)','number',22.5,23.25,24,24.75,25.5,NULL,42,true,NULL,'t4','table'),
+
+-- t5 (43-45)
+('H.t5','TMP-wfwmmjcn','H(t5)','number',12.3,12.65,13,13.35,13.7,NULL,43,true,NULL,'t5','table'),
+('C.t5','TMP-wfwmmjcn','C(t5)','number',12.3,12.65,13,13.35,13.7,NULL,44,true,NULL,'t5','table'),
+('T.t5','TMP-wfwmmjcn','T(t5)','number',12.3,12.65,13,13.35,13.7,NULL,45,true,NULL,'t5','table'),
+
+-- t6 (NULL) - Web Thickness dengan order_numb NULL
+('H.t6','TMP-wfwmmjcn','H(t6)','number',12.3,12.65,13,13.35,13.7,NULL,NULL,true,NULL,'t6','table'),
+('C.t6','TMP-wfwmmjcn','C(t6)','number',12.3,12.65,13,13.35,13.7,NULL,NULL,true,NULL,'t6','table'),
+('T.t6','TMP-wfwmmjcn','T(t6)','number',12.3,12.65,13,13.35,13.7,NULL,NULL,true,NULL,'t6','table'),
+
+-- t7 (NULL) - Web Thickness dengan order_numb NULL
+('H.t7','TMP-wfwmmjcn','H(t7)','number',12.3,12.65,13,13.35,13.7,NULL,NULL,true,NULL,'t7','table'),
+('C.t7','TMP-wfwmmjcn','C(t7)','number',12.3,12.65,13,13.35,13.7,NULL,NULL,true,NULL,'t7','table'),
+('T.t7','TMP-wfwmmjcn','T(t7)','number',12.3,12.65,13,13.35,13.7,NULL,NULL,true,NULL,'t7','table'),
+
+-- FormRight (46-54)
+('height.of.flange','TMP-wfwmmjcn','Height of Flange','number',297,298.5,300,301.5,303,0,46,true,NULL,'FormRight','Height of Flange'),
+('flange.thickness','TMP-wfwmmjcn','Flange Thickness','number',22.5,23.25,24,24.75,25.5,0,47,true,NULL,'FormRight','Flange Thickness'),
+('width.of.web','TMP-wfwmmjcn','Width of Web','number',696,698,700,702,704,0,48,true,NULL,'FormRight','Width of Web'),
+('web.thickness','TMP-wfwmmjcn','Web Thickness','number',12.3,12.65,13,13.35,13.7,0,49,true,NULL,'FormRight','Web Thickness'),
+('unit.weight','TMP-wfwmmjcn','Unit Weight (Kgm)','number',174.7,178.35,182,185.65,189.3,0,50,true,NULL,'FormRight','Unit Weight (Kgm)'),
+('radius','TMP-wfwmmjcn','Radius','number',0,0,18,0,0,0,51,true,NULL,'FormRight','Radius'),
+('web.off.center','TMP-wfwmmjcn','Web Off Center','number',-3.5,-1.75,0,1.75,3.5,0,52,true,NULL,'FormRight','Web Off Center'),
+('os','TMP-wfwmmjcn','OS','number',0,0,3.6,0,0,0,53,true,NULL,'FormRight','OS'),
+('cow','TMP-wfwmmjcn','CoW','number',0,0,0,0,0,2.5,54,true,NULL,'FormRight','CoW');
+
+INSERT INTO qc_template_mapping (mapping_id, qc_template_id, group_name, position, order_numb) VALUES
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'Width of Web', 'H-Top', 1),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'Width of Web', 'H-Bottom', 2),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'Height of Flange', 'B1', 3),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'Height of Flange', 'B2', 4),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'Flange Thickness', 'b1', 5),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'Flange Thickness', 'b3', 6),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'Flange Thickness', 'b2', 7),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'Flange Thickness', 'b4', 8),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'Web Off Center', 'b1-b2/2', 9),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'Web Off Center', 'b3-b4/2', 10),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'Flange Thickness', 't1', 11),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'Flange Thickness', 't3', 12),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'Flange Thickness', 't2', 13),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'Flange Thickness', 't4', 14),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'Web Thickness', 't5', 15),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'Web Thickness', 't6', 16),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'Web Thickness', 't7', 17),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'Radius', '', 18),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'CoW', '', 19),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'OS', '', 20),
+('MAP' || LEFT(gen_random_uuid()::text, 8), 'TMP-wfwmmjcn', 'Unit Weight (Kgm)', '', 21);

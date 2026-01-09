@@ -62,11 +62,12 @@ export class LocationController {
   })
   @ApiResponse({ status: 200, description: 'Berhasil mengambil semua lokasi' })
   async findAll(
+    @CurrentUser('id') userId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('search') search?: string,
   ) {
-    return this.locationService.getAllLocations(page, limit, search);
+    return this.locationService.getAllLocations(userId, page, limit, search);
   }
 
   /**
@@ -78,8 +79,11 @@ export class LocationController {
   @ApiOperation({ summary: 'Ambil detail lokasi berdasarkan ID' })
   @ApiParam({ name: 'locationId', description: 'ID lokasi yang ingin diambil' })
   @ApiResponse({ status: 200, description: 'Berhasil mengambil detail lokasi' })
-  async findOne(@Param('locationId') locationId: string): Promise<Location> {
-    return this.locationService.getDetailLocation(locationId);
+  async findOne(
+    @CurrentUser('id') userId: string,
+    @Param('locationId') locationId: string,
+  ): Promise<Location> {
+    return this.locationService.getDetailLocation(userId, locationId);
   }
 
   /**
@@ -111,10 +115,11 @@ export class LocationController {
   })
   @ApiResponse({ status: 200, description: 'Berhasil memperbarui lokasi' })
   async update(
+    @CurrentUser('id') userId: string,
     @Param('locationId') locationId: string,
     @Body() dto: UpdateLocationDto,
   ): Promise<void> {
-    return this.locationService.update(locationId, dto);
+    return this.locationService.update(userId, locationId, dto);
   }
 
   /**

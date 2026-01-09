@@ -32,4 +32,12 @@ export class CreateLocationDto {
   @IsString()
   @IsOptional()
   addres?: string;
+
+  @ApiPropertyOptional({
+    description: 'Nama grup WhatsApp lokasi',
+    example: 'WA QC Gudang Pusat',
+  })
+  @IsString()
+  @IsOptional()
+  wa_group?: string;
 }

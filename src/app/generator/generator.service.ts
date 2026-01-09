@@ -26,6 +26,12 @@ export class GeneratorService {
       status: 'passed' | 'not passed';
     }) => (dim.status === 'passed' ? 'text-gray-600' : 'text-red-600');
 
+    const overallLabel = (status: 'passed' | 'not passed') =>
+      status === 'passed' ? 'PASSED' : 'REJECT';
+
+    const overallColor = (status: 'passed' | 'not passed') =>
+      status === 'passed' ? 'text-green-700' : 'text-red-700';
+
     const html = `
     <!doctype html>
         <html lang="en">
@@ -180,13 +186,21 @@ export class GeneratorService {
                 <!-- Note Section -->
                 <div class="row-span-1 border-t border-black">
                     <div class="grid grid-cols-5 text-center border-b border-black">
+                    <div class="px-3 border-r border-l border-black">
+                        <div class="text-[10px] text-gray-600 whitespace-nowrap">
+                            Status
+                        </div>
+                        <div class="text-xs font-semibold whitespace-nowrap ${overallColor(data.statusOverall)}">
+                            ${overallLabel(data.statusOverall)}
+                        </div>
+                    </div>
                     <div class="px-3 border-r border-black">
                         <div class="text-[10px] text-gray-600 whitespace-nowrap">No Sequence</div>
                         <div class="text-xs font-semibold">${data.sequenceNo}</div>
                     </div>
                     <div class="px-3">
                         <div class="text-[10px] text-gray-600 whitespace-nowrap">Potongan</div>
-                        <div class="text-xs font-semibold">${data.potongan}</div>
+                        <div class="text-xs font-semibold">${data.qcPrefix}/${data.potongan}</div>
                     </div>
                     <div class="px-3 border-l border-black">
                         <div class="text-[10px] text-gray-600 whitespace-nowrap">Batch ID</div>
@@ -195,8 +209,8 @@ export class GeneratorService {
                     <div class="px-3 border-l border-black">
                         <div class="text-[10px] text-gray-600 whitespace-nowrap">Lokasi</div>
                         <div class="text-xs font-semibold whitespace-nowrap">${data.lokasi}</div>
-                    </div>
-                    </div>
+                    </div>                    
+                </div>
                 </div>
                 </div>
             </div>
