@@ -395,13 +395,15 @@ export class QcRecordService {
     /** 6. Ambil QC Template Data (TOLERANCE) */
     const inputCodes = [...new Set(qcDataRecords.map((d) => d.input_code))];
 
-    const templateDatas = await this.qcTemplateDataRepo
-      .createQueryBuilder('qtd')
-      .where('qtd.qc_template_id = :templateId', {
-        templateId: qcRecord.qc_template_id,
-      })
-      .andWhere('qtd.input_code IN (:...inputCodes)', { inputCodes })
-      .getMany();
+    const templateDatas = inputCodes.length
+      ? await this.qcTemplateDataRepo
+          .createQueryBuilder('qtd')
+          .where('qtd.qc_template_id = :templateId', {
+            templateId: qcRecord.qc_template_id,
+          })
+          .andWhere('qtd.input_code IN (:...inputCodes)', { inputCodes })
+          .getMany()
+      : [];
 
     const templateMap = new Map(templateDatas.map((t) => [t.input_code, t]));
 

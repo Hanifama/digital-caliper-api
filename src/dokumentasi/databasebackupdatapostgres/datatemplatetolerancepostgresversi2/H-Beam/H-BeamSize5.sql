@@ -24,34 +24,34 @@ INSERT INTO qc_template_data (input_code, qc_template_id, label, input_type, min
 ('T.B2','TMP-rtxtuyt','T(B2)','number',197,198.5,200,201.5,203,NULL,12,true,'','B2','table'),
 
 -- b1 (13-15) - DIUBAH: Tolerance sekarang mengikuti Flange Thickness (197,198.5,200,201.5,203)
-('H.b1','TMP-rtxtuyt','H(b1)','number',197,198.5,200,201.5,203,NULL,13,true,'','b1','table'),
-('C.b1','TMP-rtxtuyt','C(b1)','number',197,198.5,200,201.5,203,NULL,14,true,'','b1','table'),
-('T.b1','TMP-rtxtuyt','T(b1)','number',197,198.5,200,201.5,203,NULL,15,true,'','b1','table'),
+('H.b1','TMP-rtxtuyt','H(b1)','number',11,11.5,12,12.5,13,NULL,13,true,'','b1','table'),
+('C.b1','TMP-rtxtuyt','C(b1)','number',11,11.5,12,12.5,13,NULL,14,true,'','b1','table'),
+('T.b1','TMP-rtxtuyt','T(b1)','number',11,11.5,12,12.5,13,NULL,15,true,'','b1','table'),
 
 -- b3 (16-18) - DIUBAH: Tolerance sekarang mengikuti Flange Thickness (197,198.5,200,201.5,203)
-('H.b3','TMP-rtxtuyt','H(b3)','number',197,198.5,200,201.5,203,NULL,16,true,'','b3','table'),
-('C.b3','TMP-rtxtuyt','C(b3)','number',197,198.5,200,201.5,203,NULL,17,true,'','b3','table'),
-('T.b3','TMP-rtxtuyt','T(b3)','number',197,198.5,200,201.5,203,NULL,18,true,'','b3','table'),
+('H.b3','TMP-rtxtuyt','H(b3)','number',11,11.5,12,12.5,13,NULL,16,true,'','b3','table'),
+('C.b3','TMP-rtxtuyt','C(b3)','number',11,11.5,12,12.5,13,NULL,17,true,'','b3','table'),
+('T.b3','TMP-rtxtuyt','T(b3)','number',11,11.5,12,12.5,13,NULL,18,true,'','b3','table'),
 
 -- b2 (19-21) - DIUBAH: Tolerance sekarang mengikuti Flange Thickness (197,198.5,200,201.5,203)
-('H.b2','TMP-rtxtuyt','H(b2)','number',197,198.5,200,201.5,203,NULL,19,true,'','b2','table'),
-('C.b2','TMP-rtxtuyt','C(b2)','number',197,198.5,200,201.5,203,NULL,20,true,'','b2','table'),
-('T.b2','TMP-rtxtuyt','T(b2)','number',197,198.5,200,201.5,203,NULL,21,true,'','b2','table'),
+('H.b2','TMP-rtxtuyt','H(b2)','number',11,11.5,12,12.5,13,NULL,19,true,'','b2','table'),
+('C.b2','TMP-rtxtuyt','C(b2)','number',11,11.5,12,12.5,13,NULL,20,true,'','b2','table'),
+('T.b2','TMP-rtxtuyt','T(b2)','number',11,11.5,12,12.5,13,NULL,21,true,'','b2','table'),
 
 -- b4 (22-24) - DIUBAH: Tolerance sekarang mengikuti Flange Thickness (197,198.5,200,201.5,203)
-('H.b4','TMP-rtxtuyt','H(b4)','number',197,198.5,200,201.5,203,NULL,22,true,'','b4','table'),
-('C.b4','TMP-rtxtuyt','C(b4)','number',197,198.5,200,201.5,203,NULL,23,true,'','b4','table'),
-('T.b4','TMP-rtxtuyt','T(b4)','number',197,198.5,200,201.5,203,NULL,24,true,'','b4','table'),
+('H.b4','TMP-rtxtuyt','H(b4)','number',11,11.5,12,12.5,13,NULL,22,true,'','b4','table'),
+('C.b4','TMP-rtxtuyt','C(b4)','number',11,11.5,12,12.5,13,NULL,23,true,'','b4','table'),
+('T.b4','TMP-rtxtuyt','T(b4)','number',11,11.5,12,12.5,13,NULL,24,true,'','b4','table'),
 
 -- b1-b2/2 (25-27) - DIUBAH: Tolerance sekarang mengikuti Flange Thickness (197,198.5,200,201.5,203)
-('H.b1-b2/2','TMP-rtxtuyt','H(b1-b2/2)','number',197,198.5,200,201.5,203,NULL,25,true,'','b1-b2/2','table'),
-('C.b1-b2/2','TMP-rtxtuyt','C(b1-b2/2)','number',197,198.5,200,201.5,203,NULL,26,true,'','b1-b2/2','table'),
-('T.b1-b2/2','TMP-rtxtuyt','T(b1-b2/2)','number',197,198.5,200,201.5,203,NULL,27,true,'','b1-b2/2','table'),
+('H.b1-b2/2','TMP-rtxtuyt','H(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,25,true,'','b1-b2/2','table'),
+('C.b1-b2/2','TMP-rtxtuyt','C(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,26,true,'','b1-b2/2','table'),
+('T.b1-b2/2','TMP-rtxtuyt','T(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,27,true,'','b1-b2/2','table'),
 
 -- b3-b4/2 (28-30) - DIUBAH: Tolerance sekarang mengikuti Flange Thickness (197,198.5,200,201.5,203)
-('H.b3-b4/2','TMP-rtxtuyt','H(b3-b4/2)','number',197,198.5,200,201.5,203,NULL,28,true,'','b3-b4/2','table'),
-('C.b3-b4/2','TMP-rtxtuyt','C(b3-b4/2)','number',197,198.5,200,201.5,203,NULL,29,true,'','b3-b4/2','table'),
-('T.b3-b4/2','TMP-rtxtuyt','T(b3-b4/2)','number',197,198.5,200,201.5,203,NULL,30,true,'','b3-b4/2','table'),
+('H.b3-b4/2','TMP-rtxtuyt','H(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,28,true,'','b3-b4/2','table'),
+('C.b3-b4/2','TMP-rtxtuyt','C(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,29,true,'','b3-b4/2','table'),
+('T.b3-b4/2','TMP-rtxtuyt','T(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,30,true,'','b3-b4/2','table'),
 
 -- t1 (31-33)
 ('H.t1','TMP-rtxtuyt','H(t1)','number',11,11.5,12,12.5,13,NULL,31,true,'','t1','table'),
@@ -117,7 +117,7 @@ INSERT INTO qc_template_mapping (mapping_id, qc_template_id, group_name, positio
 (CONCAT('MAP', LEFT(gen_random_uuid()::text, 8)), 'TMP-rtxtuyt', 'Height of Flange', 'B1', 0),
 (CONCAT('MAP', LEFT(gen_random_uuid()::text, 8)), 'TMP-rtxtuyt', 'CoW', '', 0),
 (CONCAT('MAP', LEFT(gen_random_uuid()::text, 8)), 'TMP-rtxtuyt', 'Web Thickness', 't5', 0),
-(CONCAT('MAP', LEFT(gen_random_uuid()::text, 8)), 'TMP-rtxtuyt', 'Flange Thickness', 'b3-b4/2', 8), -- DIUBAH: dari 'Web Off Center' ke 'Flange Thickness'
-(CONCAT('MAP', LEFT(gen_random_uuid()::text, 8)), 'TMP-rtxtuyt', 'Flange Thickness', 'b1-b2/2', 7), -- DIUBAH: dari 'Web Off Center' ke 'Flange Thickness'
+(CONCAT('MAP', LEFT(gen_random_uuid()::text, 8)), 'TMP-rtxtuyt', 'Web Off Center', 'b3-b4/2', 8),
+(CONCAT('MAP', LEFT(gen_random_uuid()::text, 8)), 'TMP-rtxtuyt', 'Web Off Center', 'b1-b2/2', 7),
 (CONCAT('MAP', LEFT(gen_random_uuid()::text, 8)), 'TMP-rtxtuyt', 'Web Thickness', 't6', 9),
 (CONCAT('MAP', LEFT(gen_random_uuid()::text, 8)), 'TMP-rtxtuyt', 'Web Thickness', 't7', 10);

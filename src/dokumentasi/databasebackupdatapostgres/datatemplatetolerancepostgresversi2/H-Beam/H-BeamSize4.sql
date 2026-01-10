@@ -97,7 +97,7 @@ INSERT INTO qc_template_data (input_code, qc_template_id, label, input_type, min
 ('radius','TMP-rtxtuys','Radius','number',0,0,13,0,0,0,51,true,'','FormRight','Radius'),
 ('web.off.center','TMP-rtxtuys','Web Off Center','number',-2.5,-1.25,0,1.25,2.5,0,52,true,'','FormRight','Web Off Center'),
 ('os','TMP-rtxtuys','OS','number',0,0,1.75,0,0,0,53,true,'','FormRight','OS'),
-('cow','TMP-rtxtuyr','CoW','number',0,0,0,0,0,2,54,true,'','FormRight','CoW');
+('cow','TMP-rtxtuys','CoW','number',0,0,0,0,0,2,54,true,'','FormRight','CoW');
 
 INSERT INTO qc_template_mapping (mapping_id, qc_template_id, group_name, position, order_numb) VALUES
 ('MAP' || LEFT(REPLACE(gen_random_uuid()::text, '-', ''), 8), 'TMP-rtxtuys', 'Width of Web', 'H-Bottom', 1),
