@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wireframe (Black & White – Strong Borders)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-white flex items-center justify-center min-h-screen">
+    <!-- Container -->
+    <div
+      class="bg-white grid grid-cols-12 border border-black shadow-md"
+      style="width: 794px; height: 559px"
+    >
+      <!-- Left Info Panel -->
+      <div class="col-span-3 grid grid-rows-3 border-r border-black">
+        <!-- Time + PIC Section -->
+        <div class="grid grid-rows-[auto_auto_1fr] border-b border-black">
+          <!-- PIC -->
+          <div class="px-4 py-2 text-center border-b border-black">
+            <div class="text-[10px] text-gray-600">PIC</div>
+            <div class="text-sm font-semibold whitespace-nowrap">
+              Akun Test Manager QC
+            </div>
+          </div>
+
+          <!-- QC DATE -->
+          <div class="px-4 py-2 text-center border-b border-black">
+            <div class="text-[10px] text-gray-600">Tanggal QC</div>
+            <div class="text-sm font-semibold">16-12-2025</div>
+          </div>
+
+          <!-- START & END TIME -->
+          <div class="grid grid-cols-2 divide-x divide-black">
+            <!-- START TIME -->
+            <div class="flex flex-col items-center justify-center py-3">
+              <p class="text-xs tracking-wide">START TIME</p>
+              <p class="text-2xl font-bold">14.00</p>
+            </div>
+
+            <!-- END TIME -->
+            <div class="flex flex-col items-center justify-center py-3">
+              <p class="text-xs tracking-wide">END TIME</p>
+              <p class="text-2xl font-bold">14.38</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weight -->
+        <div
+          class="relative flex flex-col items-center justify-center border-b border-black"
+        >
+          <!-- Title -->
+          <div
+            class="absolute top-0 inset-x-0 text-center text-xs py-1 border-b border-black bg-white"
+          >
+            Weight
+          </div>
+
+          <!-- VALUE -->
+          <div class="flex items-center justify-center h-full">
+            <p class="text-4xl font-bold">48.5</p>
+          </div>
+
+          <!-- Unit  -->
+          <div
+            class="absolute bottom-0 inset-x-0 text-center text-xs py-1 border-t border-black bg-white"
+          >
+            Kg/m
+          </div>
+        </div>
+
+        <!-- Length + Size -->
+        <div
+          class="relative flex flex-col items-center justify-center text-center h-full"
+        >
+          <!-- Length -->
+          <p class="text-xs tracking-wide">Length</p>
+          <p class="text-7xl font-bold leading-none">74</p>
+          <p class="text-xs mb-6">meter</p>
+
+          <!-- Size (BOTTOM STRIP) -->
+          <div
+            class="absolute bottom-0 inset-x-0 text-center text-xs py-2 border-t border-black bg-white"
+          >
+            <span class="text-gray-600">Size :</span>
+            <span class="font-semibold">HB 350×350×12×19</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Content -->
+      <div class="col-span-9 grid grid-rows-2">
+        <!-- Main Display -->
+        <div
+          class="row-span-3 border-b border-black flex items-center justify-center"
+        >
+          <div class="relative w-full h-full flex items-center justify-center">
+            <!-- TOP DIMENSION -->
+            <div class="absolute top-[15%] left-1/2 -translate-x-1/2">
+              <div class="flex items-end justify-center gap-[10vw] text-center">
+                <div>
+                  <span
+                    class="block text-[10px] text-gray-600 whitespace-nowrap"
+                  >
+                    Tebal Flange Kiri Atas
+                  </span>
+                  <span class="block text-sm font-semibold">1250</span>
+                </div>
+
+                <div>
+                  <span
+                    class="block text-[10px] text-gray-600 whitespace-nowrap"
+                  >
+                    Lebar Web Atas
+                  </span>
+                  <span class="block text-sm font-semibold">35</span>
+                </div>
+
+                <div>
+                  <span
+                    class="block text-[10px] text-gray-600 whitespace-nowrap"
+                  >
+                    Tebal Flange Kanan Atas
+                  </span>
+                  <span class="block text-sm font-semibold">1250</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- LEFT DIMENSION -->
+            <div
+              class="absolute left-[5%] top-1/2 -translate-y-1/2 text-center"
+            >
+              <div class="text-[10px] text-gray-600">Tinggi Flange Kiri</div>
+              <div class="text-sm font-semibold">150</div>
+            </div>
+
+            <!-- RIGHT DIMENSION -->
+            <div
+              class="absolute right-[3%] top-1/2 -translate-y-1/2 text-center"
+            >
+              <div class="text-[10px] text-gray-600">Tinggi Flange Kanan</div>
+              <div class="text-sm font-semibold">150</div>
+            </div>
+
+            <!-- BOTTOM DIMENSION -->
+            <div class="absolute bottom-[15%] left-1/2 -translate-x-1/2">
+              <div class="flex items-end justify-center gap-[10vw] text-center">
+                <!-- GROUP 1 -->
+                <div>
+                  <span
+                    class="block text-[10px] text-gray-600 whitespace-nowrap"
+                  >
+                    Tebal Flange Kiri Bawah
+                  </span>
+                  <span class="block text-sm font-semibold">1250</span>
+                </div>
+
+                <!-- GROUP 2 -->
+                <div>
+                  <span
+                    class="block text-[10px] text-gray-600 whitespace-nowrap"
+                  >
+                    Lebar Web Bawah
+                  </span>
+                  <span class="block text-sm font-semibold">349</span>
+                </div>
+
+                <!-- GROUP 3 -->
+                <div>
+                  <span
+                    class="block text-[10px] text-gray-600 whitespace-nowrap"
+                  >
+                    Tebal Flange Kanan Bawah
+                  </span>
+                  <span class="block text-sm font-semibold">1250</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- IMAGE -->
+            <img
+              src="./vectors/h-beam-shape.svg"
+              class="max-h-[60%] max-w-[60%] object-contain"
+            />
+
+            <!-- CENTER LABEL -->
+            <!-- <div class="absolute text-sm font-bold">IMAGE CENTER</div> -->
+
+            <!-- INNER DETAILS (B2, Simetri Kanan, Simetri Kiri, B4) -->
+            <div
+              class="absolute inset-x-0 top-[52%] px-[160px] flex justify-between text-center"
+            >
+              <!-- LEFT GROUP: B2 + Simetri Kanan -->
+              <div class="flex items-center gap-[40px]">
+                <!-- B2 -->
+                <div>
+                  <div class="text-[10px] text-gray-600">b2</div>
+                  <div class="text-xs font-semibold">42</div>
+                </div>
+
+                <!-- Simetri Kanan -->
+                <div>
+                  <div class="text-[10px] text-gray-600">Simetri Kanan</div>
+                  <div class="text-xs font-semibold">86</div>
+                </div>
+              </div>
+
+              <!-- RIGHT GROUP: Simetri Kiri + B4 -->
+              <div class="flex items-center gap-[40px]">
+                <!-- Simetri Kiri -->
+                <div>
+                  <div class="text-[10px] text-gray-600">Simetri Kiri</div>
+                  <div class="text-xs font-semibold">80</div>
+                </div>
+
+                <!-- B4 -->
+                <div>
+                  <div class="text-[10px] text-gray-600">b4</div>
+                  <div class="text-xs font-semibold">38</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="absolute top-[40%] left-1/2 -translate-x-1/2">
+              <div class="flex items-end justify-center gap-[2vw] text-center">
+                <!-- BLOCK 1 -->
+                <div class="flex items-center gap-10">
+                  <!-- B1 -->
+                  <div class="text-center">
+                    <span class="block text-[10px] text-gray-600">b1</span>
+                    <span class="block text-xs font-semibold">120</span>
+                  </div>
+
+                  <!-- Tebal Web 1 -->
+                  <div>
+                    <span
+                      class="block text-[10px] text-gray-600 whitespace-nowrap"
+                    >
+                      Tebal Web
+                    </span>
+                    <span class="block text-xs font-semibold">680</span>
+                  </div>
+                </div>
+
+                <!-- BLOCK 2 -->
+                <div>
+                  <span
+                    class="block text-[10px] text-gray-600 whitespace-nowrap"
+                  >
+                    Tebal Web
+                  </span>
+                  <span class="block text-xs font-semibold">35</span>
+                </div>
+
+                <!-- BLOCK 3 -->
+                <div class="flex items-center gap-10">
+                  <!-- Tebal Web 3 -->
+                  <div>
+                    <span
+                      class="block text-[10px] text-gray-600 whitespace-nowrap"
+                    >
+                      Tebal Web
+                    </span>
+                    <span class="block text-xs font-semibold">86</span>
+                  </div>
+
+                  <!-- B3 -->
+                  <div class="text-center">
+                    <span class="block text-[10px] text-gray-600">b3</span>
+                    <span class="block text-xs font-semibold">95</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Note Section -->
+        <div class="row-span-1 border-t border-black">
+          <div class="grid grid-cols-5 text-center border-b border-black">
+            <div class="px-3 border-r border-l border-black">
+              <div class="text-[10px] text-gray-600 whitespace-nowrap">
+                Status
+              </div>
+              <div
+                class="text-xs font-semibold whitespace-nowrap text-green-600"
+              >
+                PASSED
+              </div>
+            </div>
+            <!-- No Sequence -->
+            <div class="px-3 border-r border-black">
+              <div class="text-[10px] text-gray-600 whitespace-nowrap">
+                No Sequence
+              </div>
+              <div class="text-xs font-semibold">45</div>
+            </div>
+
+            <!-- Potongan -->
+            <div class="px-3">
+              <div class="text-[10px] text-gray-600 whitespace-nowrap">
+                Potongan
+              </div>
+              <div class="text-xs font-semibold">P2</div>
+            </div>
+
+            <!-- Batch ID -->
+            <div class="px-3 border-l border-black">
+              <div class="text-[10px] text-gray-600 whitespace-nowrap">
+                Batch ID
+              </div>
+              <div class="text-xs font-semibold">AD12345</div>
+            </div>
+
+            <!-- Lokasi -->
+            <div class="px-3 border-l border-black">
+              <div class="text-[10px] text-gray-600 whitespace-nowrap">
+                Lokasi
+              </div>
+              <div class="text-xs font-semibold whitespace-nowrap">
+                Cutting 2 Pulpit
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

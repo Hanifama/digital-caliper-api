@@ -41,10 +41,13 @@ export class GeneratorService {
             <title>Wireframe (Black & White – Strong Borders)</title>
             <script src="https://cdn.tailwindcss.com"></script>
         </head>
-        <body class="bg-white">
+        <body class="bg-white flex items-center justify-center min-h-screen">
             <!-- Container -->
-            <div class="w-full max-w-5xl h-full bg-white grid grid-cols-12 gap-0 border border-black">
-                
+            <div
+                class="bg-white grid grid-cols-12 border border-black shadow-md"
+                style="width: 794px; height: 559px;"
+            >
+  
                 <!-- Left Info Panel -->
                 <div class="col-span-3 grid grid-rows-3 border-r border-black">
                 <!-- Time + PIC Section -->
@@ -154,32 +157,84 @@ export class GeneratorService {
                     <!-- IMAGE -->
                     <img src="data:image/svg+xml;base64,${imageBase64}" class="max-h-[60%] max-w-[60%] object-contain" />
 
-                    <!-- INNER DETAILS -->
-                    <div class="absolute left-[30%] top-[52%] text-center">
+                    <!-- INNER DETAILS SIMETRI & B DIMENSIONS -->
+                    <div class="absolute inset-x-0 top-[52%] px-[160px] flex justify-between text-center">
+                    <!-- LEFT GROUP: B2 + Simetri Kanan -->
+                    <div class="flex items-center gap-[40px]">
+                        <!-- B2 -->
+                        <div class="text-center">
+                        <div class="text-[10px] text-gray-600">b2</div>
+                        <div class="text-xs font-semibold text-gray-600">${data.dimensions.b2.value}</div>
+                        </div>
+
+                        <!-- Simetri Kanan -->
+                        <div class="text-center">
                         <div class="text-[10px] text-gray-600">Simetri Kanan</div>
-                        <div class="text-xs font-semibold ${colorClass(data.dimensions.simetriRight)}">${data.dimensions.simetriRight.value}</div>
-                    </div>
-                    <div class="absolute right-[30%] top-[52%] text-center">
-                        <div class="text-[10px] text-gray-600">Simetri Kiri</div>
-                        <div class="text-xs font-semibold ${colorClass(data.dimensions.simetriLeft)}">${data.dimensions.simetriLeft.value}</div>
-                    </div>
-                    <div class="absolute top-[40%] left-1/2 -translate-x-1/2">
-                        <div class="flex items-end justify-center gap-[5vw] text-center">
-                        <div>
-                            <span class="block text-[10px] text-gray-600 whitespace-nowrap">Tebal Web</span>
-                            <span class="block text-xs font-semibold ${colorClass(data.dimensions.webLeft)}">${data.dimensions.webLeft.value}</span>
-                        </div>
-                        <div>
-                            <span class="block text-[10px] text-gray-600 whitespace-nowrap">Tebal Web</span>
-                            <span class="block text-xs font-semibold ${colorClass(data.dimensions.webCenter)}">${data.dimensions.webCenter.value}</span>
-                        </div>
-                        <div>
-                            <span class="block text-[10px] text-gray-600 whitespace-nowrap">Tebal Web</span>
-                            <span class="block text-xs font-semibold ${colorClass(data.dimensions.webRight)}">${data.dimensions.webRight.value}</span>
+                        <span class="block text-[10px] text-gray-600">b1-b2/2</span>
+                        <div class="text-xs font-semibold ${colorClass(data.dimensions.simetriRight)}">
+                            ${data.dimensions.simetriRight.value}
                         </div>
                         </div>
                     </div>
 
+                    <!-- RIGHT GROUP: Simetri Kiri + B4 -->
+                    <div class="flex items-center gap-[40px]">
+                        <!-- Simetri Kiri -->
+                        <div class="text-center">
+                        <div class="text-[10px] text-gray-600">Simetri Kiri</div>
+                        <span class="block text-[10px] text-gray-600">b3-b4/2</span>
+                        <div class="text-xs font-semibold ${colorClass(data.dimensions.simetriLeft)}">
+                            ${data.dimensions.simetriLeft.value}
+                        </div>
+                        </div>
+
+                        <!-- B4 -->
+                        <div class="text-center">
+                        <div class="text-[10px] text-gray-600">b4</div>
+                        <div class="text-xs font-semibold text-gray-600">${data.dimensions.b4.value}</div>
+                        </div>
+                    </div>
+                    </div>
+
+                     <div class="absolute top-[40%] left-1/2 -translate-x-1/2">
+                        <div class="flex items-end justify-center gap-[2vw] text-center">
+                            <!-- BLOCK 1 -->
+                            <div class="flex items-center gap-10">
+                            <!-- b1 -->
+                            <div class="text-center">
+                                <span class="block text-[10px] text-gray-600">b1</span>
+                                <span class="block text-xs font-semibold text-gray-600">${data.dimensions.b1.value}</span>
+                            </div>
+
+                            <!-- Tebal Web -->
+                            <div>
+                                <span class="block text-[10px] text-gray-600 whitespace-nowrap">Tebal Web</span>
+                                <span class="block text-xs font-semibold ${colorClass(data.dimensions.webLeft)}">${data.dimensions.webLeft.value}</span>
+                            </div>
+                            </div>
+
+                            <!-- BLOCK 2 -->
+                            <div>
+                                <span class="block text-[10px] text-gray-600 whitespace-nowrap">Tebal Web</span>
+                                <span class="block text-xs font-semibold ${colorClass(data.dimensions.webCenter)}">${data.dimensions.webCenter.value}</span>
+                            </div>
+
+                            <!-- BLOCK 3 -->
+                            <div class="flex items-center gap-10">
+                            <!-- Tebal Web 3 -->
+                            <div>
+                                <span class="block text-[10px] text-gray-600 whitespace-nowrap">Tebal Web</span>
+                                <span class="block text-xs font-semibold ${colorClass(data.dimensions.webRight)}">${data.dimensions.webRight.value}</span>
+                            </div>
+
+                            <!-- b3 -->
+                            <div class="text-center">
+                                <span class="block text-[10px] text-gray-600">b3</span>
+                                <span class="block text-xs font-semibold text-gray-600">${data.dimensions.b3.value}</span>
+                            </div>
+                            </div>
+                        </div>
+                        </div>
                     </div>
                 </div>
 

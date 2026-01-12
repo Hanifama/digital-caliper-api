@@ -34,6 +34,11 @@ export interface PdfDataDto {
     webLeft: PdfDimension;
     webCenter: PdfDimension;
     webRight: PdfDimension;
+
+    b1: PdfDimension;
+    b2: PdfDimension;
+    b3: PdfDimension;
+    b4: PdfDimension;
   };
 
   sequenceNo: string;

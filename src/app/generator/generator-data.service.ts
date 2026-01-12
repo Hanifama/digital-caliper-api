@@ -30,6 +30,11 @@ const DIMENSION_CODE_MAP = {
   bottomLeft: 't3',
   bottomCenter: 'H-bottom',
   bottomRight: 't4',
+
+  b1: 'b1',
+  b2: 'b2',
+  b3: 'b3',
+  b4: 'b4',
 } as const;
 
 @Injectable()
@@ -182,6 +187,11 @@ export class QcPdfDataService {
         webLeft: valByPattern(DIMENSION_CODE_MAP.webLeft),
         webCenter: valByPattern(DIMENSION_CODE_MAP.webCenter),
         webRight: valByPattern(DIMENSION_CODE_MAP.webRight),
+
+        b1: valByPattern(DIMENSION_CODE_MAP.b1),
+        b2: valByPattern(DIMENSION_CODE_MAP.b2),
+        b3: valByPattern(DIMENSION_CODE_MAP.b3),
+        b4: valByPattern(DIMENSION_CODE_MAP.b4),
       },
 
       sequenceNo: String(record.sequence_no),
