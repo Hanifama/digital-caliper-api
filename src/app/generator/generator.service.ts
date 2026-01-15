@@ -290,6 +290,6 @@ export class GeneratorService {
     });
 
     await browser.close();
-    return pdfBuffer;
+    return Buffer.from(pdfBuffer);
   }
 }

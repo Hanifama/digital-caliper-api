@@ -95,9 +95,19 @@ export class NotificationService implements OnModuleInit {
       this.isReady = false;
     });
 
-    this.client.on('ready', () => {
+    this.client.on('ready', async () => {
       this.isReady = true;
-      this.logger.log('✅ WhatsApp client is ready!');
+
+      try {
+        await this.client.pupPage?.evaluate(() => {
+          // @ts-ignore
+          window.WWebJS.sendSeen = async () => {};
+        });
+
+        this.logger.log('✅ WhatsApp client is ready (sendSeen disabled)');
+      } catch (err) {
+        this.logger.error('❌ Failed to disable sendSeen', err);
+      }
     });
 
     this.client.on('disconnected', (reason) => {
