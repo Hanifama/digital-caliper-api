@@ -7,6 +7,8 @@ services:
     image: qcms-caliper-be
     env_file:
       - .env
+    environment:
+      - TZ=Asia/Jakarta
     ports:
       - '${PORT:-8085}:${PORT:-8085}'
     networks:
@@ -15,9 +17,6 @@ services:
       # WA session tetap nyala setelah rebuild
       - ./wwebjs_auth:/app/.wwebjs_auth
       - ./wwebjs_cache:/app/.wwebjs_cache
-      # waktu container ikut WIB (Asia/Jakarta)
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
 networks:
   app-network:
     driver: bridge

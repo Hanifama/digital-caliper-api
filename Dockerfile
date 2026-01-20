@@ -1,5 +1,10 @@
 FROM node:22
 
+# Timezone
+ENV TZ=Asia/Jakarta
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone
+
 # Install Chromium dependencies
 RUN apt-get update && apt-get install -y \
     chromium \

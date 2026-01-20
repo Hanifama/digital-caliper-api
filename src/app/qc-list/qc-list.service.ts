@@ -352,14 +352,27 @@ export class QcListService {
       });
     }
 
-    // Filter tanggal
+    // Default tanggal: 1 bulan (bulan berjalan)
+    let from: Date;
+    let to: Date;
+
     if (from_date && end_date) {
-      const from = new Date(from_date);
-      const to = new Date(end_date);
+      from = new Date(from_date);
+      to = new Date(end_date);
       to.setHours(23, 59, 59, 999);
-      plansQuery.andWhere('qp.created_dt BETWEEN :from AND :to', { from, to });
-      countQuery.andWhere('qp.created_dt BETWEEN :from AND :to', { from, to });
+    } else {
+      const now = new Date();
+
+      // awal bulan
+      from = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+
+      // akhir bulan
+      to = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
     }
+
+    // filter tanggal
+    plansQuery.andWhere('qp.created_dt BETWEEN :from AND :to', { from, to });
+    countQuery.andWhere('qp.created_dt BETWEEN :from AND :to', { from, to });
 
     // Sorting & pagination
     plansQuery
