@@ -15,7 +15,7 @@ import { PdfDataDto, PdfDimension, PdfValue } from './dto/pdf-qc.dto';
 const DIMENSION_CODE_MAP = {
   topLeft: 't1',
   topCenter: 'H-top',
-  topRight: 't2',
+  topRight: 't3',
 
   webLeft: 't6',
   webCenter: 't5',
@@ -27,7 +27,7 @@ const DIMENSION_CODE_MAP = {
   leftHeight: 'B1',
   rightHeight: 'B2',
 
-  bottomLeft: 't3',
+  bottomLeft: 't2',
   bottomCenter: 'H-bottom',
   bottomRight: 't4',
 
