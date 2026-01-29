@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { User } from '../auth/entitities/user.entity';
+import { User } from '../auth/entity/user.entity';
 import { QcData } from '../qc-template/entity/qc-data.enity';
 import { QcTemplate } from '../qc-template/entity/qc-template.entity';
 import { QcRecord } from '../qc-template/entity/qc-record.entity';
@@ -12,7 +12,7 @@ import { LogService } from '../log-app/log.service';
 import { MessageService } from '../message/message.service';
 import { DashboardSummaryBySizeParamsDto } from './dto/dashboard-bysize.dto';
 import { Size } from '../size/entity/size.entity';
-import { RoleMenu } from '../auth/entitities/role-menu.entity';
+import { RoleMenu } from '../auth/entity/role-menu.entity';
 
 @Injectable()
 export class DashboardService {

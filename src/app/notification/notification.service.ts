@@ -9,7 +9,7 @@ import { QcRecord } from '../qc-template/entity/qc-record.entity';
 import { Repository } from 'typeorm';
 import { QcData } from '../qc-template/entity/qc-data.enity';
 import { ConfigService } from '@nestjs/config';
-import { User } from '../auth/entitities/user.entity';
+import { User } from '../auth/entity/user.entity';
 import { SendWaQcDto } from './dto/notification-send-wa.dto';
 import { GeneratorService } from '../generator/generator.service';
 import { QcPdfDataService } from '../generator/generator-data.service';

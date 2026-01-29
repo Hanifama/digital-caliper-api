@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Request } from 'express';
 
 import { MessageService } from '../message/message.service';
-import { User } from '../auth/entitities/user.entity';
+import { User } from '../auth/entity/user.entity';
 
 @Injectable()
 export class UploadService {

@@ -18,7 +18,7 @@ import { JwtAuthGuard } from '../../guard/jwtAuth.guard';
 // import { RoleGuard } from '../../guard/role.guard';
 // import { Roles } from '../../decorator/roles.decorator';
 import { ERole } from '../../types/enum/ERole.enum';
-import { User } from '../auth/entitities/user.entity';
+import { User } from '../auth/entity/user.entity';
 import { UpdatePasswordDto, UpdateUserDto } from './dto/updateUser.dto';
 import { IResponsePageWrapper } from 'src/types/interface/IResPageWrapper.interface';
 import { CurrentUser } from 'src/decorator/user.decorator';

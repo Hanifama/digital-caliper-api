@@ -13,10 +13,10 @@ import { MessageModule } from '../message/message.module';
 
 import { JwtStrategy } from './strategy/jwt.strategy';
 
-import { User } from './entitities/user.entity';
-import { Role } from './entitities/role.entity';
-import { Menu } from './entitities/menu.entity';
-import { RoleMenu } from './entitities/role-menu.entity';
+import { User } from './entity/user.entity';
+import { Role } from './entity/role.entity';
+import { Menu } from './entity/menu.entity';
+import { RoleMenu } from './entity/role-menu.entity';
 import { LogModule } from '../log-app/log.module';
 
 @Module({

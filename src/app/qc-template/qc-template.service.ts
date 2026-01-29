@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Transactional } from 'typeorm-transactional';
 
-import { User } from '../auth/entitities/user.entity';
+import { User } from '../auth/entity/user.entity';
 import { ProductType } from '../product/entity/product-type.entity';
 
 import { MessageService } from 'src/app/message/message.service';

@@ -25,11 +25,11 @@ import { QcRecordGroupedResult } from './interfaces/groupedRecord';
 import { ProductTypeDataMapping } from '../product/entity/product-type-data-mapping.entity';
 import { IResponsePageWrapper } from 'src/types/interface/IResPageWrapper.interface';
 import { Size } from '../size/entity/size.entity';
-import { User } from '../auth/entitities/user.entity';
+import { User } from '../auth/entity/user.entity';
 import { QcTemplate } from '../qc-template/entity/qc-template.entity';
 import { FinishProcessingDto } from './dto/finish-processing.dto';
 import { LogService } from '../log-app/log.service';
-import { RoleMenu } from '../auth/entitities/role-menu.entity';
+import { RoleMenu } from '../auth/entity/role-menu.entity';
 
 @Injectable()
 export class QcRecordService {

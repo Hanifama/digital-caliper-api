@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { User } from './entitities/user.entity';
+import { User } from './entity/user.entity';
 
 import { LoginUserDto } from './dto/loginUser.dto';
 import { IRefreshTokenResponse, RefreshTokenDto } from './dto/token.dto';

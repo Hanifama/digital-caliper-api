@@ -12,7 +12,7 @@ import { Transactional } from 'typeorm-transactional';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
 import { LogService } from '../log-app/log.service';
-import { User } from '../auth/entitities/user.entity';
+import { User } from '../auth/entity/user.entity';
 
 @Injectable()
 export class LocationService {

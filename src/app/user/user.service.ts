@@ -13,8 +13,8 @@ import { PasswordService } from '../auth/password.service';
 import { MessageService } from '../message/message.service';
 import { Transactional } from 'typeorm-transactional';
 
-import { User } from '../auth/entitities/user.entity';
-import { Role } from '../auth/entitities/role.entity';
+import { User } from '../auth/entity/user.entity';
+import { Role } from '../auth/entity/role.entity';
 
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { ERole } from 'src/types/enum/ERole.enum';

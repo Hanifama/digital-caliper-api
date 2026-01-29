@@ -12,7 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { MasterService } from './master.service';
-import { Role } from '../auth/entitities/role.entity';
+import { Role } from '../auth/entity/role.entity';
 import { CurrentUser } from 'src/decorator/user.decorator';
 import { JwtAuthGuard } from 'src/guard/jwtAuth.guard';
 import {

@@ -15,9 +15,9 @@ import { QcPlan } from '../qc-template/entity/qc-plan.entity';
 import { QcRecord } from '../qc-template/entity/qc-record.entity';
 import { QcData } from '../qc-template/entity/qc-data.enity';
 import { LogModule } from '../log-app/log.module';
-import { User } from '../auth/entitities/user.entity';
+import { User } from '../auth/entity/user.entity';
 import { Size } from '../size/entity/size.entity';
-import { RoleMenu } from '../auth/entitities/role-menu.entity';
+import { RoleMenu } from '../auth/entity/role-menu.entity';
 
 @Module({
   imports: [

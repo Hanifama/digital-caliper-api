@@ -4,8 +4,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 
-import { User } from '../auth/entitities/user.entity';
-import { Role } from '../auth/entitities/role.entity';
+import { User } from '../auth/entity/user.entity';
+import { Role } from '../auth/entity/role.entity';
 
 import { MessageModule } from '../message/message.module';
 import { SheetModule } from '../sheet/sheet.module';

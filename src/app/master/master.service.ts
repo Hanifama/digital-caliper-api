@@ -8,10 +8,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Transactional } from 'typeorm-transactional';
 
-import { Role } from '../auth/entitities/role.entity';
-import { RoleMenu } from '../auth/entitities/role-menu.entity';
-import { Menu } from '../auth/entitities/menu.entity';
-import { User } from '../auth/entitities/user.entity';
+import { Role } from '../auth/entity/role.entity';
+import { RoleMenu } from '../auth/entity/role-menu.entity';
+import { Menu } from '../auth/entity/menu.entity';
+import { User } from '../auth/entity/user.entity';
 
 import { v4 as uuidv4 } from 'uuid';
 

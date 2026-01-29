@@ -11,9 +11,9 @@ import { MessageModule } from 'src/app/message/message.module';
 import { SheetModule } from '../sheet/sheet.module';
 import { ProductTypeData } from '../product/entity/product-type-data.entity';
 import { Location } from '../location/entity/location.entity';
-import { User } from '../auth/entitities/user.entity';
+import { User } from '../auth/entity/user.entity';
 import { LogModule } from '../log-app/log.module';
-import { RoleMenu } from '../auth/entitities/role-menu.entity';
+import { RoleMenu } from '../auth/entity/role-menu.entity';
 
 @Module({
   imports: [

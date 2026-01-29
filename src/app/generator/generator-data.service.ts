@@ -8,7 +8,7 @@ import { Repository } from 'typeorm';
 
 import { QcRecord } from '../qc-template/entity/qc-record.entity';
 import { QcData } from '../qc-template/entity/qc-data.enity';
-import { User } from '../auth/entitities/user.entity';
+import { User } from '../auth/entity/user.entity';
 import { PdfDataDto, PdfDimension, PdfValue } from './dto/pdf-qc.dto';
 
 /** DIMENSION CODE MAP */
