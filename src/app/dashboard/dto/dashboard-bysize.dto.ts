@@ -3,16 +3,16 @@ import { IsOptional, IsDateString, IsString } from 'class-validator';
 
 export class DashboardSummaryBySizeParamsDto {
   @ApiPropertyOptional({
-    description: 'Tanggal mulai filter (format YYYY-MM-DD)',
-    example: '2025-11-01',
+    description: 'Tanggal mulai filter (YYYY-MM-DD)',
+    example: '2026-01-01',
   })
   @IsOptional()
   @IsDateString()
   from_date?: string;
 
   @ApiPropertyOptional({
-    description: 'Tanggal akhir filter (format YYYY-MM-DD)',
-    example: '2025-11-20',
+    description: 'Tanggal akhir filter (YYYY-MM-DD)',
+    example: '2026-01-31',
   })
   @IsOptional()
   @IsDateString()
@@ -25,4 +25,12 @@ export class DashboardSummaryBySizeParamsDto {
   @IsOptional()
   @IsString()
   size?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter berdasarkan lokasi',
+    example: 'LOC002',
+  })
+  @IsOptional()
+  @IsString()
+  location_id?: string;
 }

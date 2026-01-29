@@ -17,6 +17,7 @@ import { QcData } from '../qc-template/entity/qc-data.enity';
 import { LogModule } from '../log-app/log.module';
 import { User } from '../auth/entitities/user.entity';
 import { Size } from '../size/entity/size.entity';
+import { RoleMenu } from '../auth/entitities/role-menu.entity';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { Size } from '../size/entity/size.entity';
       QcRecord,
       QcData,
       Size,
+      RoleMenu,
     ]),
     LogModule,
     MessageModule,

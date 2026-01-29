@@ -21,6 +21,7 @@ import { DashboardSummaryRecentParamsDto } from './dto/dashboard-recent.dto';
 import { DashboardMonthlyQueryDto } from './dto/dashboard-monthly-query.dto';
 import { DashboardSummaryBySizeParamsDto } from './dto/dashboard-bysize.dto';
 import { DashboardRecentQcByUserParamsDto } from './dto/dashboard-recent-byUser.dto';
+import { DashboardAnalysisQueryDto } from './dto/dashboard-analysis.dto';
 
 @ApiTags('Dashboard') // Grup endpoint di Swagger
 @ApiBearerAuth()
@@ -67,8 +68,14 @@ export class DashboardController {
     status: 200,
     description: 'Berhasil mengambil analisis dashboard',
   })
-  async getAnalysis(@CurrentUser('id') userId: string) {
-    return this.dashboardService.getDashboardWeeklyAnalysis(userId);
+  async getAnalysis(
+    @CurrentUser('id') userId: string,
+    @Query() query: DashboardAnalysisQueryDto,
+  ) {
+    return this.dashboardService.getDashboardWeeklyAnalysis(
+      userId,
+      query.location_id,
+    );
   }
 
   /**
@@ -85,12 +92,13 @@ export class DashboardController {
     @CurrentUser('id') userId: string,
     @Query() query: DashboardMonthlyQueryDto,
   ) {
-    const { year, month } = query;
+    const { year, month, location_id } = query;
 
     return this.dashboardService.getDashboardMonthlyAnalysis(
       userId,
       year,
       month,
+      location_id,
     );
   }
 
@@ -122,11 +130,12 @@ export class DashboardController {
     @CurrentUser('id') userId: string,
     @Query() query: DashboardSummaryRecentParamsDto,
   ) {
-    const { page = 1, limit = 10, from_date, end_date } = query;
+    const { page = 1, limit = 10, from_date, end_date, location_id } = query;
 
     return this.dashboardService.getRecentQcDashboard(userId, page, limit, {
       from_date,
       end_date,
+      location_id,
     });
   }
 
@@ -137,7 +146,7 @@ export class DashboardController {
   @Get('recent-qc-by-user')
   @ApiOperation({
     summary:
-      'Ambil recent QC per user (pagination) - filter lokasi hanya bisa oleh Super Admin',
+      'Ambil recent QC per user (pagination) - filter lokasi hanya bisa oleh yang memiliki acces menu',
   })
   @ApiResponse({
     status: 200,
@@ -147,13 +156,13 @@ export class DashboardController {
     @CurrentUser('id') userId: string,
     @Query() query: DashboardRecentQcByUserParamsDto,
   ) {
-    const { page = 1, limit = 10, from_date, end_date, locationId } = query;
+    const { page = 1, limit = 10, from_date, end_date, location_id } = query;
 
     return this.dashboardService.getRecentQcDashboardByUser(
       userId,
       page,
       limit,
-      { from_date, end_date, locationId },
+      { from_date, end_date, location_id },
     );
   }
 }

@@ -29,12 +29,16 @@ import { User } from '../auth/entitities/user.entity';
 import { QcTemplate } from '../qc-template/entity/qc-template.entity';
 import { FinishProcessingDto } from './dto/finish-processing.dto';
 import { LogService } from '../log-app/log.service';
+import { RoleMenu } from '../auth/entitities/role-menu.entity';
 
 @Injectable()
 export class QcRecordService {
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+
+    @InjectRepository(RoleMenu)
+    private readonly roleMenuRepo: Repository<RoleMenu>,
 
     @InjectRepository(ProductTypeData)
     private productTypeDataRepo: Repository<ProductTypeData>,
@@ -65,6 +69,21 @@ export class QcRecordService {
     // private readonly notificationService: NotificationService,
   ) {}
 
+  private async hasMenuAccess(
+    roleId: string,
+    menuId: string,
+  ): Promise<boolean> {
+    const count = await this.roleMenuRepo.count({
+      where: {
+        role_id: roleId,
+        menu_id: menuId,
+        status: 'active',
+      },
+    });
+
+    return count > 0;
+  }
+
   /** Get ALl history record QC Record */
   async getAllQcRecordHistory(
     userId: string,
@@ -90,13 +109,32 @@ export class QcRecordService {
       throw new BadRequestException('User tidak ditemukan.');
     }
 
-    const isAdmin = user.role?.name?.toLowerCase() === 'super admin';
+    const MENU_FILTER_QC_HISTORY_LOCATION = 'qc_history_filter_loc';
 
-    /** 2. Validasi akses filter location */
-    if (!isAdmin && location_id?.trim()) {
-      throw new BadRequestException(
-        'Anda tidak memiliki izin untuk memfilter berdasarkan lokasi.',
-      );
+    const canFilterLocation = await this.hasMenuAccess(
+      user.role.role_id,
+      MENU_FILTER_QC_HISTORY_LOCATION,
+    );
+
+    /** 2. location filter (ROLE MENU BASED) */
+    const requestedLocationId = location_id?.trim();
+
+    if (!canFilterLocation) {
+      // user TIDAK bisa filter lokasi
+      if (requestedLocationId) {
+        throw new BadRequestException(
+          'Anda tidak memiliki izin untuk memfilter berdasarkan lokasi.',
+        );
+      }
+
+      if (!user.locationId) {
+        throw new BadRequestException('Pengguna belum ditempatkan lokasi.');
+      }
+
+      location_id = user.locationId;
+    } else {
+      // user boleh filter lokasi
+      location_id = requestedLocationId;
     }
 
     /** 3. Base Query */
@@ -110,29 +148,10 @@ export class QcRecordService {
       .leftJoin('qc.qc_template', 'template')
       .leftJoin('qc.location', 'loc');
 
-    /** 4. Filter lokasi (ROLE BASED) */
-    if (isAdmin) {
-      // Super admin → semua lokasi
-      if (location_id?.trim()) {
-        recordsQuery.andWhere('qc.location_id = :loc', {
-          loc: location_id.trim(),
-        });
-        countQuery.andWhere('qc.location_id = :loc', {
-          loc: location_id.trim(),
-        });
-      }
-    } else {
-      // User biasa → hanya lokasi sendiri
-      if (!user.locationId) {
-        throw new BadRequestException('Pengguna belum ditempatkan lokasi.');
-      }
-
-      recordsQuery.andWhere('qc.location_id = :loc', {
-        loc: user.locationId,
-      });
-      countQuery.andWhere('qc.location_id = :loc', {
-        loc: user.locationId,
-      });
+    /** 4. Filter lokasi */
+    if (location_id) {
+      recordsQuery.andWhere('qc.location_id = :loc', { loc: location_id });
+      countQuery.andWhere('qc.location_id = :loc', { loc: location_id });
     }
 
     /** 5. Filter search */
@@ -287,7 +306,7 @@ export class QcRecordService {
     }));
 
     /** 14. Logging & message */
-    const msg = isAdmin
+    const msg = canFilterLocation
       ? 'Berhasil memuat histori QC semua lokasi.'
       : 'Berhasil memuat histori QC di lokasi Anda.';
 
@@ -298,7 +317,7 @@ export class QcRecordService {
       data_2: `page:${page}`,
       data_3: `limit:${limit}`,
       data_4: `search:${search || '-'}`,
-      data_5: `location:${location_id || user.locationId || '-'}`,
+      data_5: `location:${location_id || '-'}`,
     });
 
     return {

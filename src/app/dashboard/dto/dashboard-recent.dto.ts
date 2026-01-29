@@ -1,5 +1,11 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsDateString, IsInt, Min } from 'class-validator';
+import {
+  IsOptional,
+  IsDateString,
+  IsInt,
+  Min,
+  IsString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class DashboardSummaryRecentParamsDto {
@@ -19,7 +25,7 @@ export class DashboardSummaryRecentParamsDto {
 
   @ApiPropertyOptional({
     description: 'Tanggal mulai filter (YYYY-MM-DD)',
-    example: '2025-11-01',
+    example: '2026-01-01',
   })
   @IsOptional()
   @IsDateString()
@@ -27,9 +33,17 @@ export class DashboardSummaryRecentParamsDto {
 
   @ApiPropertyOptional({
     description: 'Tanggal akhir filter (YYYY-MM-DD)',
-    example: '2025-11-20',
+    example: '2026-01-31',
   })
   @IsOptional()
   @IsDateString()
   end_date?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter berdasarkan lokasi',
+    example: 'LOC002',
+  })
+  @IsOptional()
+  @IsString()
+  location_id?: string;
 }

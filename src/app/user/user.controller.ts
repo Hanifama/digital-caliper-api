@@ -52,7 +52,7 @@ export class UserController {
    */
   @Get()
   // @Roles(ERole.MANAJER)
-  @ApiOperation({ summary: 'Ambil semua user (Hanya Manajer)' })
+  @ApiOperation({ summary: 'Ambil semua user' })
   @ApiQuery({
     name: 'page',
     required: false,
@@ -108,7 +108,7 @@ export class UserController {
    */
   @Post('create')
   // @Roles(ERole.MANAJER)
-  @ApiOperation({ summary: 'Buat user baru (Hanya Manajer)' })
+  @ApiOperation({ summary: 'Buat user baru' })
   @ApiBody({ type: CreateUserDto })
   @ApiResponse({ status: 201, description: 'Berhasil membuat user baru' })
   async register(
@@ -125,7 +125,7 @@ export class UserController {
   @Get('export/xlsx')
   @UseGuards(JwtAuthGuard)
   // @Roles(ERole.MANAJER)
-  @ApiOperation({ summary: 'Export user ke XLSX (Hanya Manajer)' })
+  @ApiOperation({ summary: 'Export user ke XLSX' })
   @ApiResponse({ status: 200, description: 'Berhasil mengekspor data user' })
   protected async exportUserHandler(
     @CurrentUser('id') userId: string,
@@ -202,7 +202,7 @@ export class UserController {
   @Put(':userId')
   @UseGuards(JwtAuthGuard)
   // @Roles(ERole.MANAJER)
-  @ApiOperation({ summary: 'Update user berdasarkan ID (Hanya Manajer)' })
+  @ApiOperation({ summary: 'Update user berdasarkan ID' })
   @ApiParam({ name: 'userId', description: 'ID user yang ingin diperbarui' })
   @ApiBody({ type: UpdateUserDto })
   @ApiResponse({ status: 200, description: 'Berhasil memperbarui user' })
@@ -223,7 +223,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   // @Roles(ERole.MANAJER)
   @ApiOperation({
-    summary: 'Update password user berdasarkan ID (Hanya Manajer)',
+    summary: 'Update password user berdasarkan ID',
   })
   @ApiParam({
     name: 'userId',
@@ -249,7 +249,7 @@ export class UserController {
   @Delete(':userId')
   @UseGuards(JwtAuthGuard)
   // @Roles(ERole.MANAJER)
-  @ApiOperation({ summary: 'Hapus user berdasarkan ID (Hanya Manajer)' })
+  @ApiOperation({ summary: 'Hapus user berdasarkan ID' })
   @ApiParam({ name: 'userId', description: 'ID user yang ingin dihapus' })
   @ApiResponse({ status: 200, description: 'Berhasil menghapus user' })
   async deleteUser(

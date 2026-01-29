@@ -18,12 +18,16 @@ import { QcTemplateData } from '../qc-template/entity/qc-template-data.entity';
 import { LogService } from '../log-app/log.service';
 import { QcData } from '../qc-template/entity/qc-data.enity';
 import { ProductTypeData } from '../product/entity/product-type-data.entity';
+import { RoleMenu } from '../auth/entitities/role-menu.entity';
 
 @Injectable()
 export class QcListService {
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+
+    @InjectRepository(RoleMenu)
+    private readonly roleMenuRepo: Repository<RoleMenu>,
 
     @InjectRepository(QcTemplate)
     private readonly qcTemplateRepo: Repository<QcTemplate>,
@@ -49,6 +53,23 @@ export class QcListService {
     private readonly logService: LogService,
   ) {}
 
+  /** pemeriksaan acces menu */
+  private async hasMenuAccess(
+    roleId: string,
+    menuId: string,
+  ): Promise<boolean> {
+    const count = await this.roleMenuRepo.count({
+      where: {
+        role_id: roleId,
+        menu_id: menuId,
+        status: 'active',
+      },
+    });
+
+    return count > 0;
+  }
+
+  /** Insert Excel to qc plan */
   private async insertQcPlan(plans: QcPlan[]) {
     if (!plans.length) return;
 
@@ -269,12 +290,25 @@ export class QcListService {
 
     if (!user) throw new BadRequestException('User tidak ditemukan.');
 
-    const isAdmin = user.role?.name?.toLowerCase() === 'super admin';
+    const CAN_FILTER_LOC = 'qc_list_filter_location';
 
-    if (!isAdmin && location_id?.trim()) {
-      throw new BadRequestException(
-        'Anda tidak memiliki izin untuk memfilter berdasarkan lokasi.',
-      );
+    const canFilterLocation = await this.hasMenuAccess(
+      user.role.role_id,
+      CAN_FILTER_LOC,
+    );
+
+    if (!canFilterLocation) {
+      if (location_id?.trim()) {
+        throw new BadRequestException(
+          'Anda tidak memiliki izin untuk memfilter berdasarkan lokasi.',
+        );
+      }
+
+      if (!user.locationId) {
+        throw new BadRequestException('Pengguna belum ditempatkan lokasi.');
+      }
+
+      location_id = user.locationId;
     }
 
     const plansQuery = this.qcPlanRepo.createQueryBuilder('qp');
@@ -286,12 +320,19 @@ export class QcListService {
       .leftJoinAndSelect('qp.location', 'loc');
     countQuery.leftJoin('qp.qc_template', 'qt');
 
-    if (isAdmin) {
-      // Admin bisa lihat semua
+    if (canFilterLocation) {
+      // memiliki acces menu bisa lihat semua
       plansQuery.withDeleted();
       countQuery.withDeleted();
 
-      // Jika admin mengirim location → filter by location
+      plansQuery.andWhere('qp.status != :doneStatus', {
+        doneStatus: 'Done',
+      });
+      countQuery.andWhere('qp.status != :doneStatus', {
+        doneStatus: 'Done',
+      });
+
+      // Jika user memiliki acces menu mengirim location → filter by location
       if (location_id && location_id.trim()) {
         plansQuery.andWhere('qp.location_id = :filterLoc', {
           filterLoc: location_id.trim(),
@@ -301,7 +342,7 @@ export class QcListService {
         });
       }
     } else {
-      // User biasa hanya bisa lihat berdasarkan lokasi user sendiri
+      // User biasa tidak memiliki acces hanya bisa lihat berdasarkan lokasi user sendiri
       if (!user.locationId)
         throw new BadRequestException('Pengguna belum ditempatkan lokasi.');
 
@@ -436,7 +477,7 @@ export class QcListService {
       data_5: `location:${location_id || '-'}`,
     });
 
-    const msg = isAdmin
+    const msg = canFilterLocation
       ? 'Berhasil memuat semua QC Plan.'
       : 'Berhasil memuat semua QC Plan di lokasi Anda.';
 
@@ -998,20 +1039,54 @@ export class QcListService {
   }): Promise<{ filename: string; buffer: Buffer }> {
     const { userId, from_date, end_date, location_id } = filter;
 
+    const MENU_EXPORT_QC_LOCATION = 'qc_list_export_location';
+
     const user = await this.userRepo.findOne({
       where: { user_id: userId },
+      relations: ['role'],
     });
+
+    if (!user) {
+      throw new BadRequestException('User tidak ditemukan.');
+    }
+
+    const canExportByLocation = await this.hasMenuAccess(
+      user.role.role_id,
+      MENU_EXPORT_QC_LOCATION,
+    );
+
+    const requestedLocationId = location_id?.trim();
+    let resolvedLocationId: string | undefined;
+
+    if (!canExportByLocation) {
+      if (requestedLocationId) {
+        throw new BadRequestException(
+          'Anda tidak memiliki izin untuk export berdasarkan lokasi.',
+        );
+      }
+
+      if (!user.locationId) {
+        throw new BadRequestException('Pengguna belum ditempatkan lokasi.');
+      }
+
+      resolvedLocationId = user.locationId;
+    } else {
+      resolvedLocationId = requestedLocationId;
+    }
 
     // 1️. Ambil QC RECORD (TANPA JOIN QC DATA)
     const qb = this.qcRecordRepo
       .createQueryBuilder('qr')
       .leftJoinAndSelect('qr.location', 'loc')
-      .where('qr.status_overall != :processing', {
-        processing: 'processing',
+      .where('qr.status_overall != :Processing', {
+        Processing: 'Processing',
       });
 
-    if (location_id)
-      qb.andWhere('qr.location_id = :location_id', { location_id });
+    if (resolvedLocationId) {
+      qb.andWhere('qr.location_id = :locationId', {
+        locationId: resolvedLocationId,
+      });
+    }
 
     if (from_date && end_date) {
       qb.andWhere('qr.created_dt BETWEEN :from AND :to', {
@@ -1175,7 +1250,7 @@ export class QcListService {
       data_2: `range:${from_date ?? '-'}~${end_date ?? '-'}`,
       data_3: `total:${records.length}`,
       data_4: `filename:${filename}`,
-      data_5: `location:${location_id ?? 'ALL'}`,
+      data_5: `location:${resolvedLocationId ?? 'ALL'}`,
     });
 
     return { filename, buffer };

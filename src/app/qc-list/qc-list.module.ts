@@ -13,11 +13,13 @@ import { ProductTypeData } from '../product/entity/product-type-data.entity';
 import { Location } from '../location/entity/location.entity';
 import { User } from '../auth/entitities/user.entity';
 import { LogModule } from '../log-app/log.module';
+import { RoleMenu } from '../auth/entitities/role-menu.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       User,
+      RoleMenu,
       Location,
       QcTemplate,
       QcTemplateData,

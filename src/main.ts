@@ -14,7 +14,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { initializeTransactionalContext } from 'typeorm-transactional';
 
-import helmet, { frameguard, noSniff, xssFilter } from 'helmet';
+import helmet from 'helmet';
 
 import compression from 'compression';
 
@@ -39,8 +39,9 @@ import compression from 'compression';
       const allowedOrigins = [
         'http://localhost:5173', // dev frontend
         'http://localhost:4173', // staging frontend
-        'https://digitalcaliper.webview.cloud', // prod dev
-        'http://172.16.22.170', // prod www
+        'https://digitalcaliper.webview.cloud', // staging
+        'http://172.16.22.170', // prod ip
+        'http://cims.gyssteel.com/', // prod domain
         'http://localhost:8085', // Swagger UI
       ];
 
@@ -92,7 +93,8 @@ import compression from 'compression';
 
     .addServer('http://localhost:8085', 'Development Server')
     .addServer('https://api-digitalcaliper.webview.cloud/', 'Staging Server')
-    .addServer('http://172.16.22.170/api', 'Production Server')
+    .addServer('http://172.16.22.170/api', 'Production IP Server')
+    .addServer('http://cims.gyssteel.com/api', 'Production Domain Server')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

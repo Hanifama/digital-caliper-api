@@ -95,7 +95,7 @@ export class UserService {
       user_id: this.generateUserId(role.name),
       username: dto.username,
       full_name: dto.full_name,
-      name: dto.name,
+      name: dto.full_name,
       email: dto.email,
       password: hashedPassword,
       NIK: dto.NIK,

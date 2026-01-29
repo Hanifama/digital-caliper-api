@@ -10,6 +10,7 @@ INSERT INTO menu (menu_id, name, status) VALUES
 ('product', 'Product', 'active'),
 ('product_detail', 'Product Detail', 'active'),
 ('qc_list', 'QC List', 'active'),
+('qc_history', 'QC History', 'active'),
 ('user', 'User', 'active'),
 ('location', 'Location', 'active'),
 ('role', 'Role', 'active'),
@@ -32,7 +33,15 @@ INSERT INTO menu (menu_id, name, status) VALUES
 
 ('role_add', 'Add Role', 'active'),
 ('role_edit', 'Edit Role', 'active'),
-('role_delete', 'Delete Role', 'active');
+('role_delete', 'Delete Role', 'active'),
+
+('qc_list_filter_location', '[Filter] QC List by Location', 'active'),
+('qc_list_export_location', '[Export] QC List by Location', 'active'),
+
+('qc_history_filter_loc', '[Filter] QC History by Location', 'active'),
+('dashboard_filter_loc', '[Filter] Dashboard by Location', 'active'),
+
+('qc_monitoring', 'Quality Control Monitoring', 'active');
 
 
 -- Role 2 (Manajer) akses semua menu + CRUD
@@ -68,7 +77,20 @@ INSERT INTO role_menu (role_id, menu_id, status) VALUES
 -- Role CRUD
 ('2', 'role_add', 'active'),
 ('2', 'role_edit', 'active'),
-('2', 'role_delete', 'active');
+('2', 'role_delete', 'active'),
+
+--  QC List Filter Permission
+('2', 'qc_list_filter_location', 'active'),
+('2', 'qc_list_export_location', 'active'),
+
+--  QC History Filter Permission
+('2', 'qc_history_filter_loc', 'active'),
+
+--  Dashboard Filter Permission
+('2', 'dashboard_filter_loc', 'active'),
+
+--  QC Monitoring Permission
+('2', 'qc_monitoring', 'active');
 
 
 -- Role 1 (Operator) hanya akses dashboard & qc_list + CRUD

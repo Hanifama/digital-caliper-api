@@ -177,10 +177,11 @@ export class QcListController {
 
   /** Export QC Plan ke file XLSX */
   @Get('plans/export/xlsx')
-  @ApiOperation({ summary: 'Export QC Plan ke XLSX' })
+  @ApiOperation({ summary: 'Export Hasil QC ke XLSX' })
+  @ApiQuery({ name: 'location_id', required: false })
   @ApiResponse({
     status: 200,
-    description: 'Berhasil mengekspor QC Plan ke XLSX',
+    description: 'Berhasil mengekspor Hasil QC ke XLSX',
   })
   async exportQcPlansHandler(
     @Res() res: Response,
