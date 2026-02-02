@@ -39,18 +39,41 @@ export class QcListController {
   constructor(private readonly qcListService: QcListService) {}
 
   /**
-   * Ambil daftar QC Plan dengan pagination (super admin bisa filter lokasi, user biasa otomatis pakai lokasi sendiri)
+   * Ambil daftar QC Plan dengan pagination dan filter
    *
-   * @param userId ID user saat ini
-   * @param page Nomor halaman, default 1
-   * @param limit Jumlah data per halaman, default 10
+   * Akses:
+   * - User dengan akses menu izin filter lokasi dapat memfilter berdasarkan location_id
+   * - User tanpa akses menu izin filter lokasi otomatis menggunakan lokasi miliknya
+   *
+   * Filter yang tersedia:
+   * - search        : Pencarian berdasarkan qc_id, nama template, status, atau sequence_no
+   * - location_id   : Filter lokasi
+   * - file_name     : Filter berdasarkan nama file
+   * - size          : Filter ukuran produk
+   * - status        : Status QC Plan (hanya menerima `processing` atau `new_data`)
+   * - kgm_nominal   : Filter berdasarkan nominal KGM (number)
+   * - brand_merek   : Filter berdasarkan brand / merek
+   * - from_date     : Tanggal mulai (format: YYYY-MM-DD)
+   * - end_date      : Tanggal akhir (format: YYYY-MM-DD)
+   *
+   * Default behaviour:
+   * - Jika status tidak dikirim, data dengan status `Done` akan dikecualikan
+   * - Jika tanggal tidak dikirim, otomatis menggunakan rentang bulan berjalan
+   *
+   * @param userId ID user yang sedang login
+   * @param page Nomor halaman (default: 1)
+   * @param limit Jumlah data per halaman (default: 10)
    * @param search Kata kunci pencarian (opsional)
-   * @param location_id Filter lokasi (opsional, hanya berlaku untuk super admin)
-   * @param fileName Filter berdasarkan nama file (opsional)
-   * @param from_date Filter tanggal mulai (opsional)
-   * @param end_date Filter tanggal akhir (opsional)
+   * @param location_id ID lokasi (opsional, hanya yang punya akses menu)
+   * @param fileName Nama file QC Plan (opsional)
+   * @param size Ukuran produk (opsional)
+   * @param status Status QC Plan: `processing` | `new_data` (opsional)
+   * @param kgm_nominal Nominal KGM (number, opsional)
+   * @param brand_merek Brand / merek produk (opsional)
+   * @param from_date Tanggal mulai filter (opsional)
+   * @param end_date Tanggal akhir filter (opsional)
    *
-   * @returns Daftar QC Plan sesuai filter + pagination
+   * @returns Daftar QC Plan sesuai filter dan pagination
    */
   @Get('plans')
   @ApiOperation({ summary: 'Ambil daftar QC Plan List' })
@@ -59,6 +82,15 @@ export class QcListController {
   @ApiQuery({ name: 'search', required: false })
   @ApiQuery({ name: 'location_id', required: false })
   @ApiQuery({ name: 'file_name', required: false })
+  @ApiQuery({ name: 'size', required: false })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['processing', 'new_data'],
+    description: 'Filter status QC Plan (processing | new_data)',
+  })
+  @ApiQuery({ name: 'kgm_nominal', required: false })
+  @ApiQuery({ name: 'brand_merek', required: false })
   @ApiQuery({ name: 'from_date', required: false })
   @ApiQuery({ name: 'end_date', required: false })
   @ApiResponse({
@@ -72,6 +104,10 @@ export class QcListController {
     @Query('search') search?: string,
     @Query('location_id') location_id?: string,
     @Query('file_name') fileName?: string,
+    @Query('size') size?: string,
+    @Query('status') status?: string,
+    @Query('kgm_nominal') kgm_nominal?: number,
+    @Query('brand_merek') brand_merek?: string,
     @Query('from_date') from_date?: string,
     @Query('end_date') end_date?: string,
   ) {
@@ -82,6 +118,10 @@ export class QcListController {
       search,
       location_id,
       fileName,
+      size,
+      status,
+      kgm_nominal,
+      brand_merek,
       from_date,
       end_date,
     );

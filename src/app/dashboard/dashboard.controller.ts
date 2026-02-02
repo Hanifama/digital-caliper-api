@@ -22,6 +22,7 @@ import { DashboardMonthlyQueryDto } from './dto/dashboard-monthly-query.dto';
 import { DashboardSummaryBySizeParamsDto } from './dto/dashboard-bysize.dto';
 import { DashboardRecentQcByUserParamsDto } from './dto/dashboard-recent-byUser.dto';
 import { DashboardAnalysisQueryDto } from './dto/dashboard-analysis.dto';
+import { DashboardDailyAnalysisQueryDto } from './dto/dashboard-daily-analusis.dto';
 
 @ApiTags('Dashboard') // Grup endpoint di Swagger
 @ApiBearerAuth()
@@ -56,6 +57,25 @@ export class DashboardController {
     @Query() params: DashboardSummaryBySizeParamsDto,
   ) {
     return this.dashboardService.getDashboardSummaryBySize(params, userId);
+  }
+
+  @Get('analysis/daily')
+  @ApiOperation({ summary: 'Ambil analisis harian berdasarkan bulan & tahun' })
+  @ApiResponse({
+    status: 200,
+    description: 'Berhasil mengambil analisis harian dashboard',
+  })
+  async getDailyAnalysis(
+    @CurrentUser('id') userId: string,
+    @Query() query: DashboardDailyAnalysisQueryDto,
+  ) {
+    const { year, month, location_id } = query;
+    return this.dashboardService.getDashboardDailyAnalysis(
+      userId,
+      year,
+      month,
+      location_id,
+    );
   }
 
   /**

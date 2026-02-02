@@ -276,6 +276,10 @@ export class QcListService {
     search?: string,
     location_id?: string,
     fileName?: string,
+    size?: string,
+    status?: string,
+    kgm_nominal?: number,
+    brand_merek?: string,
     from_date?: string,
     end_date?: string,
   ): Promise<IResponsePageWrapper<any>> {
@@ -318,82 +322,155 @@ export class QcListService {
     plansQuery
       .leftJoinAndSelect('qp.qc_template', 'qt')
       .leftJoinAndSelect('qp.location', 'loc');
+
     countQuery.leftJoin('qp.qc_template', 'qt');
 
+    // ACCESS CONTROL & BASE FILTER
     if (canFilterLocation) {
-      // memiliki acces menu bisa lihat semua
       plansQuery.withDeleted();
       countQuery.withDeleted();
 
-      plansQuery.andWhere('qp.status != :doneStatus', {
-        doneStatus: 'Done',
-      });
-      countQuery.andWhere('qp.status != :doneStatus', {
-        doneStatus: 'Done',
-      });
+      // default exclude Done
+      if (!status) {
+        plansQuery.andWhere('qp.status != :doneStatus', { doneStatus: 'Done' });
+        countQuery.andWhere('qp.status != :doneStatus', { doneStatus: 'Done' });
+      }
 
-      // Jika user memiliki acces menu mengirim location → filter by location
-      if (location_id && location_id.trim()) {
-        plansQuery.andWhere('qp.location_id = :filterLoc', {
-          filterLoc: location_id.trim(),
+      if (location_id?.trim()) {
+        plansQuery.andWhere('qp.location_id = :locId', {
+          locId: location_id.trim(),
         });
-        countQuery.andWhere('qp.location_id = :filterLoc', {
-          filterLoc: location_id.trim(),
+        countQuery.andWhere('qp.location_id = :locId', {
+          locId: location_id.trim(),
         });
       }
     } else {
-      // User biasa tidak memiliki acces hanya bisa lihat berdasarkan lokasi user sendiri
       if (!user.locationId)
         throw new BadRequestException('Pengguna belum ditempatkan lokasi.');
 
       plansQuery
         .where('qp.deleted_at IS NULL')
-        .andWhere('qp.location_id = :locationId', {
-          locationId: user.locationId,
-        })
-        .andWhere('qp.status != :doneStatus', { doneStatus: 'Done' });
+        .andWhere('qp.location_id = :locId', {
+          locId: user.locationId,
+        });
 
       countQuery
         .where('qp.deleted_at IS NULL')
-        .andWhere('qp.location_id = :locationId', {
-          locationId: user.locationId,
-        })
-        .andWhere('qp.status != :doneStatus', { doneStatus: 'Done' });
+        .andWhere('qp.location_id = :locId', {
+          locId: user.locationId,
+        });
+
+      if (!status) {
+        plansQuery.andWhere('qp.status != :doneStatus', { doneStatus: 'Done' });
+        countQuery.andWhere('qp.status != :doneStatus', { doneStatus: 'Done' });
+      }
     }
 
-    // Filter search
+    /** FILTER SEARCH */
     if (search?.trim() && search !== '{{search}}') {
       const trimmed = search.trim();
-      const searchText = `%${trimmed.toLowerCase()}%`;
       const searchNumber = Number(trimmed);
 
       if (!isNaN(searchNumber) && /^\d+$/.test(trimmed)) {
-        plansQuery.andWhere('qp.sequence_no = :searchNumber', { searchNumber });
-        countQuery.andWhere('qp.sequence_no = :searchNumber', { searchNumber });
+        plansQuery.andWhere('qp.sequence_no = :searchNumber', {
+          searchNumber,
+        });
+        countQuery.andWhere('qp.sequence_no = :searchNumber', {
+          searchNumber,
+        });
       } else {
         plansQuery.andWhere(
-          '(LOWER(qp.qc_id) LIKE :searchText OR LOWER(qt.name) LIKE :searchText OR LOWER(qp.status) LIKE :searchText)',
-          { searchText },
+          `(qp.qc_id ILIKE :searchText 
+          OR qt.name ILIKE :searchText 
+          OR qp.status ILIKE :searchText)`,
+          { searchText: `%${trimmed}%` },
         );
+
         countQuery.andWhere(
-          '(LOWER(qp.qc_id) LIKE :searchText OR LOWER(qt.name) LIKE :searchText OR LOWER(qp.status) LIKE :searchText)',
-          { searchText },
+          `(qp.qc_id ILIKE :searchText 
+          OR qt.name ILIKE :searchText 
+          OR qp.status ILIKE :searchText)`,
+          { searchText: `%${trimmed}%` },
         );
       }
     }
 
-    // Filter file_name
+    /** FILTER file_name */
     if (fileName?.trim()) {
-      const fileNameText = `%${fileName.trim().toLowerCase()}%`;
-      plansQuery.andWhere('LOWER(qp.file_name) LIKE :fileNameText', {
-        fileNameText,
+      plansQuery.andWhere('qp.file_name ILIKE :fileName', {
+        fileName: `%${fileName.trim()}%`,
       });
-      countQuery.andWhere('LOWER(qp.file_name) LIKE :fileNameText', {
-        fileNameText,
+      countQuery.andWhere('qp.file_name ILIKE :fileName', {
+        fileName: `%${fileName.trim()}%`,
       });
     }
 
-    // Default tanggal: 1 bulan (bulan berjalan)
+    /** FILTER size */
+    if (size?.trim()) {
+      plansQuery.andWhere('qp.size ILIKE :size', {
+        size: `%${size.trim()}%`,
+      });
+      countQuery.andWhere('qp.size ILIKE :size', {
+        size: `%${size.trim()}%`,
+      });
+    }
+
+    /** FILTER status */
+    let mappedStatus: string | undefined;
+
+    if (status?.trim()) {
+      const normalizedStatus = status.trim().toLowerCase();
+
+      if (normalizedStatus === 'processing') {
+        mappedStatus = 'Processing';
+      } else if (
+        normalizedStatus === 'new' ||
+        normalizedStatus === 'new data'
+      ) {
+        mappedStatus = 'New Data';
+      } else {
+        throw new BadRequestException(
+          'Status tidak valid. Gunakan Processing atau New Data.',
+        );
+      }
+    }
+
+    if (mappedStatus) {
+      plansQuery.andWhere('qp.status = :status', {
+        status: mappedStatus,
+      });
+      countQuery.andWhere('qp.status = :status', {
+        status: mappedStatus,
+      });
+    }
+
+    /** FILTER kgm_nominal */
+    if (kgm_nominal !== undefined && kgm_nominal !== null) {
+      if (typeof kgm_nominal !== 'number' || isNaN(kgm_nominal)) {
+        throw new BadRequestException('kg/m harus berupa angka');
+      }
+
+      plansQuery.andWhere('qp.kgm_nominal = :nominal', {
+        nominal: kgm_nominal,
+      });
+
+      countQuery.andWhere('qp.kgm_nominal = :nominal', {
+        nominal: kgm_nominal,
+      });
+    }
+
+    /** FILTER brand_merek */
+    if (brand_merek?.trim()) {
+      plansQuery.andWhere('qp.brand_merek ILIKE :brandMerek', {
+        brandMerek: `%${brand_merek.trim()}%`,
+      });
+
+      countQuery.andWhere('qp.brand_merek ILIKE :brandMerek', {
+        brandMerek: `%${brand_merek.trim()}%`,
+      });
+    }
+
+    /** FILTER DATE RANGE */
     let from: Date;
     let to: Date;
 
@@ -403,19 +480,14 @@ export class QcListService {
       to.setHours(23, 59, 59, 999);
     } else {
       const now = new Date();
-
-      // awal bulan
       from = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-
-      // akhir bulan
       to = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
     }
 
-    // filter tanggal
     plansQuery.andWhere('qp.created_dt BETWEEN :from AND :to', { from, to });
     countQuery.andWhere('qp.created_dt BETWEEN :from AND :to', { from, to });
 
-    // Sorting & pagination
+    /** SORT & PAGINATION */
     plansQuery
       .orderBy('qp.sequence_no', 'ASC')
       .addOrderBy('qp.created_dt', 'DESC')
@@ -426,9 +498,10 @@ export class QcListService {
       plansQuery.getMany(),
       countQuery.getCount(),
     ]);
+
     const totalPages = Math.ceil(totalData / limit);
 
-    // Ambil user map
+    /** USER MAP */
     const userIds = Array.from(
       new Set(
         plans
@@ -437,6 +510,7 @@ export class QcListService {
           .filter(Boolean),
       ),
     );
+
     let userMap = new Map<string, string>();
     if (userIds.length > 0) {
       const users = await this.userRepo
@@ -444,6 +518,7 @@ export class QcListService {
         .select(['u.user_id', 'u.name'])
         .where('u.user_id IN (:...userIds)', { userIds })
         .getMany();
+
       userMap = new Map(users.map((u) => [u.user_id, u.name]));
     }
 
@@ -477,11 +552,11 @@ export class QcListService {
       data_5: `location:${location_id || '-'}`,
     });
 
-    const msg = canFilterLocation
-      ? 'Berhasil memuat semua QC Plan.'
-      : 'Berhasil memuat semua QC Plan di lokasi Anda.';
-
-    this.messageService.setMessage(msg);
+    this.messageService.setMessage(
+      canFilterLocation
+        ? 'Berhasil memuat semua QC Plan.'
+        : 'Berhasil memuat semua QC Plan di lokasi Anda.',
+    );
 
     return {
       meta: {

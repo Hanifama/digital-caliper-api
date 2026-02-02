@@ -3,7 +3,7 @@ import { RoleMenu } from './role-menu.entity';
 
 @Entity('menu')
 export class Menu {
-  @PrimaryColumn({ type: 'varchar', length: 25 })
+  @PrimaryColumn({ type: 'varchar', length: 50 })
   menu_id: string;
 
   @Column({ length: 50 })

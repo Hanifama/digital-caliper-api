@@ -13,12 +13,17 @@ import { MessageService } from '../message/message.service';
 import { DashboardSummaryBySizeParamsDto } from './dto/dashboard-bysize.dto';
 import { Size } from '../size/entity/size.entity';
 import { RoleMenu } from '../auth/entity/role-menu.entity';
+import { ProductType } from '../product/entity/product-type.entity';
+import { DashboardMeta } from './interfaces/dashboard-meta-size';
 
 @Injectable()
 export class DashboardService {
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+
+    @InjectRepository(ProductType)
+    private readonly productTypeDataRepo: Repository<ProductType>,
 
     @InjectRepository(QcRecord)
     private readonly qcRecordRepo: Repository<QcRecord>,
@@ -206,6 +211,158 @@ export class DashboardService {
     }
   }
 
+  // === Daily Analysis dashboard ===
+  async getDashboardDailyAnalysis(
+    userId: string,
+    year: number,
+    month: number,
+    location_id?: string,
+  ) {
+    /** 1. Ambil user */
+    const user = await this.userRepo.findOne({
+      where: { user_id: userId },
+      relations: ['role'],
+    });
+
+    if (!user) throw new Error('User tidak ditemukan.');
+
+    const MENU_FILTER_DASHBOARD_LOCATION = 'dashboard_filter_loc';
+
+    /** 2. Cek permission */
+    const canFilterLocation = await this.hasMenuAccess(
+      user.role.role_id,
+      MENU_FILTER_DASHBOARD_LOCATION,
+    );
+
+    /** 3. Tentukan lokasi efektif */
+    let effectiveLocationId: string | null = null;
+
+    if (canFilterLocation) {
+      effectiveLocationId = location_id ?? null;
+    } else {
+      if (location_id) {
+        throw new Error('Anda tidak mempunyai akses untuk filter lokasi.');
+      }
+
+      if (!user.locationId) {
+        throw new Error('User belum mempunyai lokasi.');
+      }
+
+      effectiveLocationId = user.locationId;
+    }
+
+    /** 4. Base Query */
+    const baseQcQuery = () => {
+      const qb = this.qcRecordRepo.createQueryBuilder('r');
+
+      if (effectiveLocationId) {
+        qb.andWhere('r.location_id = :locationId', {
+          locationId: effectiveLocationId,
+        });
+      }
+
+      return qb;
+    };
+
+    /** 5. Range tanggal bulan */
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1); // exclusive
+
+    /** 6. Query QC harian */
+    const dailyRaw = await baseQcQuery()
+      .select(
+        `to_char(r.created_dt AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD')`,
+        'date',
+      )
+      .addSelect(
+        `SUM(CASE WHEN r.status = 'Done' THEN 1 ELSE 0 END)`,
+        'total_qc',
+      )
+      .addSelect(
+        `SUM(CASE WHEN r.status = 'Done' AND r.status_overall = 'Passed' THEN 1 ELSE 0 END)`,
+        'passed',
+      )
+      .addSelect(
+        `SUM(CASE WHEN r.status = 'Done' AND r.status_overall = 'Not Passed' THEN 1 ELSE 0 END)`,
+        'not_passed',
+      )
+      .andWhere(`r.created_dt >= :startDate AND r.created_dt < :endDate`, {
+        startDate,
+        endDate,
+      })
+      .groupBy('date')
+      .orderBy('date', 'ASC')
+      .getRawMany();
+
+    /** 7. Map date → data */
+    const dailyMap = new Map<
+      string,
+      { totalQc: number; passed: number; notPassed: number }
+    >();
+
+    dailyRaw.forEach((r) => {
+      dailyMap.set(r.date, {
+        totalQc: Number(r.total_qc),
+        passed: Number(r.passed),
+        notPassed: Number(r.not_passed),
+      });
+    });
+
+    /** 8. Generate tanggal 1 → akhir bulan */
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    const daily = Array.from({ length: daysInMonth }).map((_, i) => {
+      const d = new Date(year, month - 1, i + 1);
+      const date = d.toISOString().slice(0, 10);
+
+      const data = dailyMap.get(date) ?? {
+        totalQc: 0,
+        passed: 0,
+        notPassed: 0,
+      };
+
+      const percentPassed =
+        data.totalQc > 0 ? Math.round((data.passed / data.totalQc) * 100) : 0;
+
+      this.messageService.setMessage(
+        'Berhasil memuat ringkasan harian dashboard.',
+      );
+
+      return {
+        date,
+        totalQc: data.totalQc,
+        passed: data.passed,
+        notPassed: data.notPassed,
+        percentPassed,
+        percentNotPassed: data.totalQc > 0 ? 100 - percentPassed : 0,
+        hasQcInspection: data.totalQc > 0,
+      };
+    });
+
+    /** 9. Logging */
+    try {
+      await this.logService.createLog(user, {
+        data_1: 'DASHBOARD-ANALYSIS-DAILY',
+        data_2: `month:${month}-${year} location:${
+          effectiveLocationId ?? 'ALL'
+        }`,
+        data_3: `totalQc:${daily.reduce((s, d) => s + d.totalQc, 0)}`,
+        data_4: `passed:${daily.reduce((s, d) => s + d.passed, 0)}`,
+        data_5: `viewer:${user.full_name}`,
+      });
+    } catch (err) {
+      console.error('Failed to create daily dashboard analysis log', err);
+    }
+
+    /** 10. Return */
+    return {
+      month,
+      year,
+      totalDays: daysInMonth,
+      daily,
+    };
+  }
+
   // === Weekly Analysis dashboard ===
   async getDashboardWeeklyAnalysis(userId?: string, location_id?: string) {
     /** 1. Ambil user */
@@ -298,6 +455,10 @@ export class DashboardService {
         notPassed: Number(r.not_passed),
       });
     });
+
+    this.messageService.setMessage(
+      'Berhasil memuat ringkasan mingguan dashboard.',
+    );
 
     /** 7. Rolling 7 days */
     const days = [
@@ -477,6 +638,10 @@ export class DashboardService {
         notPassed: Number(r.not_passed),
       });
     });
+
+    this.messageService.setMessage(
+      'Berhasil memuat ringkasan bulanan dashboard.',
+    );
 
     const months = [
       'January',
@@ -857,6 +1022,8 @@ export class DashboardService {
       not_passed: Number(r.not_passed_count),
     }));
 
+    this.messageService.setMessage('Berhasil memuat ringkasan QC.');
+
     /** 12. Logging */
     try {
       await this.logService.createLog(user, {
@@ -884,7 +1051,7 @@ export class DashboardService {
 
   // === Summary BySize dashboard ===
   async getDashboardSummaryBySize(
-    params: DashboardSummaryBySizeParamsDto,
+    params: DashboardSummaryBySizeParamsDto & { prodtype_id?: string },
     userId: string,
   ) {
     /** 1. Ambil user */
@@ -903,16 +1070,14 @@ export class DashboardService {
       MENU_FILTER_DASHBOARD_LOCATION,
     );
 
-    /** 3. Tentukan location yang dipakai */
-    const { from_date, end_date, size, location_id } = params;
+    /** 3. Tentukan location */
+    const { from_date, end_date, size, location_id, prodtype_id } = params;
 
     let effectiveLocationId: string | null = null;
 
     if (canFilterLocation) {
-      // boleh filter → ALL atau lokasi tertentu
       effectiveLocationId = location_id ?? null;
     } else {
-      // tidak boleh filter
       if (location_id) {
         throw new BadRequestException(
           'Anda tidak mempunyai akses untuk filter lokasi.',
@@ -929,13 +1094,27 @@ export class DashboardService {
     /** 4. Handle date range */
     let start = from_date ? new Date(from_date) : new Date();
     let end = end_date ? new Date(end_date) : start;
+
     start.setHours(0, 0, 0, 0);
     end.setHours(0, 0, 0, 0);
-    end.setDate(end.getDate() + 1); // end exclusive
+    end.setDate(end.getDate() + 1);
+
+    if (prodtype_id) {
+      const product = await this.productTypeDataRepo.findOne({
+        where: { prodtype_id },
+      });
+
+      if (!product) {
+        throw new BadRequestException('Product type tidak ditemukan');
+      }
+    }
 
     /** 5. Base Query */
     const baseQcQuery = () => {
-      const qb = this.qcRecordRepo.createQueryBuilder('r');
+      const qb = this.qcRecordRepo
+        .createQueryBuilder('r')
+        .leftJoin(Size, 's', 's.name = r.size')
+        .leftJoin(ProductType, 'pt', 'pt.prodtype_id = s.prodtype_id');
 
       if (effectiveLocationId) {
         qb.andWhere('r.location_id = :locationId', {
@@ -948,16 +1127,63 @@ export class DashboardService {
         end,
       });
 
-      if (size) {
-        qb.andWhere('r.size = :size', { size });
-      }
+      if (size) qb.andWhere('r.size = :size', { size });
+      if (prodtype_id)
+        qb.andWhere('pt.prodtype_id = :prodtype_id', { prodtype_id });
 
       return qb;
     };
 
-    /** 6. Ambil data summary */
+    /** ============================
+     *  6. META (SUMMARY PRODUCT)
+     *  ============================
+     */
+    const metaRaw = await baseQcQuery()
+      .select('pt.prodtype_id', 'productId')
+      .addSelect('pt.name', 'productName')
+      .addSelect(`COUNT(CASE WHEN r.status = 'Done' THEN 1 END)`, 'qcDone')
+      .addSelect(
+        `COUNT(CASE WHEN r.status_overall = 'Passed' THEN 1 END)`,
+        'passed',
+      )
+      .addSelect(
+        `COUNT(CASE WHEN r.status_overall = 'Not Passed' THEN 1 END)`,
+        'notPassed',
+      )
+      .groupBy('pt.prodtype_id')
+      .addGroupBy('pt.name')
+      .getRawMany();
+
+    /**
+     * - params prodtype_id ada  → array 1 item berdasarkan params diminta
+     * - params prodtype_id null → array multi product
+     */
+    const meta: DashboardMeta = metaRaw
+      .filter((p) => !prodtype_id || p.productId === prodtype_id)
+      .map((p) => {
+        const qcDone = Number(p.qcDone);
+        const passed = Number(p.passed);
+        const notPassed = Number(p.notPassed);
+
+        return {
+          prodtype_id: p.productId,
+          name: p.productName,
+          qcDone,
+          passed,
+          notPassed,
+          percentPassed: qcDone ? Math.round((passed / qcDone) * 100) : 0,
+          percentNotPassed: qcDone ? Math.round((notPassed / qcDone) * 100) : 0,
+        };
+      });
+
+    /** ============================
+     *  7. DATA BY SIZE
+     *  ============================
+     */
     const rawData = await baseQcQuery()
       .select('r.size', 'size')
+      .addSelect('pt.prodtype_id', 'productId')
+      .addSelect('pt.name', 'productName')
       .addSelect(`COUNT(CASE WHEN r.status = 'Done' THEN 1 END)`, 'qcDone')
       .addSelect(
         `COUNT(CASE WHEN r.status_overall = 'Passed' THEN 1 END)`,
@@ -968,24 +1194,42 @@ export class DashboardService {
         'notPassed',
       )
       .groupBy('r.size')
+      .addGroupBy('pt.prodtype_id')
+      .addGroupBy('pt.name')
       .getRawMany();
 
-    /** 7. Mapping */
-    const result = rawData.map((r) => {
-      const qcDone = Number(r.qcDone);
-      const passed = Number(r.passed);
-      const notPassed = Number(r.notPassed);
+    /** Helper: ambil angka WF (WF 300X150X6.5X9 → 300) */
+    const getWFSizeNumber = (size: string): number => {
+      if (!size) return Number.MAX_SAFE_INTEGER;
 
-      return {
-        size: r.size || 'Unknown',
-        qcDone,
-        passed,
-        notPassed,
-        percentPassed: qcDone ? Math.round((passed / qcDone) * 100) : 0,
-        percentNotPassed: qcDone ? Math.round((notPassed / qcDone) * 100) : 0,
-        hasQcInspection: qcDone > 0,
-      };
-    });
+      const match = size.match(/^WF\s*(\d+)/i);
+      return match ? Number(match[1]) : Number.MAX_SAFE_INTEGER;
+    };
+
+    const data = rawData
+      .map((r) => {
+        const qcDone = Number(r.qcDone);
+        const passed = Number(r.passed);
+        const notPassed = Number(r.notPassed);
+
+        return {
+          size: r.size || 'Unknown',
+          prodtype_id: r.productId,
+          name: r.productName,
+          qcDone,
+          passed,
+          notPassed,
+          percentPassed: qcDone ? Math.round((passed / qcDone) * 100) : 0,
+          percentNotPassed: qcDone ? Math.round((notPassed / qcDone) * 100) : 0,
+          hasQcInspection: qcDone > 0,
+          __sortSize: getWFSizeNumber(r.size),
+        };
+      })
+      /** SORT SIZE WF DARI KECIL → BESAR */
+      .sort((a, b) => a.__sortSize - b.__sortSize)
+      .map(({ __sortSize, ...rest }) => rest);
+
+    this.messageService.setMessage('Berhasil memuat ringkasan size.');
 
     /** 8. Logging */
     try {
@@ -995,16 +1239,20 @@ export class DashboardService {
           end.getTime() - 1,
         )
           .toISOString()
-          .slice(0, 10)} location:${effectiveLocationId ?? 'ALL'} size:${
-          size || 'ALL'
-        }`,
-        data_3: `sizes:${result.length}`,
+          .slice(0, 10)} location:${effectiveLocationId ?? 'ALL'} product:${
+          prodtype_id ?? 'ALL'
+        } size:${size ?? 'ALL'}`,
+        data_3: `sizes:${data.length}`,
         data_4: `viewer:${user.full_name}`,
       });
     } catch (err) {
       console.error('Failed to create dashboard log', err);
     }
 
-    return result;
+    /** 9. FINAL RESPONSE */
+    return {
+      meta,
+      data,
+    };
   }
 }

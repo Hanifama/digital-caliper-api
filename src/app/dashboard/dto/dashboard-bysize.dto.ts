@@ -19,8 +19,16 @@ export class DashboardSummaryBySizeParamsDto {
   end_date?: string;
 
   @ApiPropertyOptional({
+    description: 'Filter berdasarkan product type',
+    example: 'H-BEAM',
+  })
+  @IsOptional()
+  @IsString()
+  prodtype_id?: string;
+
+  @ApiPropertyOptional({
     description: 'Filter berdasarkan size tertentu',
-    example: 'S',
+    example: 'HB 200X200X8X12',
   })
   @IsOptional()
   @IsString()

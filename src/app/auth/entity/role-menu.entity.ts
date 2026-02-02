@@ -1,17 +1,10 @@
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  ManyToOne,
-  JoinColumn,
-  PrimaryColumn,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, PrimaryColumn } from 'typeorm';
 import { Role } from './role.entity';
 import { Menu } from './menu.entity';
 
 @Entity('role_menu')
 export class RoleMenu {
-  @PrimaryColumn({ type: 'varchar', length: 25 })
+  @PrimaryColumn({ type: 'varchar', length: 50 })
   menu_id: string;
 
   @PrimaryColumn({ type: 'varchar', length: 25 })

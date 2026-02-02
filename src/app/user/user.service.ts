@@ -214,12 +214,13 @@ export class UserService {
     // mapping ke format Excel
     const formatedData = users.map((user) => ({
       'User ID': user.user_id,
+      Username: user.username,
       'Nama Lengkap': user.name,
       Email: user.email,
       Departemen: user.departement,
       'Last Login': user.last_login ? user.last_login.toISOString() : '',
       Status: user.status,
-      'Role Name': user.role?.name,
+      'User Role': user.role?.name,
     }));
 
     const filename = `data-user-${Date.now()}.xlsx`;
@@ -242,45 +243,46 @@ export class UserService {
    * Mendapatkan list pengguna by userId
    */
   public async getUser(userId: string, ownerId: string): Promise<any> {
-    const getUser = await this.userRepo.findOne({
+    const targetUser = await this.userRepo.findOne({
       where: { user_id: userId },
       relations: ['role', 'location'],
     });
 
-    const user = await this.userRepo.findOne({ where: { user_id: ownerId } });
-    if (!user) {
+    if (!targetUser) {
+      throw new NotFoundException('User tidak ditemukan');
+    }
+
+    const currentUser = await this.userRepo.findOne({
+      where: { user_id: ownerId },
+    });
+
+    if (!currentUser) {
       throw new BadRequestException(
         `User dengan ID ${ownerId} tidak ditemukan.`,
       );
     }
 
-    if (!getUser) throw new NotFoundException('User tidak ditemukan');
-
     this.messageService.setMessage('Berhasil memuat detail user.');
 
-    const currentUser = await this.userRepo.findOne({
-      where: { user_id: userId },
-    });
-
-    await this.logService.createLog(user, {
+    await this.logService.createLog(currentUser, {
       data_1: 'GET-USER',
       data_2: `user_id:${userId}`,
     });
 
     return {
-      user_id: user.user_id,
-      username: user.username,
-      full_name: user.full_name,
-      name: user.name,
-      email: user.email,
-      departement: user.departement,
-      image: user.image,
-      last_login: user.last_login,
-      status: user.status,
-      role_id: user.role?.role_id,
-      role_name: user.role?.name,
-      location_id: user.location?.location_id,
-      location_name: user.location?.name,
+      user_id: targetUser.user_id,
+      username: targetUser.username,
+      full_name: targetUser.full_name,
+      name: targetUser.name,
+      email: targetUser.email,
+      departement: targetUser.departement,
+      image: targetUser.image,
+      last_login: targetUser.last_login,
+      status: targetUser.status,
+      role_id: targetUser.role?.role_id,
+      role_name: targetUser.role?.name,
+      location_id: targetUser.location?.location_id,
+      location_name: targetUser.location?.name,
     };
   }
 
@@ -378,94 +380,94 @@ export class UserService {
     userId: string,
     dto: UpdateUserDto,
   ): Promise<void> {
-    // Ambil user beserta relasi role dan location
-    const updateUser = await this.userRepo.findOne({
+    // 1️ Ambil target user yang akan di-update
+    const targetUser = await this.userRepo.findOne({
       where: { user_id: userId },
       relations: ['role', 'location'],
     });
 
-    const user = await this.userRepo.findOne({ where: { user_id: ownerId } });
-    if (!user) {
+    if (!targetUser) {
+      throw new NotFoundException('User tidak ditemukan');
+    }
+
+    // 2️ Ambil user yang sedang login (untuk log)
+    const currentUser = await this.userRepo.findOne({
+      where: { user_id: ownerId },
+    });
+
+    if (!currentUser) {
       throw new BadRequestException(
         `User dengan ID ${ownerId} tidak ditemukan.`,
       );
     }
 
-    if (!updateUser) throw new NotFoundException('User tidak ditemukan');
+    // 3️ Update field sederhana
+    if (dto.name !== undefined) targetUser.name = dto.name;
+    if (dto.full_name !== undefined) targetUser.full_name = dto.full_name;
+    if (dto.departement !== undefined) targetUser.departement = dto.departement;
+    if (dto.status !== undefined) targetUser.status = dto.status;
 
-    // Update name
-    if (dto.name !== undefined) updateUser.name = dto.name;
-
-    // Update full_name
-    if (dto.full_name !== undefined) updateUser.full_name = dto.full_name;
-
-    // Update email dengan validasi uniqueness
-    if (dto.email !== undefined && dto.email !== updateUser.email) {
+    // 4️ Update email (dengan validasi unik)
+    if (dto.email !== undefined && dto.email !== targetUser.email) {
       const existing = await this.userRepo.findOne({
         where: { email: dto.email },
       });
-      if (existing && existing.user_id !== userId)
+
+      if (existing && existing.user_id !== userId) {
         throw new BadRequestException('Email sudah digunakan');
-      user.email = dto.email;
+      }
+
+      targetUser.email = dto.email;
     }
 
-    // Update departement
-    if (dto.departement !== undefined) updateUser.departement = dto.departement;
-
-    // Update NIK
-    if (dto.NIK !== undefined && dto.NIK !== updateUser.NIK) {
+    // 5️ Update NIK (dengan validasi unik)
+    if (dto.NIK !== undefined && dto.NIK !== targetUser.NIK) {
       const existing = await this.userRepo.findOne({
         where: { NIK: dto.NIK },
       });
-      if (existing && existing.user_id !== userId)
+
+      if (existing && existing.user_id !== userId) {
         throw new BadRequestException('NIK sudah digunakan');
-      updateUser.NIK = dto.NIK;
+      }
+
+      targetUser.NIK = dto.NIK;
     }
 
-    // Update role
-    if (dto.roleId !== undefined && dto.roleId !== updateUser.role.role_id) {
+    // 6️ Update role
+    if (dto.roleId !== undefined && dto.roleId !== targetUser.role?.role_id) {
       const role = await this.roleRepo.findOne({
         where: { role_id: dto.roleId },
       });
+
       if (!role) throw new BadRequestException('Role tidak ditemukan.');
-      user.role = role;
+
+      targetUser.role = role;
     }
 
-    // Update location
+    // 7️ Update location
     if (
       dto.locationId !== undefined &&
-      dto.locationId !== updateUser.location?.location_id
+      dto.locationId !== targetUser.location?.location_id
     ) {
       const location = await this.locationRepo.findOne({
         where: { location_id: dto.locationId },
       });
+
       if (!location) throw new BadRequestException('Location tidak ditemukan.');
-      user.location = location;
+
+      targetUser.location = location;
     }
 
-    // Update status
-    if (dto.status !== undefined) updateUser.status = dto.status;
+    // 8️ SIMPAN USER
+    await this.userRepo.save(targetUser);
 
-    // Simpan perubahan
-    await this.userRepo.save(user);
     this.messageService.setMessage('User berhasil diperbarui.');
 
-    function truncate(value: string, length = 50) {
-      return value.length > length ? value.slice(0, length) : value;
-    }
-
-    await this.logService.createLog(user, {
-      data_1: truncate('UPDATE-USER'),
-      data_2: truncate(`user_id:${userId}`),
-      data_3: truncate(
-        `updated_fields:${Object.keys(dto).slice(0, 1).join(',')}`,
-      ),
-      data_4: truncate(
-        `updated_fields:${Object.keys(dto).slice(1, 2).join(',')}`,
-      ),
-      data_5: truncate(
-        `updated_fields:${Object.keys(dto).slice(2, 3).join(',')}`,
-      ),
+    // 9️ SIMPAN Logging
+    await this.logService.createLog(currentUser, {
+      data_1: 'UPDATE-USER',
+      data_2: `user_id:${userId}`,
+      data_3: `updated_fields:${Object.keys(dto).join(',')}`,
     });
   }
 
@@ -474,53 +476,65 @@ export class UserService {
    */
   @Transactional()
   async register(dto: CreateUserDto, userId: string): Promise<UserResponseDto> {
-    try {
-      const savedUser = await this.createUser(dto);
+    // 1️ Validasi email sudah terdaftar atau belum
+    const emailExists = await this.userRepo.findOne({
+      where: { email: dto.email },
+    });
 
-      const user = await this.userRepo.findOne({ where: { user_id: userId } });
-      if (!user) {
-        throw new BadRequestException(
-          `User dengan ID ${userId} tidak ditemukan.`,
-        );
-      }
-
-      this.messageService.setMessage('Register akun berhasil.');
-
-      await this.logService.createLog(user, {
-        data_1: 'REGISTER-USER',
-        data_2: `user_id:${savedUser.user_id}`,
-        data_3: `email:${savedUser.email}`,
-        data_4: `role:${savedUser.role?.name || '-'}`,
-        data_5: `status:${savedUser.status}`,
-      });
-
-      return {
-        id: savedUser.user_id,
-        username: savedUser.username,
-        full_name: savedUser.full_name,
-        name: savedUser.name,
-        email: savedUser.email,
-        role: savedUser.role?.name,
-        departement: savedUser.departement,
-        NIK: savedUser.NIK,
-        image: savedUser.image,
-        status: savedUser.status,
-      };
-    } catch (error) {
-      // Tangani error duplicate email
-      if (error.code === 'ER_DUP_ENTRY') {
-        throw new BadRequestException(
-          'Email sudah terdaftar, silakan gunakan email lain.',
-        );
-      }
-      // Tangani error unique violation (Postgres)
-      if (error.code === '23505') {
-        throw new BadRequestException(
-          'Email sudah terdaftar, silakan gunakan email lain.',
-        );
-      }
-      throw error;
+    if (emailExists) {
+      throw new BadRequestException(
+        'Email sudah terdaftar, silakan gunakan email lain.',
+      );
     }
+
+    // 2️ Validasi NIK sudah terdaftar atau belum
+    const nikExists = await this.userRepo.findOne({
+      where: { NIK: dto.NIK },
+    });
+
+    if (nikExists) {
+      throw new BadRequestException('NIK sudah terdaftar di pengguna lain.');
+    }
+
+    // 3️ Jika lolos validasi, lanjutkan proses pembuatan user
+    const savedUser = await this.createUser(dto);
+
+    // 4️ Ambil user yang melakukan register (admin / requester)
+    const currentUser = await this.userRepo.findOne({
+      where: { user_id: userId },
+    });
+
+    if (!currentUser) {
+      throw new BadRequestException(
+        `User dengan ID ${userId} tidak ditemukan.`,
+      );
+    }
+
+    // 5️ Set message global response
+    this.messageService.setMessage('Register akun berhasil.');
+
+    // 6️ Simpan log aktivitas
+    await this.logService.createLog(currentUser, {
+      data_1: 'REGISTER-USER',
+      data_2: `user_id:${savedUser.user_id}`,
+      data_3: `email:${savedUser.email}`,
+      data_4: `role:${savedUser.role?.name || '-'}`,
+      data_5: `status:${savedUser.status}`,
+    });
+
+    // 7️ Return response terkontrol
+    return {
+      id: savedUser.user_id,
+      username: savedUser.username,
+      full_name: savedUser.full_name,
+      name: savedUser.name,
+      email: savedUser.email,
+      role: savedUser.role?.name,
+      departement: savedUser.departement,
+      NIK: savedUser.NIK,
+      image: savedUser.image,
+      status: savedUser.status,
+    };
   }
 
   /**
