@@ -1,6 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DeepPartial } from 'typeorm';
+
+import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 
 import { User } from './entity/user.entity';
 
@@ -13,6 +16,7 @@ import { MessageService } from '../message/message.service';
 
 import { IJwtPayload } from 'src/types/interface/IJwtPayload.interface';
 import { LogService } from '../log-app/log.service';
+import { LdapService } from './ldap.service';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +28,7 @@ export class AuthService {
     private readonly messageService: MessageService,
     private readonly tokenManagerService: TokenManagerService,
     private readonly logService: LogService,
+    private readonly ldapService: LdapService,
   ) {}
 
   /**
@@ -96,6 +101,78 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
+    };
+  }
+
+  async loginLdap(dto: LoginUserDto) {
+    // 1. Autentikasi user ke LDAP
+    const ldapUser = await this.ldapService.authenticate(
+      dto.identifier,
+      dto.password,
+    );
+
+    // DEBUG: cetak data LDAP (bisa diaktifkan jika perlu)
+    // console.log('LDAP USER DATA:', JSON.stringify(ldapUser, null, 2));
+
+    // 2. Cari user di database berdasarkan email (fallback ke username jika email null)
+    let user = await this.userRepo.findOne({
+      where: { email: ldapUser.email ?? ldapUser.username },
+      relations: ['role'],
+    });
+
+    // 3. Jika user belum ada, buat baru
+    if (!user) {
+      const defaultPassword = await bcrypt.hash(dto.password, 10);
+
+      // Mapping role LDAP ke role internal
+      const mapRole = (ldapRoles: string[]) => {
+        if (!ldapRoles || ldapRoles.length === 0) return '1';
+        if (ldapRoles.some((r) => r.includes('Admin'))) return '2';
+        if (ldapRoles.some((r) => r.includes('Manager'))) return '3';
+        return '1';
+      };
+
+      const roleId = mapRole(
+        Array.isArray(ldapUser.roles) ? ldapUser.roles : [],
+      );
+
+      // Full name fallback ke firstName + lastName jika displayName kosong
+      const fullName =
+        ldapUser.displayName ??
+        (`${ldapUser.firstName ?? ''} ${ldapUser.lastName ?? ''}`.trim() ||
+          ldapUser.username);
+
+      // Buat user baru
+      user = this.userRepo.create({
+        user_id: randomUUID(),
+        username: ldapUser.username,
+        email: ldapUser.email ?? ldapUser.username,
+        full_name: fullName,
+        name: fullName,
+        password: defaultPassword,
+        status: 1,
+        role: roleId,
+        locationId: 'LOC001',
+      } as DeepPartial<User>);
+
+      await this.userRepo.save(user);
+    }
+
+    // 4. Update last login
+    user.last_login = new Date();
+    await this.userRepo.save(user);
+
+    // 5. Generate JWT
+    const payload: IJwtPayload = {
+      id: user.user_id,
+      name: user.full_name,
+      email: user.email,
+      role: user.role?.name ?? '1',
+    };
+
+    return {
+      accessToken: await this.tokenManager.generateAccessToken(payload),
+      refreshToken: await this.tokenManager.generateRefreshToken(payload),
     };
   }
 }

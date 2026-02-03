@@ -1,0 +1,22 @@
+version: '3.9'
+
+services:
+  qcms-caliper-be-staging:
+    container_name: qcms-caliper-be-staging
+    build: .
+    image: qcms-caliper-be-staging
+    env_file:
+      - .env.staging
+    environment:
+      - TZ=Asia/Jakarta
+    ports:
+      - '8086:8085' # host 8086 → container 8085
+    networks:
+      - app-network-staging
+    volumes:
+      - ./wwebjs_auth_staging:/app/.wwebjs_auth
+      - ./wwebjs_cache_staging:/app/.wwebjs_cache
+
+networks:
+  app-network-staging:
+    driver: bridge

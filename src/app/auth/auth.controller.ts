@@ -29,6 +29,12 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
+  @Post('login-ldap')
+  @ApiOperation({ summary: 'Login pengguna via LDAP (Testing)' })
+  async loginLdap(@Body() dto: LoginUserDto) {
+    return this.authService.loginLdap(dto);
+  }
+
   /**
    * Endpoint untuk refresh access token
    * @param refreshTokenDto Berisi refreshToken yang valid

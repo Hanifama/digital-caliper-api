@@ -68,7 +68,7 @@ export class DashboardService {
       relations: ['role'],
     });
 
-    const MENU_FILTER_DASHBOARD_LOCATION = 'dashboard_filter_loc';
+    const MENU_FILTER_DASHBOARD_LOCATION = 'dashboard_filter_location';
 
     if (!user) {
       throw new Error('User tidak ditemukan.');
@@ -226,7 +226,7 @@ export class DashboardService {
 
     if (!user) throw new Error('User tidak ditemukan.');
 
-    const MENU_FILTER_DASHBOARD_LOCATION = 'dashboard_filter_loc';
+    const MENU_FILTER_DASHBOARD_LOCATION = 'dashboard_filter_location';
 
     /** 2. Cek permission */
     const canFilterLocation = await this.hasMenuAccess(
@@ -375,7 +375,7 @@ export class DashboardService {
 
     if (!user) throw new Error('User tidak ditemukan.');
 
-    const MENU_FILTER_DASHBOARD_LOCATION = 'dashboard_filter_loc';
+    const MENU_FILTER_DASHBOARD_LOCATION = 'dashboard_filter_location';
 
     /** 2. Cek permission */
     const canFilterLocation = await this.hasMenuAccess(
@@ -542,7 +542,7 @@ export class DashboardService {
 
     if (!user) throw new Error('User tidak ditemukan.');
 
-    const MENU_FILTER_DASHBOARD_LOCATION = 'dashboard_filter_loc';
+    const MENU_FILTER_DASHBOARD_LOCATION = 'dashboard_filter_location';
 
     /** 2. Cek permission filter lokasi */
     const canFilterLocation = await this.hasMenuAccess(
@@ -747,7 +747,7 @@ export class DashboardService {
       relations: ['role'],
     });
 
-    const MENU_FILTER_DASHBOARD_LOCATION = 'dashboard_filter_loc';
+    const MENU_FILTER_DASHBOARD_LOCATION = 'dashboard_filter_location';
 
     if (!user) {
       throw new Error('User tidak ditemukan.');
@@ -943,7 +943,7 @@ export class DashboardService {
     /** 2. Cek akses filter lokasi */
     const canFilterLocation = await this.hasMenuAccess(
       user.role.role_id,
-      'dashboard_filter_loc',
+      'dashboard_filter_location',
     );
 
     const { from_date, end_date, location_id } = params || {};
@@ -1060,7 +1060,7 @@ export class DashboardService {
       relations: ['role'],
     });
 
-    const MENU_FILTER_DASHBOARD_LOCATION = 'dashboard_filter_loc';
+    const MENU_FILTER_DASHBOARD_LOCATION = 'dashboard_filter_location';
 
     if (!user) throw new Error('User tidak ditemukan.');
 
