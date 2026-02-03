@@ -93,7 +93,8 @@ import compression from 'compression';
 
     .addServer('http://localhost:8085', 'Development Server')
     .addServer('https://api-digitalcaliper.webview.cloud/', 'Staging Server')
-    .addServer('http://172.16.22.170/api', 'Production IP Server')
+    .addServer('http://172.16.22.170/api', 'Production Server')
+    .addServer('http://172.16.22.170/staging/api', 'Staging Server')
     .addServer('http://cims.gyssteel.com/api', 'Production Domain Server')
     .build();
 
