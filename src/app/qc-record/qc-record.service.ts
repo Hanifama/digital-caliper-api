@@ -109,7 +109,7 @@ export class QcRecordService {
       throw new BadRequestException('User tidak ditemukan.');
     }
 
-    const MENU_FILTER_QC_HISTORY_LOCATION = 'qc_history_filter_loc';
+    const MENU_FILTER_QC_HISTORY_LOCATION = 'qc_history_filter_location';
 
     const canFilterLocation = await this.hasMenuAccess(
       user.role.role_id,
