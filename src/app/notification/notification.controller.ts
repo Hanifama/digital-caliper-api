@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Res, Get, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Res,
+  Get,
+  UseGuards,
+  HttpException,
+} from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import type { Response } from 'express';
 import {
@@ -57,6 +65,21 @@ export class NotificationController {
       res.send(buffer);
     } catch (err) {
       res.status(500).json({ message: 'Gagal generate QR: ' + err.message });
+    }
+  }
+
+  @Get('wa-status')
+  @ApiOperation({ summary: 'Cek status WhatsApp client' })
+  @ApiResponse({ status: 200, description: 'Client ready' })
+  @ApiResponse({ status: 503, description: 'Client belum siap' })
+  async getWaStatus() {
+    if (this.notificationService.isClientReady()) {
+      return { ready: true, message: 'WhatsApp client siap digunakan.' };
+    } else {
+      throw new HttpException(
+        { ready: false, message: 'WhatsApp client belum siap digunakan.' },
+        503,
+      );
     }
   }
 }

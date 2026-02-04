@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import * as ldap from 'ldapjs';
 import { ConfigService } from '@nestjs/config';
 

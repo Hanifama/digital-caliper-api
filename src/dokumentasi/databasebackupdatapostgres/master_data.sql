@@ -38,8 +38,8 @@ INSERT INTO menu (menu_id, name, status) VALUES
 ('qc_list_filter_location', '[Filter] QC List by Location', 'active'),
 ('qc_list_export_location', '[Export] QC List by Location', 'active'),
 
-('qc_history_filter_loc', '[Filter] QC History by Location', 'active'),
-('dashboard_filter_loc', '[Filter] Dashboard by Location', 'active'),
+('qc_history_filter_location', '[Filter] QC History by Location', 'active'),
+('dashboard_filter_location', '[Filter] Dashboard by Location', 'active'),
 
 ('qc_monitoring', 'Quality Control Monitoring', 'active');
 

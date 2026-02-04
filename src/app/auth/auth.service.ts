@@ -104,29 +104,39 @@ export class AuthService {
     };
   }
 
-  async loginLdap(dto: LoginUserDto) {
-    // 1. Autentikasi user ke LDAP
-    const ldapUser = await this.ldapService.authenticate(
-      dto.identifier,
-      dto.password,
-    );
-
-    // DEBUG: cetak data LDAP (bisa diaktifkan jika perlu)
-    // console.log('LDAP USER DATA:', JSON.stringify(ldapUser, null, 2));
-
-    // 2. Cari user di database berdasarkan email (fallback ke username jika email null)
+  /**
+   * Login pengguna
+   * @param dto Data LoginUserDto
+   * @returns Object berisi accessToken dan refreshToken
+   * @throws mencari ke LDAP jika pengguna tidak ditemukan di database postgre
+   */
+  async authenticaton(dto: LoginUserDto) {
+    // 1️ Cari user di database dulu berdasarkan email / username / NIK
     let user = await this.userRepo.findOne({
-      where: { email: ldapUser.email ?? ldapUser.username },
+      where: [
+        { email: dto.identifier },
+        { username: dto.identifier },
+        { NIK: dto.identifier },
+      ],
       relations: ['role'],
     });
 
-    // 3. Jika user belum ada, buat baru
+    // 2️ Kalau user belum ada, autentikasi ke LDAP
     if (!user) {
-      const defaultPassword = await bcrypt.hash(dto.password, 10);
+      const ldapUser = await this.ldapService.authenticate(
+        dto.identifier,
+        dto.password,
+      );
+
+      if (!ldapUser) {
+        throw new Error(
+          'Autentikasi LDAP gagal: user tidak ditemukan atau password salah',
+        );
+      }
 
       // Mapping role LDAP ke role internal
       const mapRole = (ldapRoles: string[]) => {
-        if (!ldapRoles || ldapRoles.length === 0) return '1';
+        if (!ldapRoles || ldapRoles.length === 0) return '1'; // default user
         if (ldapRoles.some((r) => r.includes('Admin'))) return '2';
         if (ldapRoles.some((r) => r.includes('Manager'))) return '3';
         return '1';
@@ -143,6 +153,8 @@ export class AuthService {
           ldapUser.username);
 
       // Buat user baru
+      const defaultPassword = await bcrypt.hash(dto.password, 10);
+
       user = this.userRepo.create({
         user_id: randomUUID(),
         username: ldapUser.username,
@@ -153,16 +165,17 @@ export class AuthService {
         status: 1,
         role: roleId,
         locationId: 'LOC001',
+        nik: null,
       } as DeepPartial<User>);
 
       await this.userRepo.save(user);
     }
 
-    // 4. Update last login
+    // 3️ Update last login
     user.last_login = new Date();
     await this.userRepo.save(user);
 
-    // 5. Generate JWT
+    // 4️ Generate JWT
     const payload: IJwtPayload = {
       id: user.user_id,
       name: user.full_name,

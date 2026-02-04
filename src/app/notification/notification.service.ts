@@ -8,7 +8,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { QcRecord } from '../qc-template/entity/qc-record.entity';
 import { Repository } from 'typeorm';
 import { QcData } from '../qc-template/entity/qc-data.enity';
-import { ConfigService } from '@nestjs/config';
 import { User } from '../auth/entity/user.entity';
 import { SendWaQcDto } from './dto/notification-send-wa.dto';
 import { GeneratorService } from '../generator/generator.service';
@@ -35,8 +34,6 @@ export class NotificationService implements OnModuleInit {
 
     @InjectRepository(QcData)
     private readonly qcDataRepo: Repository<QcData>,
-
-    private readonly configService: ConfigService,
   ) {}
 
   onModuleInit() {
