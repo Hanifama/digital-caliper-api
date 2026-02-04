@@ -84,10 +84,10 @@ INSERT INTO role_menu (role_id, menu_id, status) VALUES
 ('2', 'qc_list_export_location', 'active'),
 
 --  QC History Filter Permission
-('2', 'qc_history_filter_loc', 'active'),
+('2', 'qc_history_filter_location', 'active'),
 
 --  Dashboard Filter Permission
-('2', 'dashboard_filter_loc', 'active'),
+('2', 'dashboard_filter_location', 'active'),
 
 --  QC Monitoring Permission
 ('2', 'qc_monitoring', 'active');
