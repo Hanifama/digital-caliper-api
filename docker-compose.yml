@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   qcms-caliper-be:
     container_name: qcms-caliper-be
@@ -14,9 +12,9 @@ services:
     networks:
       - app-network
     volumes:
-      # WA session tetap nyala setelah rebuild
       - ./wwebjs_auth:/app/.wwebjs_auth
       - ./wwebjs_cache:/app/.wwebjs_cache
+
 networks:
   app-network:
     driver: bridge
