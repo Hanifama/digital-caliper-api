@@ -200,4 +200,16 @@ export class QcRecordController {
       statusQc,
     );
   }
+
+  @Get('/detail-template')
+  @ApiOperation({ summary: 'Ambil semua template dengan struktur detail QC' })
+  @ApiResponse({
+    status: 200,
+    description: 'Berhasil mengambil semua template dengan struktur QC',
+  })
+  async getAllTemplateDetail(
+    @CurrentUser('id') userId: string,
+  ): Promise<QcRecordGroupedResult[]> {
+    return this.qcRecordService.getAllTemplateDetail(userId);
+  }
 }

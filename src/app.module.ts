@@ -38,6 +38,7 @@ import { AppVersionModule } from './app/app-version/app-version.module';
 import { LogModule } from './app/log-app/log.module';
 import { NotificationModule } from './app/notification/notification.module';
 import { GeneratorModule } from './app/generator/generator.module';
+import { QcListL1Module } from './app/qc-list-l1/qc-list-l1.module';
 
 let transactionalDS: DataSource;
 
@@ -82,6 +83,7 @@ let transactionalDS: DataSource;
     QcRecordModule,
     LocationModule,
     UserModule,
+    QcListL1Module,
   ],
   controllers: [AppController],
   providers: [

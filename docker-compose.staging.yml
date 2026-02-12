@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   qcms-caliper-be-staging:
     container_name: qcms-caliper-be-staging

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Transactional } from 'typeorm-transactional';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -1487,5 +1487,224 @@ export class QcRecordService {
 
     this.messageService.setMessage(`Berhasil memuat QC Record ${qcId}`);
     return grouped;
+  }
+
+  /** Detail List QC Template Gruped detail QC*/
+  async getAllTemplateDetail(userId: string): Promise<QcRecordGroupedResult[]> {
+    // Optional: validasi user saja (tanpa location)
+    const user = await this.userRepo.findOne({
+      where: { user_id: userId },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User tidak ditemukan.');
+    }
+
+    // 1️ Ambil SEMUA template
+    const templates = await this.qcTemplateRepo.find();
+
+    if (!templates.length) return [];
+
+    // 2️ Ambil semua template ids & prodtype ids
+    const templateIds = templates.map((t) => t.qc_template_id);
+    const prodtypeIds = [...new Set(templates.map((t) => t.prodtype_id))];
+
+    // 3️ Ambil semua data sekaligus (hindari N+1)
+    const allTemplateDatas = await this.qcTemplateDataRepo.find({
+      where: { qc_template_id: In(templateIds) },
+    });
+
+    const allProductFields = await this.productTypeDataRepo.find({
+      where: { prodtype_id: In(prodtypeIds) },
+    });
+
+    const allProductMappings = await this.productTypeDataMappingRepo.find({
+      where: { prodtype_id: In(prodtypeIds) },
+    });
+
+    // ===============================
+    // GROUPING MAPS
+    // ===============================
+
+    const templateDataMap = new Map<string, any[]>();
+    allTemplateDatas.forEach((td) => {
+      if (!templateDataMap.has(td.qc_template_id)) {
+        templateDataMap.set(td.qc_template_id, []);
+      }
+      templateDataMap.get(td.qc_template_id)!.push(td);
+    });
+
+    const productFieldMap = new Map<string, any[]>();
+    allProductFields.forEach((pf) => {
+      if (!productFieldMap.has(pf.prodtype_id)) {
+        productFieldMap.set(pf.prodtype_id, []);
+      }
+      productFieldMap.get(pf.prodtype_id)!.push(pf);
+    });
+
+    const productMappingMap = new Map<string, any[]>();
+    allProductMappings.forEach((pm) => {
+      if (!productMappingMap.has(pm.prodtype_id)) {
+        productMappingMap.set(pm.prodtype_id, []);
+      }
+      productMappingMap.get(pm.prodtype_id)!.push(pm);
+    });
+
+    const results: QcRecordGroupedResult[] = [];
+
+    // ===============================
+    // LOOP TEMPLATE
+    // ===============================
+
+    for (const template of templates) {
+      const templateDatas = templateDataMap.get(template.qc_template_id) || [];
+      const productFields = productFieldMap.get(template.prodtype_id) || [];
+      const productMappings = productMappingMap.get(template.prodtype_id) || [];
+
+      const grouped: QcRecordGroupedResult = {
+        qc_id: '',
+        qc_template_id: template.qc_template_id,
+        sequence_no: 0,
+        piece_no: '',
+        template_prodtype_id: template.prodtype_id,
+        template_profile: template.profile,
+        template_name: template.name,
+        template_size_id: template.size_id,
+        template_size_name: template.name,
+        template_std_dimention: template.std_dimention,
+        template_brand_merek: template.brand_merek,
+        template_specification: template.specification,
+        status: 'Template-Draft',
+        status_overall: 'Draft',
+        created_dt: template.created_dt,
+        table: [],
+        FormRight: [],
+        basic: [],
+        default: [],
+      };
+
+      // ===============================
+      // TABLE BUILD
+      // ===============================
+
+      const tempTable: Record<string, any[]> = {};
+
+      const allHCTFields = productFields.filter((f) =>
+        ['H', 'C', 'T'].includes(f.code[0]),
+      );
+
+      allHCTFields.forEach((item) => {
+        const templateData = templateDatas.find(
+          (td) => td.input_code === item.code,
+        );
+
+        const position = item.position || 'default';
+
+        const entry = {
+          input_code: item.code,
+          alias: item.alias ?? null,
+          isFormula: item.is_formula,
+          formula: item.formula,
+          input_value: null,
+          status: 'Draft',
+          position,
+          enabled: templateData?.enabled ?? false,
+          selected: !!templateData,
+          order_numb: templateData?.order_numb ?? null,
+          input_type: templateData?.input_type || item.type,
+          is_readonly: item.is_readonly ?? false,
+          isTolerance: item.is_tolerance ?? false,
+          minTolerance: templateData?.min_tolerance ?? null,
+          maxTolerance: templateData?.max_tolerance ?? null,
+          t_lt_50_Tolerance: templateData?.t_lt_50_tolerance ?? null,
+          nominalTolerance: templateData?.nominal_tolerance ?? null,
+          t_gt_50_Tolerance: templateData?.t_gt_50_tolerance ?? null,
+        };
+
+        if (!tempTable[position]) tempTable[position] = [];
+        tempTable[position].push(entry);
+      });
+
+      for (const pos in tempTable) {
+        grouped.table.push({
+          name: pos,
+          alias: pos,
+          enabled:
+            templateDatas.find(
+              (td) => td.position === pos && td.group_name === 'table',
+            )?.enabled ?? false,
+          fields: tempTable[pos],
+        });
+      }
+
+      grouped.table.sort((a, b) => a.name.localeCompare(b.name));
+
+      // ===============================
+      // FORM RIGHT
+      // ===============================
+
+      const formRightFields = productFields.filter(
+        (f) => f.position === 'FormRight',
+      );
+
+      const mappingsByCode = new Map<string, Set<string>>();
+
+      productMappings.forEach((m) => {
+        if (!mappingsByCode.has(m.code)) {
+          mappingsByCode.set(m.code, new Set());
+        }
+        mappingsByCode.get(m.code)!.add(m.position);
+      });
+
+      formRightFields.forEach((field) => {
+        const templateFormRight = templateDatas.find(
+          (td) => td.group_name === field.label,
+        );
+
+        grouped.FormRight.push({
+          name: field.label,
+          alias: field.alias ?? null,
+          enabled: templateFormRight?.enabled ?? false,
+          tolerance: {
+            min: templateFormRight?.min_tolerance ?? 0,
+            t_lt_50: templateFormRight?.t_lt_50_tolerance ?? 0,
+            nominal: templateFormRight?.nominal_tolerance ?? 0,
+            t_gt_50: templateFormRight?.t_gt_50_tolerance ?? 0,
+            max: templateFormRight?.max_tolerance ?? 0,
+            actual: templateFormRight?.actual_tolerance ?? 0,
+          },
+          relatedTablePositions: Array.from(
+            mappingsByCode.get(field.code) || new Set(),
+          ),
+        });
+      });
+
+      grouped.FormRight.sort((a, b) => a.name.localeCompare(b.name));
+
+      // ===============================
+      // BASIC & DEFAULT
+      // ===============================
+
+      grouped.basic = productFields
+        .filter((f) => f.position === 'basic')
+        .map((f) => ({
+          label: f.label,
+          value: null,
+          code: f.code,
+        }));
+
+      grouped.default = productFields
+        .filter((f) => f.position === 'default')
+        .map((f) => ({
+          label: f.label,
+          value: null,
+          code: f.code,
+        }));
+
+      results.push(grouped);
+    }
+
+    this.messageService.setMessage(`Berhasil memuat Grup QC Template`);
+    return results;
   }
 }

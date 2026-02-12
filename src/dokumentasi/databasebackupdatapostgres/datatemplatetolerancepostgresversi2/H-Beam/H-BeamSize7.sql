@@ -44,14 +44,14 @@ INSERT INTO qc_template_data (input_code, qc_template_id, label, input_type, min
 ('T.b4','TMP-rtxtuyv','T(b4)','number',247,248.5,250,251.5,253,NULL,24,true,'','b4','table'),
 
 -- b1-b2/2 (25-27) - DIUBAH: Tolerance sekarang mengikuti Height of Flange (247,248.5,250,251.5,253)
-('H.b1-b2/2','TMP-rtxtuyv','H(b1-b2/2)','number',247,248.5,250,251.5,253,NULL,25,true,'','b1-b2/2','table'),
-('C.b1-b2/2','TMP-rtxtuyv','C(b1-b2/2)','number',247,248.5,250,251.5,253,NULL,26,true,'','b1-b2/2','table'),
-('T.b1-b2/2','TMP-rtxtuyv','T(b1-b2/2)','number',247,248.5,250,251.5,253,NULL,27,true,'','b1-b2/2','table'),
+('H.b1-b2/2','TMP-rtxtuyv','H(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,25,true,'','b1-b2/2','table'),
+('C.b1-b2/2','TMP-rtxtuyv','C(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,26,true,'','b1-b2/2','table'),
+('T.b1-b2/2','TMP-rtxtuyv','T(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,27,true,'','b1-b2/2','table'),
 
 -- b3-b4/2 (28-30) - DIUBAH: Tolerance sekarang mengikuti Height of Flange (247,248.5,250,251.5,253)
-('H.b3-b4/2','TMP-rtxtuyv','H(b3-b4/2)','number',247,248.5,250,251.5,253,NULL,28,true,'','b3-b4/2','table'),
-('C.b3-b4/2','TMP-rtxtuyv','C(b3-b4/2)','number',247,248.5,250,251.5,253,NULL,29,true,'','b3-b4/2','table'),
-('T.b3-b4/2','TMP-rtxtuyv','T(b3-b4/2)','number',247,248.5,250,251.5,253,NULL,30,true,'','b3-b4/2','table'),
+('H.b3-b4/2','TMP-rtxtuyv','H(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,28,true,'','b3-b4/2','table'),
+('C.b3-b4/2','TMP-rtxtuyv','C(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,29,true,'','b3-b4/2','table'),
+('T.b3-b4/2','TMP-rtxtuyv','T(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,30,true,'','b3-b4/2','table'),
 
 -- t1 (31-33)
 ('H.t1','TMP-rtxtuyv','H(t1)','number',13,13.5,14,14.5,15,NULL,31,true,'','t1','table'),

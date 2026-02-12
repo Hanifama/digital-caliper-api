@@ -119,7 +119,8 @@ export class QcListService {
         status,
         created_by,
         created_dt
-      ) VALUES ${values};
+      ) VALUES ${values}
+      ON CONFLICT (qc_id, location_id, sequence_no) DO NOTHING;
     `;
 
     await this.qcPlanRepo.query(sql);

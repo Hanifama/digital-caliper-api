@@ -129,22 +129,10 @@ export class AuthService {
       );
 
       if (!ldapUser) {
-        throw new Error(
-          'Autentikasi LDAP gagal: user tidak ditemukan atau password salah',
-        );
+        throw new Error('Autentikasi LDAP gagal: user tidak ditemukan.');
       }
 
-      // Mapping role LDAP ke role internal
-      const mapRole = (ldapRoles: string[]) => {
-        if (!ldapRoles || ldapRoles.length === 0) return '1'; // default user
-        if (ldapRoles.some((r) => r.includes('Admin'))) return '2';
-        if (ldapRoles.some((r) => r.includes('Manager'))) return '3';
-        return '1';
-      };
-
-      const roleId = mapRole(
-        Array.isArray(ldapUser.roles) ? ldapUser.roles : [],
-      );
+      const roleId = '2';
 
       // Full name fallback ke firstName + lastName jika displayName kosong
       const fullName =
@@ -164,7 +152,7 @@ export class AuthService {
         password: defaultPassword,
         status: 1,
         role: roleId,
-        locationId: 'LOC001',
+        locationId: 'LOC004',
         nik: null,
       } as DeepPartial<User>);
 
@@ -182,6 +170,8 @@ export class AuthService {
       email: user.email,
       role: user.role?.name ?? '1',
     };
+
+    this.messageService.setMessage(`Berhasil Login. Silahkan Masuk!`);
 
     return {
       accessToken: await this.tokenManager.generateAccessToken(payload),
