@@ -23,52 +23,52 @@ INSERT INTO qc_template_data (input_code, qc_template_id, label, input_type, min
 ('C.B2','TMP-wfvllibm','C(B2)','number',297,298.5,300,301.5,303,NULL,11,true,'','B2','table'),
 ('T.B2','TMP-wfvllibm','T(B2)','number',297,298.5,300,301.5,303,NULL,12,true,'','B2','table'),
 
--- b1 (13-15) - SEKARANG: Flange Thickness (dipindah dari Web Off Center)
+-- b1 (13-15) - Flange Thicknees = Tebal Kaki
 ('H.b1','TMP-wfvllibm','H(b1)','number',18.5,19.25,20,20.75,21.5,NULL,13,true,'','b1','table'),
 ('C.b1','TMP-wfvllibm','C(b1)','number',18.5,19.25,20,20.75,21.5,NULL,14,true,'','b1','table'),
 ('T.b1','TMP-wfvllibm','T(b1)','number',18.5,19.25,20,20.75,21.5,NULL,15,true,'','b1','table'),
 
--- b3 (16-18) - SEKARANG: Flange Thickness (dipindah dari Web Off Center)
+-- b3 (16-18) - Flange Thicknees = Tebal Kaki
 ('H.b3','TMP-wfvllibm','H(b3)','number',18.5,19.25,20,20.75,21.5,NULL,16,true,'','b3','table'),
 ('C.b3','TMP-wfvllibm','C(b3)','number',18.5,19.25,20,20.75,21.5,NULL,17,true,'','b3','table'),
 ('T.b3','TMP-wfvllibm','T(b3)','number',18.5,19.25,20,20.75,21.5,NULL,18,true,'','b3','table'),
 
--- b2 (19-21) - SEKARANG: Flange Thickness (dipindah dari Web Off Center)
+-- b2 (19-21) - Flange Thicknees = Tebal Kaki
 ('H.b2','TMP-wfvllibm','H(b2)','number',18.5,19.25,20,20.75,21.5,NULL,19,true,'','b2','table'),
 ('C.b2','TMP-wfvllibm','C(b2)','number',18.5,19.25,20,20.75,21.5,NULL,20,true,'','b2','table'),
 ('T.b2','TMP-wfvllibm','T(b2)','number',18.5,19.25,20,20.75,21.5,NULL,21,true,'','b2','table'),
 
--- b4 (22-24) - SEKARANG: Flange Thickness (dipindah dari Web Off Center)
+-- b4 (22-24) - Flange Thicknees = Tebal Kaki
 ('H.b4','TMP-wfvllibm','H(b4)','number',18.5,19.25,20,20.75,21.5,NULL,22,true,'','b4','table'),
 ('C.b4','TMP-wfvllibm','C(b4)','number',18.5,19.25,20,20.75,21.5,NULL,23,true,'','b4','table'),
 ('T.b4','TMP-wfvllibm','T(b4)','number',18.5,19.25,20,20.75,21.5,NULL,24,true,'','b4','table'),
 
--- b1-b2/2 (25-27) - Tetap di Web Off Center dengan toleransi asli
+-- b1-b2/2 (25-27) - Web of Center = WOC
 ('H.b1-b2/2','TMP-wfvllibm','H(b1-b2/2)','number',-3.5,-1.75,0,1.75,3.5,NULL,25,true,'','b1-b2/2','table'),
 ('C.b1-b2/2','TMP-wfvllibm','C(b1-b2/2)','number',-3.5,-1.75,0,1.75,3.5,NULL,26,true,'','b1-b2/2','table'),
 ('T.b1-b2/2','TMP-wfvllibm','T(b1-b2/2)','number',-3.5,-1.75,0,1.75,3.5,NULL,27,true,'','b1-b2/2','table'),
 
--- b3-b4/2 (28-30) - Tetap di Web Off Center dengan toleransi asli
+-- b3-b4/2 (28-30) - Web of Center = WOC
 ('H.b3-b4/2','TMP-wfvllibm','H(b3-b4/2)','number',-3.5,-1.75,0,1.75,3.5,NULL,28,true,'','b3-b4/2','table'),
 ('C.b3-b4/2','TMP-wfvllibm','C(b3-b4/2)','number',-3.5,-1.75,0,1.75,3.5,NULL,29,true,'','b3-b4/2','table'),
 ('T.b3-b4/2','TMP-wfvllibm','T(b3-b4/2)','number',-3.5,-1.75,0,1.75,3.5,NULL,30,true,'','b3-b4/2','table'),
 
--- t1 (31-33) - Flange Thickness
+-- t1 (31-33) - Flange Thicknees = Tebal Kaki
 ('H.t1','TMP-wfvllibm','H(t1)','number',18.5,19.25,20,20.75,21.5,NULL,31,true,'','t1','table'),
 ('C.t1','TMP-wfvllibm','C(t1)','number',18.5,19.25,20,20.75,21.5,NULL,32,true,'','t1','table'),
 ('T.t1','TMP-wfvllibm','T(t1)','number',18.5,19.25,20,20.75,21.5,NULL,33,true,'','t1','table'),
 
--- t3 (34-36) - Flange Thickness
+-- t3 (34-36) - Flange Thicknees = Tebal Kaki
 ('H.t3','TMP-wfvllibm','H(t3)','number',18.5,19.25,20,20.75,21.5,NULL,34,true,'','t3','table'),
 ('C.t3','TMP-wfvllibm','C(t3)','number',18.5,19.25,20,20.75,21.5,NULL,35,true,'','t3','table'),
 ('T.t3','TMP-wfvllibm','T(t3)','number',18.5,19.25,20,20.75,21.5,NULL,36,true,'','t3','table'),
 
--- t2 (37-39) - Flange Thickness
+-- t2 (37-39) - Flange Thicknees = Tebal Kaki
 ('H.t2','TMP-wfvllibm','H(t2)','number',18.5,19.25,20,20.75,21.5,NULL,37,true,'','t2','table'),
 ('C.t2','TMP-wfvllibm','C(t2)','number',18.5,19.25,20,20.75,21.5,NULL,38,true,'','t2','table'),
 ('T.t2','TMP-wfvllibm','T(t2)','number',18.5,19.25,20,20.75,21.5,NULL,39,true,'','t2','table'),
 
--- t4 (40-42) - Flange Thickness
+-- t4 (40-42) - Flange Thicknees = Tebal Kaki
 ('H.t4','TMP-wfvllibm','H(t4)','number',18.5,19.25,20,20.75,21.5,NULL,40,true,'','t4','table'),
 ('C.t4','TMP-wfvllibm','C(t4)','number',18.5,19.25,20,20.75,21.5,NULL,41,true,'','t4','table'),
 ('T.t4','TMP-wfvllibm','T(t4)','number',18.5,19.25,20,20.75,21.5,NULL,42,true,'','t4','table'),

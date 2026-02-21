@@ -292,7 +292,7 @@ export class UserService {
   public async getProfile(userId: string) {
     const user = await this.userRepo.findOne({
       where: { user_id: userId },
-      relations: ['role', 'role.roleMenus', 'role.roleMenus.menu'],
+      relations: ['role', 'role.roleMenus', 'role.roleMenus.menu', 'location'],
     });
 
     if (!user) throw new NotFoundException('User tidak ditemukan');
@@ -308,6 +308,9 @@ export class UserService {
 
     const safeUser = this.safeUser(user);
 
+    const locationName = user.location?.name ?? null;
+    const groupName = user.location?.wa_group ?? null;
+
     this.messageService.setMessage('Berhasil mengambil profil user');
 
     await this.logService.createLog(user, {
@@ -317,6 +320,8 @@ export class UserService {
 
     return {
       ...safeUser,
+      location_name: locationName,
+      group_name: groupName,
       menus: accessibleMenus,
     };
   }

@@ -3,87 +3,87 @@ INSERT INTO qc_template (qc_template_id, prodtype_id, size_id, profile, std_dime
 ('TMP-rtxtuyu', 'H-BEAM', 'HB 200X204X12X12', 'HB 200X204X12X12', '200X204X12X12', 'H-BEAM 200X204X12X12', 'HB 200X204X12X12', 'Template HB 200X204X12X12', 'active', 'Akun Testing Manajer', '2025-11-04 16:16:53', 'Akun Testing Manajer', '2025-11-04 16:16:53');
 
 INSERT INTO qc_template_data (input_code, qc_template_id, label, input_type, min_tolerance, t_lt_50_tolerance, nominal_tolerance, t_gt_50_tolerance, max_tolerance, actual_tolerance, order_numb, enabled, sound, position, group_name) VALUES
--- H-Top (1-3)
+-- H-Top (1-3) - Width of Web = Tinggi Web
 ('H.H-top','TMP-rtxtuyu','H(H-top)','number',198,199,200,201,202,NULL,1,true,'','H-Top','table'),
 ('C.H-top','TMP-rtxtuyu','C(H-top)','number',198,199,200,201,202,NULL,2,true,'','H-Top','table'),
 ('T.H-top','TMP-rtxtuyu','T(H-top)','number',198,199,200,201,202,NULL,3,true,'','H-Top','table'),
 
--- H-Bottom (4-6)
+-- H-Bottom (4-6) - Width of Web = Tinggi Web
 ('H.H-bottom','TMP-rtxtuyu','H(H-bottom)','number',198,199,200,201,202,NULL,4,true,'','H-Bottom','table'),
 ('C.H-bottom','TMP-rtxtuyu','C(H-bottom)','number',198,199,200,201,202,NULL,5,true,'','H-Bottom','table'),
 ('T.H-bottom','TMP-rtxtuyu','T(H-bottom)','number',198,199,200,201,202,NULL,6,true,'','H-Bottom','table'),
 
--- B1 (7-9)
+-- B1 (7-9) - Height of Flange = Lebar Kaki
 ('H.B1','TMP-rtxtuyu','H(B1)','number',201,202.5,204,205.5,207,NULL,7,true,'','B1','table'),
 ('C.B1','TMP-rtxtuyu','C(B1)','number',201,202.5,204,205.5,207,NULL,8,true,'','B1','table'),
 ('T.B1','TMP-rtxtuyu','T(B1)','number',201,202.5,204,205.5,207,NULL,9,true,'','B1','table'),
 
--- B2 (10-12)
+-- B2 (10-12) - Height of Flange = Lebar Kaki
 ('H.B2','TMP-rtxtuyu','H(B2)','number',201,202.5,204,205.5,207,NULL,10,true,'','B2','table'),
 ('C.B2','TMP-rtxtuyu','C(B2)','number',201,202.5,204,205.5,207,NULL,11,true,'','B2','table'),
 ('T.B2','TMP-rtxtuyu','T(B2)','number',201,202.5,204,205.5,207,NULL,12,true,'','B2','table'),
 
--- b1 (13-15) - TOLERANSI DIUBAH KE FLANGE THICKNESS STANDARD (11,11.5,12,12.5,13)
+-- b1 (13-15) - Flange Thickness = Tebal Kaki
 ('H.b1','TMP-rtxtuyu','H(b1)','number',11,11.5,12,12.5,13,NULL,13,true,'','b1','table'),
 ('C.b1','TMP-rtxtuyu','C(b1)','number',11,11.5,12,12.5,13,NULL,14,true,'','b1','table'),
 ('T.b1','TMP-rtxtuyu','T(b1)','number',11,11.5,12,12.5,13,NULL,15,true,'','b1','table'),
 
--- b3 (16-18) - TOLERANSI DIUBAH KE FLANGE THICKNESS STANDARD
+-- b3 (16-18) - Flange Thickness = Tebal Kaki
 ('H.b3','TMP-rtxtuyu','H(b3)','number',11,11.5,12,12.5,13,NULL,16,true,'','b3','table'),
 ('C.b3','TMP-rtxtuyu','C(b3)','number',11,11.5,12,12.5,13,NULL,17,true,'','b3','table'),
 ('T.b3','TMP-rtxtuyu','T(b3)','number',11,11.5,12,12.5,13,NULL,18,true,'','b3','table'),
 
--- b2 (19-21) - TOLERANSI DIUBAH KE FLANGE THICKNESS STANDARD
+-- b2 (19-21) - Flange Thickness = Tebal Kaki
 ('H.b2','TMP-rtxtuyu','H(b2)','number',11,11.5,12,12.5,13,NULL,19,true,'','b2','table'),
 ('C.b2','TMP-rtxtuyu','C(b2)','number',11,11.5,12,12.5,13,NULL,20,true,'','b2','table'),
 ('T.b2','TMP-rtxtuyu','T(b2)','number',11,11.5,12,12.5,13,NULL,21,true,'','b2','table'),
 
--- b4 (22-24) - TOLERANSI DIUBAH KE FLANGE THICKNESS STANDARD
+-- b4 (22-24) - Flange Thickness = Tebal Kaki
 ('H.b4','TMP-rtxtuyu','H(b4)','number',11,11.5,12,12.5,13,NULL,22,true,'','b4','table'),
 ('C.b4','TMP-rtxtuyu','C(b4)','number',11,11.5,12,12.5,13,NULL,23,true,'','b4','table'),
 ('T.b4','TMP-rtxtuyu','T(b4)','number',11,11.5,12,12.5,13,NULL,24,true,'','b4','table'),
 
--- b1-b2/2 (25-27)
+-- b1-b2/2 (25-27) - Web of Center = WOC
 ('H.b1-b2/2','TMP-rtxtuyu','H(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,25,true,'','b1-b2/2','table'),
 ('C.b1-b2/2','TMP-rtxtuyu','C(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,26,true,'','b1-b2/2','table'),
 ('T.b1-b2/2','TMP-rtxtuyu','T(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,27,true,'','b1-b2/2','table'),
 
--- b3-b4/2 (28-30)
+-- b3-b4/2 (28-30) - Web of Center = WOC
 ('H.b3-b4/2','TMP-rtxtuyu','H(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,28,true,'','b3-b4/2','table'),
 ('C.b3-b4/2','TMP-rtxtuyu','C(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,29,true,'','b3-b4/2','table'),
 ('T.b3-b4/2','TMP-rtxtuyu','T(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,30,true,'','b3-b4/2','table'),
 
--- t1 (31-33)
+-- t1 (31-33) - Flange Thickness = Tebal Kaki
 ('H.t1','TMP-rtxtuyu','H(t1)','number',11,11.5,12,12.5,13,NULL,31,true,'','t1','table'),
 ('C.t1','TMP-rtxtuyu','C(t1)','number',11,11.5,12,12.5,13,NULL,32,true,'','t1','table'),
 ('T.t1','TMP-rtxtuyu','T(t1)','number',11,11.5,12,12.5,13,NULL,33,true,'','t1','table'),
 
--- t3 (34-36)
+-- t3 (34-36) - Flange Thickness = Tebal Kaki
 ('H.t3','TMP-rtxtuyu','H(t3)','number',11,11.5,12,12.5,13,NULL,34,true,'','t3','table'),
 ('C.t3','TMP-rtxtuyu','C(t3)','number',11,11.5,12,12.5,13,NULL,35,true,'','t3','table'),
 ('T.t3','TMP-rtxtuyu','T(t3)','number',11,11.5,12,12.5,13,NULL,36,true,'','t3','table'),
 
--- t2 (37-39)
+-- t2 (37-39) - Flange Thickness = Tebal Kaki
 ('H.t2','TMP-rtxtuyu','H(t2)','number',11,11.5,12,12.5,13,NULL,37,true,'','t2','table'),
 ('C.t2','TMP-rtxtuyu','C(t2)','number',11,11.5,12,12.5,13,NULL,38,true,'','t2','table'),
 ('T.t2','TMP-rtxtuyu','T(t2)','number',11,11.5,12,12.5,13,NULL,39,true,'','t2','table'),
 
--- t4 (40-42)
+-- t4 (40-42) - Flange Thickness = Tebal Kaki
 ('H.t4','TMP-rtxtuyu','H(t4)','number',11,11.5,12,12.5,13,NULL,40,true,'','t4','table'),
 ('C.t4','TMP-rtxtuyu','C(t4)','number',11,11.5,12,12.5,13,NULL,41,true,'','t4','table'),
 ('T.t4','TMP-rtxtuyu','T(t4)','number',11,11.5,12,12.5,13,NULL,42,true,'','t4','table'),
 
--- t5 (43-45)
+-- t5 (43-45) - Web Thickness = Tebal Web
 ('H.t5','TMP-rtxtuyu','H(t5)','number',11.3,11.65,12,12.35,12.7,NULL,43,true,'','t5','table'),
 ('C.t5','TMP-rtxtuyu','C(t5)','number',11.3,11.65,12,12.35,12.7,NULL,44,true,'','t5','table'),
 ('T.t5','TMP-rtxtuyu','T(t5)','number',11.3,11.65,12,12.35,12.7,NULL,45,true,'','t5','table'),
 
--- t6 (NULL) - dengan order_numb NULL
+-- t6 (NULL) - Web Thickness = Tebal Web dengan order_numb NULL
 ('H.t6','TMP-rtxtuyu','H(t6)','number',11.3,11.65,12,12.35,12.7,NULL,NULL,true,'','t6','table'),
 ('C.t6','TMP-rtxtuyu','C(t6)','number',11.3,11.65,12,12.35,12.7,NULL,NULL,true,'','t6','table'),
 ('T.t6','TMP-rtxtuyu','T(t6)','number',11.3,11.65,12,12.35,12.7,NULL,NULL,true,'','t6','table'),
 
--- t7 (NULL) - dengan order_numb NULL
+-- t7 (NULL) - Web Thickness = Tebal Web dengan order_numb NULL
 ('H.t7','TMP-rtxtuyu','H(t7)','number',11.3,11.65,12,12.35,12.7,NULL,NULL,true,'','t7','table'),
 ('C.t7','TMP-rtxtuyu','C(t7)','number',11.3,11.65,12,12.35,12.7,NULL,NULL,true,'','t7','table'),
 ('T.t7','TMP-rtxtuyu','T(t7)','number',11.3,11.65,12,12.35,12.7,NULL,NULL,true,'','t7','table'),
@@ -102,12 +102,12 @@ INSERT INTO qc_template_data (input_code, qc_template_id, label, input_type, min
 INSERT INTO qc_template_mapping (mapping_id, qc_template_id, group_name, position, order_numb) VALUES
 ('MAP' || LEFT(REPLACE(gen_random_uuid()::text, '-', ''), 8), 'TMP-rtxtuyu', 'Width of Web', 'H-Bottom', 1),
 ('MAP' || LEFT(REPLACE(gen_random_uuid()::text, '-', ''), 8), 'TMP-rtxtuyu', 'Flange Thickness', 't4', 2),
-('MAP' || LEFT(REPLACE(gen_random_uuid()::text, '-', ''), 8), 'TMP-rtxtuyu', 'Flange Thickness', 'b1', 3),  -- DIUBAH: dari Web Off Center ke Flange Thickness
+('MAP' || LEFT(REPLACE(gen_random_uuid()::text, '-', ''), 8), 'TMP-rtxtuyu', 'Flange Thickness', 'b1', 3),  
 ('MAP' || LEFT(REPLACE(gen_random_uuid()::text, '-', ''), 8), 'TMP-rtxtuyu', 'Flange Thickness', 't1', 0),
-('MAP' || LEFT(REPLACE(gen_random_uuid()::text, '-', ''), 8), 'TMP-rtxtuyu', 'Flange Thickness', 'b2', 4),  -- DIUBAH: dari Web Off Center ke Flange Thickness
-('MAP' || LEFT(REPLACE(gen_random_uuid()::text, '-', ''), 8), 'TMP-rtxtuyu', 'Flange Thickness', 'b3', 5),  -- DIUBAH: dari Web Off Center ke Flange Thickness
+('MAP' || LEFT(REPLACE(gen_random_uuid()::text, '-', ''), 8), 'TMP-rtxtuyu', 'Flange Thickness', 'b2', 4), 
+('MAP' || LEFT(REPLACE(gen_random_uuid()::text, '-', ''), 8), 'TMP-rtxtuyu', 'Flange Thickness', 'b3', 5),  
 ('MAP' || LEFT(REPLACE(gen_random_uuid()::text, '-', ''), 8), 'TMP-rtxtuyu', 'Width of Web', 'H-Top', 0),
-('MAP' || LEFT(REPLACE(gen_random_uuid()::text, '-', ''), 8), 'TMP-rtxtuyu', 'Flange Thickness', 'b4', 6),  -- DIUBAH: dari Web Off Center ke Flange Thickness
+('MAP' || LEFT(REPLACE(gen_random_uuid()::text, '-', ''), 8), 'TMP-rtxtuyu', 'Flange Thickness', 'b4', 6), 
 ('MAP' || LEFT(REPLACE(gen_random_uuid()::text, '-', ''), 8), 'TMP-rtxtuyu', 'Flange Thickness', 't2', 1),
 ('MAP' || LEFT(REPLACE(gen_random_uuid()::text, '-', ''), 8), 'TMP-rtxtuyu', 'Height of Flange', 'B2', 1),
 ('MAP' || LEFT(REPLACE(gen_random_uuid()::text, '-', ''), 8), 'TMP-rtxtuyu', 'OS', '', 0),

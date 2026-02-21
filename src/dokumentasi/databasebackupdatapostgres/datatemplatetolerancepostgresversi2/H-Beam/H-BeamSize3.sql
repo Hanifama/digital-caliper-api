@@ -3,87 +3,87 @@ INSERT INTO qc_template (qc_template_id, prodtype_id, size_id, profile, std_dime
 ('TMP-rtxtryr', 'H-BEAM', 'HB 150X150X7X10', 'HB 150X150X7X10', '150X150X7X10', 'H-BEAM 150X150X7X10', 'HB 150X150X7X10', 'Template HB 150X150X7X10', 'active', 'Akun Testing Manajer', '2025-11-04 16:16:53', 'Akun Testing Manajer', '2025-11-04 16:16:53');
 
 INSERT INTO qc_template_data (input_code, qc_template_id, label, input_type, min_tolerance, t_lt_50_tolerance, nominal_tolerance, t_gt_50_tolerance, max_tolerance, actual_tolerance, order_numb, enabled, sound, position, group_name) VALUES
--- H-Top (1-3)
+-- H-Top (1-3) - Width of Web = Tinggi Web
 ('H.H-top','TMP-rtxtryr','H(H-top)','number',148,149,150,151,152,NULL,1,true,'','H-Top','table'),
 ('C.H-top','TMP-rtxtryr','C(H-top)','number',148,149,150,151,152,NULL,2,true,'','H-Top','table'),
 ('T.H-top','TMP-rtxtryr','T(H-top)','number',148,149,150,151,152,NULL,3,true,'','H-Top','table'),
 
--- H-Bottom (4-6)
+-- H-Bottom (4-6) - Width of Web = Tinggi Web
 ('H.H-bottom','TMP-rtxtryr','H(H-bottom)','number',148,149,150,151,152,NULL,4,true,'','H-Bottom','table'),
 ('C.H-bottom','TMP-rtxtryr','C(H-bottom)','number',148,149,150,151,152,NULL,5,true,'','H-Bottom','table'),
 ('T.H-bottom','TMP-rtxtryr','T(H-bottom)','number',148,149,150,151,152,NULL,6,true,'','H-Bottom','table'),
 
--- B1 (7-9)
+-- B1 (7-9) - Heigh of Flange = Lebar Kaki
 ('H.B1','TMP-rtxtryr','H(B1)','number',147.5,148.75,150,151.25,152.5,NULL,7,true,'','B1','table'),
 ('C.B1','TMP-rtxtryr','C(B1)','number',147.5,148.75,150,151.25,152.5,NULL,8,true,'','B1','table'),
 ('T.B1','TMP-rtxtryr','T(B1)','number',147.5,148.75,150,151.25,152.5,NULL,9,true,'','B1','table'),
 
--- B2 (10-12)
+-- B2 (10-12) - Heigh of Flange = Lebar Kaki
 ('H.B2','TMP-rtxtryr','H(B2)','number',147.5,148.75,150,151.25,152.5,NULL,10,true,'','B2','table'),
 ('C.B2','TMP-rtxtryr','C(B2)','number',147.5,148.75,150,151.25,152.5,NULL,11,true,'','B2','table'),
 ('T.B2','TMP-rtxtryr','T(B2)','number',147.5,148.75,150,151.25,152.5,NULL,12,true,'','B2','table'),
 
--- b1 (13-15) - DIUBAH: Tolerance sekarang mengikuti Flange Thickness (147.5,148.75,150,151.25,152.5)
-('H.b1','TMP-rtxtryr','H(b1)','number',147.5,148.75,150,151.25,152.5,NULL,13,true,'','b1','table'),
-('C.b1','TMP-rtxtryr','C(b1)','number',147.5,148.75,150,151.25,152.5,NULL,14,true,'','b1','table'),
-('T.b1','TMP-rtxtryr','T(b1)','number',147.5,148.75,150,151.25,152.5,NULL,15,true,'','b1','table'),
+-- b1 (13-15) - Flange Thicknees = Tebal Kaki
+('H.b1','TMP-rtxtryr','H(b1)','number',9,9.5,10,10.5,11,NULL,13,true,'','b1','table'),
+('C.b1','TMP-rtxtryr','C(b1)','number',9,9.5,10,10.5,11,NULL,14,true,'','b1','table'),
+('T.b1','TMP-rtxtryr','T(b1)','number',9,9.5,10,10.5,11,NULL,15,true,'','b1','table'),
 
--- b3 (16-18) - DIUBAH: Tolerance sekarang mengikuti Flange Thickness (147.5,148.75,150,151.25,152.5)
-('H.b3','TMP-rtxtryr','H(b3)','number',147.5,148.75,150,151.25,152.5,NULL,16,true,'','b3','table'),
-('C.b3','TMP-rtxtryr','C(b3)','number',147.5,148.75,150,151.25,152.5,NULL,17,true,'','b3','table'),
-('T.b3','TMP-rtxtryr','T(b3)','number',147.5,148.75,150,151.25,152.5,NULL,18,true,'','b3','table'),
+-- b3 (16-18) - Flange Thicknees = Tebal Kaki
+('H.b3','TMP-rtxtryr','H(b3)','number',9,9.5,10,10.5,11,NULL,16,true,'','b3','table'),
+('C.b3','TMP-rtxtryr','C(b3)','number',9,9.5,10,10.5,11,NULL,17,true,'','b3','table'),
+('T.b3','TMP-rtxtryr','T(b3)','number',9,9.5,10,10.5,11,NULL,18,true,'','b3','table'),
 
--- b2 (19-21) - DIUBAH: Tolerance sekarang mengikuti Flange Thickness (147.5,148.75,150,151.25,152.5)
-('H.b2','TMP-rtxtryr','H(b2)','number',147.5,148.75,150,151.25,152.5,NULL,19,true,'','b2','table'),
-('C.b2','TMP-rtxtryr','C(b2)','number',147.5,148.75,150,151.25,152.5,NULL,20,true,'','b2','table'),
-('T.b2','TMP-rtxtryr','T(b2)','number',147.5,148.75,150,151.25,152.5,NULL,21,true,'','b2','table'),
+-- b2 (19-21) - Flange Thicknees = Tebal Kaki
+('H.b2','TMP-rtxtryr','H(b2)','number',9,9.5,10,10.5,11,NULL,19,true,'','b2','table'),
+('C.b2','TMP-rtxtryr','C(b2)','number',9,9.5,10,10.5,11,NULL,20,true,'','b2','table'),
+('T.b2','TMP-rtxtryr','T(b2)','number',9,9.5,10,10.5,11,NULL,21,true,'','b2','table'),
 
--- b4 (22-24) - DIUBAH: Tolerance sekarang mengikuti Flange Thickness (147.5,148.75,150,151.25,152.5)
-('H.b4','TMP-rtxtryr','H(b4)','number',147.5,148.75,150,151.25,152.5,NULL,22,true,'','b4','table'),
-('C.b4','TMP-rtxtryr','C(b4)','number',147.5,148.75,150,151.25,152.5,NULL,23,true,'','b4','table'),
-('T.b4','TMP-rtxtryr','T(b4)','number',147.5,148.75,150,151.25,152.5,NULL,24,true,'','b4','table'),
+-- b4 (22-24) - Flange Thicknees = Tebal Kaki
+('H.b4','TMP-rtxtryr','H(b4)','number',9,9.5,10,10.5,11,NULL,22,true,'','b4','table'),
+('C.b4','TMP-rtxtryr','C(b4)','number',9,9.5,10,10.5,11,NULL,23,true,'','b4','table'),
+('T.b4','TMP-rtxtryr','T(b4)','number',9,9.5,10,10.5,11,NULL,24,true,'','b4','table'),
 
--- b1-b2/2 (25-27) - DIUBAH: Tolerance sekarang mengikuti Flange Thickness (147.5,148.75,150,151.25,152.5)
-('H.b1-b2/2','TMP-rtxtryr','H(b1-b2/2)','number',147.5,148.75,150,151.25,152.5,NULL,25,true,'','b1-b2/2','table'),
-('C.b1-b2/2','TMP-rtxtryr','C(b1-b2/2)','number',147.5,148.75,150,151.25,152.5,NULL,26,true,'','b1-b2/2','table'),
-('T.b1-b2/2','TMP-rtxtryr','T(b1-b2/2)','number',147.5,148.75,150,151.25,152.5,NULL,27,true,'','b1-b2/2','table'),
+-- b1-b2/2 (25-27) - Web of Center = WOC
+('H.b1-b2/2','TMP-rtxtryr','H(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,25,true,'','b1-b2/2','table'),
+('C.b1-b2/2','TMP-rtxtryr','C(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,26,true,'','b1-b2/2','table'),
+('T.b1-b2/2','TMP-rtxtryr','T(b1-b2/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,27,true,'','b1-b2/2','table'),
 
--- b3-b4/2 (28-30) - DIUBAH: Tolerance sekarang mengikuti Flange Thickness (147.5,148.75,150,151.25,152.5)
-('H.b3-b4/2','TMP-rtxtryr','H(b3-b4/2)','number',147.5,148.75,150,151.25,152.5,NULL,28,true,'','b3-b4/2','table'),
-('C.b3-b4/2','TMP-rtxtryr','C(b3-b4/2)','number',147.5,148.75,150,151.25,152.5,NULL,29,true,'','b3-b4/2','table'),
-('T.b3-b4/2','TMP-rtxtryr','T(b3-b4/2)','number',147.5,148.75,150,151.25,152.5,NULL,30,true,'','b3-b4/2','table'),
+-- b3-b4/2 (28-30) - Web of Center = WOC
+('H.b3-b4/2','TMP-rtxtryr','H(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,28,true,'','b3-b4/2','table'),
+('C.b3-b4/2','TMP-rtxtryr','C(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,29,true,'','b3-b4/2','table'),
+('T.b3-b4/2','TMP-rtxtryr','T(b3-b4/2)','number',-2.5,-1.25,0,1.25,2.5,NULL,30,true,'','b3-b4/2','table'),
 
--- t1 (31-33)
+-- t1 (31-33) - Flange Thicknees = Tebal Kaki
 ('H.t1','TMP-rtxtryr','H(t1)','number',9,9.5,10,10.5,11,NULL,31,true,'','t1','table'),
 ('C.t1','TMP-rtxtryr','C(t1)','number',9,9.5,10,10.5,11,NULL,32,true,'','t1','table'),
 ('T.t1','TMP-rtxtryr','T(t1)','number',9,9.5,10,10.5,11,NULL,33,true,'','t1','table'),
 
--- t3 (34-36)
+-- t3 (34-36) - Flange Thicknees = Tebal Kaki
 ('H.t3','TMP-rtxtryr','H(t3)','number',9,9.5,10,10.5,11,NULL,34,true,'','t3','table'),
 ('C.t3','TMP-rtxtryr','C(t3)','number',9,9.5,10,10.5,11,NULL,35,true,'','t3','table'),
 ('T.t3','TMP-rtxtryr','T(t3)','number',9,9.5,10,10.5,11,NULL,36,true,'','t3','table'),
 
--- t2 (37-39)
+-- t2 (37-39) - Flange Thicknees = Tebal Kaki
 ('H.t2','TMP-rtxtryr','H(t2)','number',9,9.5,10,10.5,11,NULL,37,true,'','t2','table'),
 ('C.t2','TMP-rtxtryr','C(t2)','number',9,9.5,10,10.5,11,NULL,38,true,'','t2','table'),
 ('T.t2','TMP-rtxtryr','T(t2)','number',9,9.5,10,10.5,11,NULL,39,true,'','t2','table'),
 
--- t4 (40-42)
+-- t4 (40-42) - Flange Thicknees = Tebal Kaki
 ('H.t4','TMP-rtxtryr','H(t4)','number',9,9.5,10,10.5,11,NULL,40,true,'','t4','table'),
 ('C.t4','TMP-rtxtryr','C(t4)','number',9,9.5,10,10.5,11,NULL,41,true,'','t4','table'),
 ('T.t4','TMP-rtxtryr','T(t4)','number',9,9.5,10,10.5,11,NULL,42,true,'','t4','table'),
 
--- t5 (43-45)
+-- t5 (43-45) - Web Thicknees = Tebal Web
 ('H.t5','TMP-rtxtryr','H(t5)','number',6.3,6.65,7,7.35,7.7,NULL,43,true,'','t5','table'),
 ('C.t5','TMP-rtxtryr','C(t5)','number',6.3,6.65,7,7.35,7.7,NULL,44,true,'','t5','table'),
 ('T.t5','TMP-rtxtryr','T(t5)','number',6.3,6.65,7,7.35,7.7,NULL,45,true,'','t5','table'),
 
--- t6 (NULL) - dengan order_numb NULL
+-- t6 (46-48) - Web Thicknees = Tebal Web order_numb null
 ('H.t6','TMP-rtxtryr','H(t6)','number',6.3,6.65,7,7.35,7.7,NULL,NULL,true,'','t6','table'),
 ('C.t6','TMP-rtxtryr','C(t6)','number',6.3,6.65,7,7.35,7.7,NULL,NULL,true,'','t6','table'),
 ('T.t6','TMP-rtxtryr','T(t6)','number',6.3,6.65,7,7.35,7.7,NULL,NULL,true,'','t6','table'),
 
--- t7 (NULL) - dengan order_numb NULL
+-- t7 (49-51) - Web Thicknees = Tebal Web order_numb null
 ('H.t7','TMP-rtxtryr','H(t7)','number',6.3,6.65,7,7.35,7.7,NULL,NULL,true,'','t7','table'),
 ('C.t7','TMP-rtxtryr','C(t7)','number',6.3,6.65,7,7.35,7.7,NULL,NULL,true,'','t7','table'),
 ('T.t7','TMP-rtxtryr','T(t7)','number',6.3,6.65,7,7.35,7.7,NULL,NULL,true,'','t7','table'),
@@ -99,7 +99,6 @@ INSERT INTO qc_template_data (input_code, qc_template_id, label, input_type, min
 ('os','TMP-rtxtryr','OS','number',0,0,1.5,0,0,0,53,true,'','FormRight','OS'),
 ('cow','TMP-rtxtryr','CoW','number',0,0,0,0,0,2,54,true,'','FormRight','CoW');
 
--- DIUBAH: b1, b2, b3, b4, b1-b2/2, b3-b4/2 sekarang mapping ke Flange Thickness
 INSERT INTO qc_template_mapping (mapping_id, qc_template_id, group_name, position, order_numb) VALUES
 (CONCAT('MAP', LEFT(gen_random_uuid()::text, 8)), 'TMP-rtxtryr', 'Width of Web', 'H-Bottom', 1),
 (CONCAT('MAP', LEFT(gen_random_uuid()::text, 8)), 'TMP-rtxtryr', 'Flange Thickness', 't4', 2),
@@ -120,5 +119,5 @@ INSERT INTO qc_template_mapping (mapping_id, qc_template_id, group_name, positio
 (CONCAT('MAP', LEFT(gen_random_uuid()::text, 8)), 'TMP-rtxtryr', 'Flange Thickness', 'b2', 4),
 (CONCAT('MAP', LEFT(gen_random_uuid()::text, 8)), 'TMP-rtxtryr', 'Flange Thickness', 'b3', 5),
 (CONCAT('MAP', LEFT(gen_random_uuid()::text, 8)), 'TMP-rtxtryr', 'Flange Thickness', 'b4', 6),
-(CONCAT('MAP', LEFT(gen_random_uuid()::text, 8)), 'TMP-rtxtryr', 'Flange Thickness', 'b1-b2/2', 7),
-(CONCAT('MAP', LEFT(gen_random_uuid()::text, 8)), 'TMP-rtxtryr', 'Flange Thickness', 'b3-b4/2', 8);
+(CONCAT('MAP', LEFT(gen_random_uuid()::text, 8)), 'TMP-rtxtryr', 'Web Off Center', 'b1-b2/2', 7),
+(CONCAT('MAP', LEFT(gen_random_uuid()::text, 8)), 'TMP-rtxtryr', 'Web Off Center', 'b3-b4/2', 8);

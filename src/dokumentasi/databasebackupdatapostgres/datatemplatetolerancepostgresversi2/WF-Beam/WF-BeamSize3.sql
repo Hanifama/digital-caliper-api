@@ -3,87 +3,87 @@ INSERT INTO qc_template (qc_template_id, prodtype_id, size_id, profile, std_dime
 ('TMP-wfcgqrub', 'WF-BEAM', 'WF 150X75X5X7', 'WF 150X75X5X7', '150X75X5X7', 'WF-BEAM 150X75X5X7', 'WF 150X75X5X7', 'Template WF-BEAM 150X75X5X7', 'active', 'Akun Testing Manajer', '2025-11-08 13:00:00', 'Akun Testing Manajer', '2025-11-08 13:00:00');
 
 INSERT INTO qc_template_data (input_code, qc_template_id, label, input_type, min_tolerance, t_lt_50_tolerance, nominal_tolerance, t_gt_50_tolerance, max_tolerance, actual_tolerance, order_numb, enabled, sound, position, group_name) VALUES
--- H-Top (1-3) - Width of Web
+-- H-Top (1-3) - Widht of Web = Tinggi Web
 ('H.H-top', 'TMP-wfcgqrub', 'H(H-top)', 'number', 148, 149, 150, 151, 152, NULL, 1, true, '', 'H-Top', 'table'),
 ('C.H-top', 'TMP-wfcgqrub', 'C(H-top)', 'number', 148, 149, 150, 151, 152, NULL, 2, true, '', 'H-Top', 'table'),
 ('T.H-top', 'TMP-wfcgqrub', 'T(H-top)', 'number', 148, 149, 150, 151, 152, NULL, 3, true, '', 'H-Top', 'table'),
 
--- H-Bottom (4-6) - Width of Web
+-- H-Bottom (4-6) - Widht of Web = Tinggi Web
 ('H.H-bottom', 'TMP-wfcgqrub', 'H(H-bottom)', 'number', 148, 149, 150, 151, 152, NULL, 4, true, '', 'H-Bottom', 'table'),
 ('C.H-bottom', 'TMP-wfcgqrub', 'C(H-bottom)', 'number', 148, 149, 150, 151, 152, NULL, 5, true, '', 'H-Bottom', 'table'),
 ('T.H-bottom', 'TMP-wfcgqrub', 'T(H-bottom)', 'number', 148, 149, 150, 151, 152, NULL, 6, true, '', 'H-Bottom', 'table'),
 
--- B1 (7-9) - Height of Flange
+-- B1 (7-9) - Heigh of Flange = Lebar Kaki
 ('H.B1', 'TMP-wfcgqrub', 'H(B1)', 'number', 73, 74, 75, 76, 77, NULL, 7, true, '', 'B1', 'table'),
 ('C.B1', 'TMP-wfcgqrub', 'C(B1)', 'number', 73, 74, 75, 76, 77, NULL, 8, true, '', 'B1', 'table'),
 ('T.B1', 'TMP-wfcgqrub', 'T(B1)', 'number', 73, 74, 75, 76, 77, NULL, 9, true, '', 'B1', 'table'),
 
--- B2 (10-12) - Height of Flange
+-- B2 (10-12) - Heigh of Flange = Lebar Kaki
 ('H.B2', 'TMP-wfcgqrub', 'H(B2)', 'number', 73, 74, 75, 76, 77, NULL, 10, true, '', 'B2', 'table'),
 ('C.B2', 'TMP-wfcgqrub', 'C(B2)', 'number', 73, 74, 75, 76, 77, NULL, 11, true, '', 'B2', 'table'),
 ('T.B2', 'TMP-wfcgqrub', 'T(B2)', 'number', 73, 74, 75, 76, 77, NULL, 12, true, '', 'B2', 'table'),
 
--- b1 (13-15) - TOLERANCE DIUBAH: mengikuti Flange Thickness (5.5,6.25,7,7.75,8.5)
+-- b1 (13-15) - Flange Thicknees = Tebal Kaki
 ('H.b1', 'TMP-wfcgqrub', 'H(b1)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 13, true, '', 'b1', 'table'),
 ('C.b1', 'TMP-wfcgqrub', 'C(b1)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 14, true, '', 'b1', 'table'),
 ('T.b1', 'TMP-wfcgqrub', 'T(b1)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 15, true, '', 'b1', 'table'),
 
--- b3 (16-18) - TOLERANCE DIUBAH: mengikuti Flange Thickness (5.5,6.25,7,7.75,8.5)
+-- b3 (16-18) - Flange Thicknees = Tebal Kaki
 ('H.b3', 'TMP-wfcgqrub', 'H(b3)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 16, true, '', 'b3', 'table'),
 ('C.b3', 'TMP-wfcgqrub', 'C(b3)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 17, true, '', 'b3', 'table'),
 ('T.b3', 'TMP-wfcgqrub', 'T(b3)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 18, true, '', 'b3', 'table'),
 
--- b2 (19-21) - TOLERANCE DIUBAH: mengikuti Flange Thickness (5.5,6.25,7,7.75,8.5)
+-- b2 (19-21) - Flange Thicknees = Tebal Kaki
 ('H.b2', 'TMP-wfcgqrub', 'H(b2)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 19, true, '', 'b2', 'table'),
 ('C.b2', 'TMP-wfcgqrub', 'C(b2)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 20, true, '', 'b2', 'table'),
 ('T.b2', 'TMP-wfcgqrub', 'T(b2)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 21, true, '', 'b2', 'table'),
 
--- b4 (22-24) - TOLERANCE DIUBAH: mengikuti Flange Thickness (5.5,6.25,7,7.75,8.5)
+-- b4 (22-24) - Flange Thicknees = Tebal Kaki
 ('H.b4', 'TMP-wfcgqrub', 'H(b4)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 22, true, '', 'b4', 'table'),
 ('C.b4', 'TMP-wfcgqrub', 'C(b4)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 23, true, '', 'b4', 'table'),
 ('T.b4', 'TMP-wfcgqrub', 'T(b4)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 24, true, '', 'b4', 'table'),
 
--- b1-b2/2 (25-27) - tetap menggunakan toleransi Web Off Center karena perhitungan offset
+-- b1-b2/2 (25-27) - Web of Center = WOC
 ('H.b1-b2/2', 'TMP-wfcgqrub', 'H(b1-b2/2)', 'number', -2.5, -1.25, 0, 1.25, 2.5, NULL, 25, true, '', 'b1-b2/2', 'table'),
 ('C.b1-b2/2', 'TMP-wfcgqrub', 'C(b1-b2/2)', 'number', -2.5, -1.25, 0, 1.25, 2.5, NULL, 26, true, '', 'b1-b2/2', 'table'),
 ('T.b1-b2/2', 'TMP-wfcgqrub', 'T(b1-b2/2)', 'number', -2.5, -1.25, 0, 1.25, 2.5, NULL, 27, true, '', 'b1-b2/2', 'table'),
 
--- b3-b4/2 (28-30) - tetap menggunakan toleransi Web Off Center karena perhitungan offset
+-- b3-b4/2 (28-30) - Web of Center = WOC
 ('H.b3-b4/2', 'TMP-wfcgqrub', 'H(b3-b4/2)', 'number', -2.5, -1.25, 0, 1.25, 2.5, NULL, 28, true, '', 'b3-b4/2', 'table'),
 ('C.b3-b4/2', 'TMP-wfcgqrub', 'C(b3-b4/2)', 'number', -2.5, -1.25, 0, 1.25, 2.5, NULL, 29, true, '', 'b3-b4/2', 'table'),
 ('T.b3-b4/2', 'TMP-wfcgqrub', 'T(b3-b4/2)', 'number', -2.5, -1.25, 0, 1.25, 2.5, NULL, 30, true, '', 'b3-b4/2', 'table'),
 
--- t1 (31-33) - Flange Thickness
+-- t1 (31-33) - Flange Thicknees = Tebal Kaki
 ('H.t1', 'TMP-wfcgqrub', 'H(t1)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 31, true, '', 't1', 'table'),
 ('C.t1', 'TMP-wfcgqrub', 'C(t1)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 32, true, '', 't1', 'table'),
 ('T.t1', 'TMP-wfcgqrub', 'T(t1)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 33, true, '', 't1', 'table'),
 
--- t3 (34-36) - Flange Thickness
+-- t3 (34-36) - Flange Thicknees = Tebal Kaki
 ('H.t3', 'TMP-wfcgqrub', 'H(t3)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 34, true, '', 't3', 'table'),
 ('C.t3', 'TMP-wfcgqrub', 'C(t3)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 35, true, '', 't3', 'table'),
 ('T.t3', 'TMP-wfcgqrub', 'T(t3)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 36, true, '', 't3', 'table'),
 
--- t2 (37-39) - Flange Thickness
+-- t2 (37-39) - Flange Thicknees = Tebal Kaki
 ('H.t2', 'TMP-wfcgqrub', 'H(t2)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 37, true, '', 't2', 'table'),
 ('C.t2', 'TMP-wfcgqrub', 'C(t2)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 38, true, '', 't2', 'table'),
 ('T.t2', 'TMP-wfcgqrub', 'T(t2)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 39, true, '', 't2', 'table'),
 
--- t4 (40-42) - Flange Thickness
+-- t4 (40-42) - Flange Thicknees = Tebal Kaki
 ('H.t4', 'TMP-wfcgqrub', 'H(t4)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 40, true, '', 't4', 'table'),
 ('C.t4', 'TMP-wfcgqrub', 'C(t4)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 41, true, '', 't4', 'table'),
 ('T.t4', 'TMP-wfcgqrub', 'T(t4)', 'number', 5.5, 6.25, 7, 7.75, 8.5, NULL, 42, true, '', 't4', 'table'),
 
--- t5 (43-45) - Web Thickness
+-- t5 (43-45) - Web Thicknees = Tebal Web
 ('H.t5', 'TMP-wfcgqrub', 'H(t5)', 'number', 4, 4.65, 5.3, 5.95, 6.6, NULL, 43, true, '', 't5', 'table'),
 ('C.t5', 'TMP-wfcgqrub', 'C(t5)', 'number', 4, 4.65, 5.3, 5.95, 6.6, NULL, 44, true, '', 't5', 'table'),
 ('T.t5', 'TMP-wfcgqrub', 'T(t5)', 'number', 4, 4.65, 5.3, 5.95, 6.6, NULL, 45, true, '', 't5', 'table'),
 
--- t6 (46-48) - order_numb diisi NULL
+-- t6 (46-48) - Web Thicknees = Tebal Web order_numb NULL
 ('H.t6', 'TMP-wfcgqrub', 'H(t6)', 'number', 4, 4.65, 5.3, 5.95, 6.6, NULL, NULL, true, '', 't6', 'table'),
 ('C.t6', 'TMP-wfcgqrub', 'C(t6)', 'number', 4, 4.65, 5.3, 5.95, 6.6, NULL, 47, true, '', 't6', 'table'),
 ('T.t6', 'TMP-wfcgqrub', 'T(t6)', 'number', 4, 4.65, 5.3, 5.95, 6.6, NULL, 48, true, '', 't6', 'table'),
 
--- t7 (49-51) - order_numb diisi NULL
+-- t7 (49-51) - Web Thicknees = Tebal Web order_numb NULL
 ('H.t7', 'TMP-wfcgqrub', 'H(t7)', 'number', 4, 4.65, 5.3, 5.95, 6.6, NULL, NULL, true, '', 't7', 'table'),
 ('C.t7', 'TMP-wfcgqrub', 'C(t7)', 'number', 4, 4.65, 5.3, 5.95, 6.6, NULL, NULL, true, '', 't7', 'table'),
 ('T.t7', 'TMP-wfcgqrub', 'T(t7)', 'number', 4, 4.65, 5.3, 5.95, 6.6, NULL, NULL, true, '', 't7', 'table'),
@@ -111,12 +111,12 @@ INSERT INTO qc_template_mapping (mapping_id, qc_template_id, group_name, positio
 ('MAP' || LEFT(md5(random()::text), 8), 'TMP-wfcgqrub', 'Web Thickness', 't5', 0),
 ('MAP' || LEFT(md5(random()::text), 8), 'TMP-wfcgqrub', 'Web Thickness', 't6', 1),
 ('MAP' || LEFT(md5(random()::text), 8), 'TMP-wfcgqrub', 'Web Thickness', 't7', 2),
-('MAP' || LEFT(md5(random()::text), 8), 'TMP-wfcgqrub', 'Flange Thickness', 'b1', 4),  -- DIUBAH: b1 mapping ke Flange Thickness
-('MAP' || LEFT(md5(random()::text), 8), 'TMP-wfcgqrub', 'Flange Thickness', 'b2', 5),  -- DIUBAH: b2 mapping ke Flange Thickness
-('MAP' || LEFT(md5(random()::text), 8), 'TMP-wfcgqrub', 'Flange Thickness', 'b3', 6),  -- DIUBAH: b3 mapping ke Flange Thickness
-('MAP' || LEFT(md5(random()::text), 8), 'TMP-wfcgqrub', 'Flange Thickness', 'b4', 7),  -- DIUBAH: b4 mapping ke Flange Thickness
-('MAP' || LEFT(md5(random()::text), 8), 'TMP-wfcgqrub', 'Web Off Center', 'b1-b2/2', 8),  -- Tetap di Web Off Center karena ini perhitungan offset
-('MAP' || LEFT(md5(random()::text), 8), 'TMP-wfcgqrub', 'Web Off Center', 'b3-b4/2', 9),  -- Tetap di Web Off Center karena ini perhitungan offset
+('MAP' || LEFT(md5(random()::text), 8), 'TMP-wfcgqrub', 'Flange Thickness', 'b1', 4), 
+('MAP' || LEFT(md5(random()::text), 8), 'TMP-wfcgqrub', 'Flange Thickness', 'b2', 5),  
+('MAP' || LEFT(md5(random()::text), 8), 'TMP-wfcgqrub', 'Flange Thickness', 'b3', 6),  
+('MAP' || LEFT(md5(random()::text), 8), 'TMP-wfcgqrub', 'Flange Thickness', 'b4', 7), 
+('MAP' || LEFT(md5(random()::text), 8), 'TMP-wfcgqrub', 'Web Off Center', 'b1-b2/2', 8), 
+('MAP' || LEFT(md5(random()::text), 8), 'TMP-wfcgqrub', 'Web Off Center', 'b3-b4/2', 9), 
 ('MAP' || LEFT(md5(random()::text), 8), 'TMP-wfcgqrub', 'Radius', '', 0),
 ('MAP' || LEFT(md5(random()::text), 8), 'TMP-wfcgqrub', 'CoW', '', 0),
 ('MAP' || LEFT(md5(random()::text), 8), 'TMP-wfcgqrub', 'OS', '', 0),

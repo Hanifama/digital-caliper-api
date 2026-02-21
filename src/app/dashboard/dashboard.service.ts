@@ -7,7 +7,6 @@ import { QcData } from '../qc-template/entity/qc-data.enity';
 import { QcTemplate } from '../qc-template/entity/qc-template.entity';
 import { QcRecord } from '../qc-template/entity/qc-record.entity';
 
-import { DashboardSummaryParams } from './interfaces/dashboard-summary-params';
 import { LogService } from '../log-app/log.service';
 import { MessageService } from '../message/message.service';
 import { DashboardSummaryBySizeParamsDto } from './dto/dashboard-bysize.dto';
@@ -15,6 +14,10 @@ import { Size } from '../size/entity/size.entity';
 import { RoleMenu } from '../auth/entity/role-menu.entity';
 import { ProductType } from '../product/entity/product-type.entity';
 import { DashboardMeta } from './interfaces/dashboard-meta-size';
+import { DashboardSummaryParams } from './interfaces/dashboard-summary-params';
+import { DashboardDimensionParamsDto } from './dto/dashboard-dimension.dto';
+import { DashboardDimensionDetailDto } from './dto/dashboard-dimesion-detail';
+import { QcTemplateData } from '../qc-template/entity/qc-template-data.entity';
 
 @Injectable()
 export class DashboardService {
@@ -33,6 +36,9 @@ export class DashboardService {
 
     @InjectRepository(QcTemplate)
     private readonly qcTemplateRepo: Repository<QcTemplate>,
+
+    @InjectRepository(QcTemplateData)
+    private readonly qcTemplateDataRepo: Repository<QcTemplateData>,
 
     @InjectRepository(Size)
     private readonly sizeRepo: Repository<Size>,
@@ -84,7 +90,7 @@ export class DashboardService {
       MENU_FILTER_DASHBOARD_LOCATION,
     );
 
-    const { from_date, end_date, location_id } = params;
+    const { from_date, end_date, location_id, prodtype_id, size } = params;
 
     /** 3. Validasi filter lokasi */
     if (!canFilterLocation && location_id) {
@@ -128,6 +134,14 @@ export class DashboardService {
         start,
         end,
       });
+
+      if (size) {
+        qb.andWhere('r.size = :size', { size });
+      }
+
+      if (prodtype_id) {
+        qb.andWhere('r.product = :prodtype_id', { prodtype_id });
+      }
 
       return qb;
     };
@@ -1250,6 +1264,372 @@ export class DashboardService {
     }
 
     /** 9. FINAL RESPONSE */
+    return {
+      meta,
+      data,
+    };
+  }
+
+  // === Summary by dimensi dashboard ===
+  async getDimensionSummary(
+    params: DashboardDimensionParamsDto,
+    userId: string,
+  ) {
+    const user = await this.userRepo.findOne({
+      where: { user_id: userId },
+      relations: ['role'],
+    });
+
+    if (!user) throw new Error('User tidak ditemukan');
+
+    const { from_date, end_date, location_id, prodtype_id, size } = params;
+
+    /** ===== permission lokasi ===== */
+    const MENU_FILTER_DASHBOARD_LOCATION = 'dashboard_filter_location';
+    const canFilterLocation = await this.hasMenuAccess(
+      user.role.role_id,
+      MENU_FILTER_DASHBOARD_LOCATION,
+    );
+
+    /** ===== tentukan effective location ===== */
+    let effectiveLocationId: string | null = null;
+    if (canFilterLocation) {
+      effectiveLocationId = location_id ?? null;
+    } else {
+      if (location_id) {
+        throw new BadRequestException(
+          'Anda tidak mempunyai akses untuk filter lokasi.',
+        );
+      }
+      if (!user.locationId) {
+        throw new BadRequestException('User belum mempunyai lokasi.');
+      }
+      effectiveLocationId = user.locationId;
+    }
+
+    /** ===== date range ===== */
+    let start = from_date ? new Date(from_date) : new Date();
+    let end = end_date ? new Date(end_date) : start;
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    end.setDate(end.getDate() + 1);
+
+    /** ===== QUERY ===== */
+    const qb = this.qcTemplateDataRepo
+      .createQueryBuilder('qtd')
+
+      // template
+      .innerJoin('qc_template', 'qt', 'qt.qc_template_id = qtd.qc_template_id')
+
+      // record inspeksi
+      .innerJoin(
+        'qc_record',
+        'r',
+        `
+    r.qc_template_id = qt.qc_template_id
+    `,
+      )
+
+      // data hasil inspeksi (boleh tidak ada)
+      .leftJoin(
+        'qc_data',
+        'qd',
+        `
+    qd.qc_id = r.qc_id
+    AND qd.sequence_no = r.sequence_no
+    AND qd.piece_no = r.piece_no
+    AND qd.location_id = r.location_id
+    AND qd.position = qtd.position
+    `,
+      )
+
+      .leftJoin(
+        'product_type_data',
+        'ptd',
+        `
+    ptd.position = qtd.position
+    AND ptd.prodtype_id = qt.prodtype_id
+    AND ptd.status = 'active'
+    `,
+      );
+
+    qb.where('r.status = :done', { done: 'Done' });
+    qb.andWhere('qtd.position != :exclude', { exclude: 'FormRight' });
+    qb.andWhere('r.created_dt >= :start AND r.created_dt < :end', {
+      start,
+      end,
+    });
+
+    /** ===== location filter ===== */
+    if (effectiveLocationId) {
+      qb.andWhere('r.location_id = :loc', { loc: effectiveLocationId });
+    }
+
+    if (size) qb.andWhere('r.size = :size', { size });
+    if (prodtype_id)
+      qb.andWhere('qt.prodtype_id = :prodtype_id', { prodtype_id });
+
+    /** ===== GROUPING ===== */
+    const raw = await qb
+      .select('qtd.position', 'position')
+      .addSelect(`MAX(COALESCE(ptd.alias, qtd.position))`, 'alias')
+
+      // jumlah inspeksi
+      .addSelect(
+        `
+    COUNT(DISTINCT CONCAT(r.qc_id,'-',r.sequence_no,'-',r.piece_no,'-',r.location_id))
+  `,
+        'total_check',
+      )
+
+      // passed
+      .addSelect(
+        `
+    COUNT(DISTINCT CASE WHEN qd.status='Passed'
+    THEN CONCAT(r.qc_id,'-',r.sequence_no,'-',r.piece_no,'-',r.location_id) END)
+  `,
+        'passed',
+      )
+
+      // not passed
+      .addSelect(
+        `
+    COUNT(DISTINCT CASE WHEN qd.status='Not Passed'
+    THEN CONCAT(r.qc_id,'-',r.sequence_no,'-',r.piece_no,'-',r.location_id) END)
+  `,
+        'notPassed',
+      )
+
+      .groupBy('qtd.position')
+      .orderBy('qtd.position', 'ASC')
+      .getRawMany();
+
+    /** ===== FORMAT RESPONSE ===== */
+    const data = raw.map((r) => {
+      const totalCheck = Number(r.total_check);
+      const passed = Number(r.passed);
+      const notPassed = Number(r.notPassed);
+
+      const checked = passed + notPassed;
+      const notChecked = totalCheck - checked;
+
+      const percentPassed = checked ? Math.round((passed / checked) * 100) : 0;
+
+      const percentNotPassed = checked ? 100 - percentPassed : 0;
+
+      const alias = r.alias?.trim();
+      const dimensi =
+        alias && alias.toLowerCase() !== r.position.toLowerCase()
+          ? `${r.position} - ${alias}`
+          : r.position;
+
+      return {
+        dimensi,
+        passed,
+        notPassed,
+        totalCheck,
+        percentPassed,
+        percentNotPassed,
+        notChecked,
+        isTolerance: checked > 0,
+      };
+    });
+
+    /** SORT: yang tidak dicek mucul paling bawah */
+    data.sort((a, b) => {
+      if (a.isTolerance && !b.isTolerance) return -1;
+      if (!a.isTolerance && b.isTolerance) return 1;
+      return 0;
+    });
+
+    this.messageService.setMessage('Berhasil memuat dimension summary');
+    return data;
+  }
+
+  // === Summary by dimensi dashboard ===
+  async getDimensionDetail(
+    params: DashboardDimensionDetailDto,
+    userId: string,
+  ) {
+    const user = await this.userRepo.findOne({
+      where: { user_id: userId },
+      relations: ['role'],
+    });
+
+    if (!user) throw new Error('User tidak ditemukan');
+
+    const { position, from_date, end_date, location_id, prodtype_id, size } =
+      params;
+
+    /** ===== permission lokasi ===== */
+    const canFilterLocation = await this.hasMenuAccess(
+      user.role.role_id,
+      'dashboard_filter_location',
+    );
+
+    const activeLocationId = canFilterLocation
+      ? (location_id ?? null)
+      : (() => {
+          if (location_id)
+            throw new BadRequestException(
+              'Anda tidak mempunyai akses untuk filter lokasi.',
+            );
+          if (!user.locationId)
+            throw new BadRequestException('User belum mempunyai lokasi.');
+          return user.locationId;
+        })();
+
+    /** ===== date range ===== */
+    let start = from_date ? new Date(from_date) : new Date();
+    let end = end_date ? new Date(end_date) : start;
+
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    end.setDate(end.getDate() + 1);
+
+    /** ===== QUERY ===== */
+    const qb = this.qcDataRepo
+      .createQueryBuilder('qd')
+      .innerJoin(
+        'qc_record',
+        'r',
+        `
+        r.qc_id = qd.qc_id
+        AND r.sequence_no = qd.sequence_no
+        AND r.piece_no = qd.piece_no
+        AND r.location_id = qd.location_id
+        `,
+      )
+      .innerJoin('qc_template', 'qt', 'qt.qc_template_id = r.qc_template_id')
+
+      .leftJoin(
+        'qc_template_data',
+        'qtd',
+        `
+        qtd.input_code = qd.input_code
+        AND qtd.qc_template_id = qt.qc_template_id
+        `,
+      )
+
+      .leftJoin(
+        'product_type_data',
+        'ptd',
+        `
+        ptd.position = qd.position
+        AND ptd.prodtype_id = qt.prodtype_id
+        AND ptd.status = 'active'
+        `,
+      );
+
+    qb.where('r.status = :done', { done: 'Done' });
+
+    qb.andWhere('qd.position = :position', { position });
+
+    qb.andWhere('r.created_dt >= :start AND r.created_dt < :end', {
+      start,
+      end,
+    });
+
+    if (activeLocationId) {
+      qb.andWhere('r.location_id = :loc', { loc: activeLocationId });
+    }
+
+    if (size) qb.andWhere('r.size = :size', { size });
+
+    if (prodtype_id) {
+      qb.andWhere('qt.prodtype_id = :prodtype_id', { prodtype_id });
+    }
+
+    const qcDone = await this.qcRecordRepo
+      .createQueryBuilder('r')
+      .innerJoin('qc_template', 'qt', 'qt.qc_template_id = r.qc_template_id')
+      .where('r.status = :done', { done: 'Done' })
+      .andWhere('r.created_dt >= :start AND r.created_dt < :end', {
+        start,
+        end,
+      })
+      .andWhere(activeLocationId ? 'r.location_id = :loc' : '1=1', {
+        loc: activeLocationId,
+      })
+      .andWhere(size ? 'r.size = :size' : '1=1', { size })
+      .andWhere(prodtype_id ? 'qt.prodtype_id = :prodtype_id' : '1=1', {
+        prodtype_id,
+      })
+      .getCount();
+
+    const rows = await qb
+      .select('qd.qc_id', 'qc_id')
+      .addSelect('r.piece_no', 'piece_no')
+      .addSelect('r.sequence_no', 'sequence_no')
+      .addSelect('qd.position', 'position')
+      .addSelect(`COALESCE(ptd.alias, qd.position)`, 'alias')
+
+      .addSelect('qd.input_value', 'input_value')
+
+      /** tolerance dari template */
+      .addSelect('qtd.min_tolerance', 'min_tolerance')
+      .addSelect('qtd.max_tolerance', 'max_tolerance')
+      .addSelect('qtd.t_lt_50_tolerance', 't_lt_50_tolerance')
+      .addSelect('qtd.t_gt_50_tolerance', 't_gt_50_tolerance')
+      .addSelect('qtd.nominal_tolerance', 'nominal_tolerance')
+
+      .addSelect('qd.status', 'status')
+      .addSelect('r.created_dt', 'checked_at')
+      .addSelect('r.size', 'size')
+      .orderBy('r.created_dt', 'DESC')
+      .distinct(true)
+      .getRawMany();
+
+    const checked = rows.length;
+
+    const passed = rows.filter((r) => r.status === 'Passed').length;
+
+    const notPassed = rows.filter((r) => r.status === 'Not Passed').length;
+
+    const notChecked = qcDone - checked;
+
+    const data = rows.map((r) => {
+      const aliasText =
+        r.alias && r.alias.toLowerCase() !== r.position.toLowerCase()
+          ? `${r.position} - ${r.alias}`
+          : r.position;
+
+      return {
+        qc_id: r.qc_id,
+        piece_no: r.piece_no,
+        sequence_no: Number(r.sequence_no),
+        alias: aliasText,
+        input_value: Number(r.input_value),
+        min_tolerance: Number(r.min_tolerance),
+        t_lt_50_tolerance: Number(r.t_lt_50_tolerance),
+        nominal_tolerance: Number(r.nominal_tolerance),
+        t_gt_50_tolerance: Number(r.t_gt_50_tolerance),
+        max_tolerance: Number(r.max_tolerance),
+        status: r.status,
+        checked_at: r.checked_at,
+      };
+    });
+
+    const firstRow = rows[0];
+
+    const positionLabel =
+      firstRow?.alias && firstRow.alias.toLowerCase() !== position.toLowerCase()
+        ? `${position} - ${firstRow.alias}`
+        : position;
+
+    const meta = {
+      alias: positionLabel,
+      size: size ?? firstRow?.size ?? null,
+      product: prodtype_id ?? null,
+      qcDone,
+      passed,
+      notPassed,
+      checked,
+      notChecked,
+    };
+
+    this.messageService.setMessage('Berhasil memuat detail dimensi');
+
     return {
       meta,
       data,

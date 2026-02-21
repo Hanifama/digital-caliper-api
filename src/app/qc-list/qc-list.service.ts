@@ -1112,8 +1112,10 @@ export class QcListService {
     from_date?: string;
     end_date?: string;
     location_id?: string;
+    size?: string;
+    std_grad?: string;
   }): Promise<{ filename: string; buffer: Buffer }> {
-    const { userId, from_date, end_date, location_id } = filter;
+    const { userId, from_date, end_date, location_id, size, std_grad } = filter;
 
     const MENU_EXPORT_QC_LOCATION = 'qc_list_export_location';
 
@@ -1173,6 +1175,18 @@ export class QcListService {
       qb.andWhere('qr.created_dt >= :from', { from: `${from_date} 00:00:00` });
     } else if (end_date) {
       qb.andWhere('qr.created_dt <= :to', { to: `${end_date} 23:59:59` });
+    }
+
+    if (size) {
+      qb.andWhere('qr.size ILIKE :size', {
+        size: `%${size}%`,
+      });
+    }
+
+    if (std_grad) {
+      qb.andWhere('qr.std_grad ILIKE :stdGrad', {
+        stdGrad: `%${std_grad}%`,
+      });
     }
 
     const records = await qb.getMany();
@@ -1270,7 +1284,7 @@ export class QcListService {
 
         // GANTI ID ke NAMA USER
         CreatedBy: userMap.get(record.created_by) || record.created_by,
-        CreatedDt: record.created_dt.toISOString(),
+        CreatedDt: new Date(record.created_dt).toLocaleString('id-ID'),
       };
 
       const prodtypeId = qcTemplateMap.get(record.qc_template_id)?.prodtype_id;

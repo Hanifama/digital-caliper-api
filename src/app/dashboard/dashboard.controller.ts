@@ -15,7 +15,6 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { DashboardSummaryParamsDto } from './dto/dashboard-summary.dto';
 import { CurrentUser } from 'src/decorator/user.decorator';
 import { DashboardSummaryRecentParamsDto } from './dto/dashboard-recent.dto';
 import { DashboardMonthlyQueryDto } from './dto/dashboard-monthly-query.dto';
@@ -23,8 +22,11 @@ import { DashboardSummaryBySizeParamsDto } from './dto/dashboard-bysize.dto';
 import { DashboardRecentQcByUserParamsDto } from './dto/dashboard-recent-byUser.dto';
 import { DashboardAnalysisQueryDto } from './dto/dashboard-analysis.dto';
 import { DashboardDailyAnalysisQueryDto } from './dto/dashboard-daily-analusis.dto';
+import { DashboardSummaryParams } from './interfaces/dashboard-summary-params';
+import { DashboardDimensionParamsDto } from './dto/dashboard-dimension.dto';
+import { DashboardDimensionDetailDto } from './dto/dashboard-dimesion-detail';
 
-@ApiTags('Dashboard') // Grup endpoint di Swagger
+@ApiTags('Dashboard')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('dashboard')
@@ -57,6 +59,34 @@ export class DashboardController {
     @Query() params: DashboardSummaryBySizeParamsDto,
   ) {
     return this.dashboardService.getDashboardSummaryBySize(params, userId);
+  }
+
+  /**
+   * Endpoint untuk mendapatkan ringkasan dashboard by dimensi qc data
+   * @param params Parameter query untuk filter data dashboard by dimensi
+   * @returns Objek berisi ringkasan data dashboard by dimensi
+   */
+  @Get('by-dimension')
+  @ApiOperation({ summary: 'Dashboard QC by Dimension' })
+  async getDimensionSummary(
+    @CurrentUser('id') userId: string,
+    @Query() params: DashboardDimensionParamsDto,
+  ) {
+    return this.dashboardService.getDimensionSummary(params, userId);
+  }
+
+  /**
+   * Endpoint untuk mendapatkan ringkasan dashboard by dimensi detail qc data
+   * @param params Parameter query untuk filter data dashboard by dimensi detail
+   * @returns Objek berisi ringkasan data dashboard by dimensi detail
+   */
+  @Get('by-dimension/detail')
+  @ApiOperation({ summary: 'Dashboard QC Dimension Detail' })
+  async getDimensionDetail(
+    @CurrentUser('id') userId: string,
+    @Query() params: DashboardDimensionDetailDto,
+  ) {
+    return this.dashboardService.getDimensionDetail(params, userId);
   }
 
   @Get('analysis/daily')
@@ -135,7 +165,7 @@ export class DashboardController {
   })
   async getDashboardSummary(
     @CurrentUser('id') userId: string,
-    @Query() params: DashboardSummaryParamsDto,
+    @Query() params: DashboardSummaryParams,
   ) {
     return this.dashboardService.getDashboardSummary(params, userId);
   }

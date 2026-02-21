@@ -3,87 +3,87 @@ INSERT INTO qc_template (qc_template_id, prodtype_id, size_id, profile, std_dime
 ('TMP-wfsiifvk','WF-BEAM','WF 450X200X9X14','WF 450X200X9X14','450X200X9X14','WF-BEAM 450X200X9X14','WF 450X200X9X14','Template WF-BEAM 450X200X9X14','active','Akun Testing Manajer','2025-11-08 13:00:00','Akun Testing Manajer','2025-11-08 13:00:00');
 
 INSERT INTO qc_template_data (input_code, qc_template_id, label, input_type, min_tolerance, t_lt_50_tolerance, nominal_tolerance, t_gt_50_tolerance, max_tolerance, actual_tolerance, order_numb, enabled, sound, position, group_name) VALUES
--- H-Top (1-3) - Width of Web (Tinggi Web)
+-- H-Top (1-3) - Widht of Web = Tinggi Web
 ('H.H-top','TMP-wfsiifvk','H(H-top)','number',447,448.5,450,451.5,453,NULL,1,true,NULL,'H-Top','table'),
 ('C.H-top','TMP-wfsiifvk','C(H-top)','number',447,448.5,450,451.5,453,NULL,2,true,NULL,'H-Top','table'),
 ('T.H-top','TMP-wfsiifvk','T(H-top)','number',447,448.5,450,451.5,453,NULL,3,true,NULL,'H-Top','table'),
 
--- H-Bottom (4-6) - Width of Web (Tinggi Web)
+-- H-Bottom (4-6) - Widht of Web = Tinggi Web 
 ('H.H-bottom','TMP-wfsiifvk','H(H-bottom)','number',447,448.5,450,451.5,453,NULL,4,true,NULL,'H-Bottom','table'),
 ('C.H-bottom','TMP-wfsiifvk','C(H-bottom)','number',447,448.5,450,451.5,453,NULL,5,true,NULL,'H-Bottom','table'),
 ('T.H-bottom','TMP-wfsiifvk','T(H-bottom)','number',447,448.5,450,451.5,453,NULL,6,true,NULL,'H-Bottom','table'),
 
--- B1 (7-9) - Height of Flange (Lebar Kaki)
+-- B1 (7-9) - Heigh of Flange = Lebar Kaki
 ('H.B1','TMP-wfsiifvk','H(B1)','number',197,198.5,200,201.5,203,NULL,7,true,NULL,'B1','table'),
 ('C.B1','TMP-wfsiifvk','C(B1)','number',197,198.5,200,201.5,203,NULL,8,true,NULL,'B1','table'),
 ('T.B1','TMP-wfsiifvk','T(B1)','number',197,198.5,200,201.5,203,NULL,9,true,NULL,'B1','table'),
 
--- B2 (10-12) - Height of Flange (Lebar Kaki)
+-- B2 (10-12) - Heigh of Flange = Lebar Kaki 
 ('H.B2','TMP-wfsiifvk','H(B2)','number',197,198.5,200,201.5,203,NULL,10,true,NULL,'B2','table'),
 ('C.B2','TMP-wfsiifvk','C(B2)','number',197,198.5,200,201.5,203,NULL,11,true,NULL,'B2','table'),
 ('T.B2','TMP-wfsiifvk','T(B2)','number',197,198.5,200,201.5,203,NULL,12,true,NULL,'B2','table'),
 
--- b1 (13-15) - Flange Thickness (Tebal Kaki) - PERUBAHAN: tolerance mengikuti Flange Thickness (13-15)
+-- b1 (13-15) Flange Thicknees = Tebal Kaki
 ('H.b1','TMP-wfsiifvk','H(b1)','number',13,13.5,14,14.5,15,NULL,13,true,NULL,'b1','table'),
 ('C.b1','TMP-wfsiifvk','C(b1)','number',13,13.5,14,14.5,15,NULL,14,true,NULL,'b1','table'),
 ('T.b1','TMP-wfsiifvk','T(b1)','number',13,13.5,14,14.5,15,NULL,15,true,NULL,'b1','table'),
 
--- b3 (16-18) - Flange Thickness (Tebal Kaki) - PERUBAHAN: tolerance mengikuti Flange Thickness (13-15)
+-- b3 (16-18)  Flange Thicknees = Tebal Kaki
 ('H.b3','TMP-wfsiifvk','H(b3)','number',13,13.5,14,14.5,15,NULL,16,true,NULL,'b3','table'),
 ('C.b3','TMP-wfsiifvk','C(b3)','number',13,13.5,14,14.5,15,NULL,17,true,NULL,'b3','table'),
 ('T.b3','TMP-wfsiifvk','T(b3)','number',13,13.5,14,14.5,15,NULL,18,true,NULL,'b3','table'),
 
--- b2 (19-21) - Flange Thickness (Tebal Kaki) - PERUBAHAN: tolerance mengikuti Flange Thickness (13-15)
+-- b2 (19-21)  Flange Thicknees = Tebal Kaki
 ('H.b2','TMP-wfsiifvk','H(b2)','number',13,13.5,14,14.5,15,NULL,19,true,NULL,'b2','table'),
 ('C.b2','TMP-wfsiifvk','C(b2)','number',13,13.5,14,14.5,15,NULL,20,true,NULL,'b2','table'),
 ('T.b2','TMP-wfsiifvk','T(b2)','number',13,13.5,14,14.5,15,NULL,21,true,NULL,'b2','table'),
 
--- b4 (22-24) - Flange Thickness (Tebal Kaki) - PERUBAHAN: tolerance mengikuti Flange Thickness (13-15)
+-- b4 (22-24) Flange Thicknees = Tebal Kaki
 ('H.b4','TMP-wfsiifvk','H(b4)','number',13,13.5,14,14.5,15,NULL,22,true,NULL,'b4','table'),
 ('C.b4','TMP-wfsiifvk','C(b4)','number',13,13.5,14,14.5,15,NULL,23,true,NULL,'b4','table'),
 ('T.b4','TMP-wfsiifvk','T(b4)','number',13,13.5,14,14.5,15,NULL,24,true,NULL,'b4','table'),
 
--- b1-b2/2 (25-27) - Web Off Center (WOC) - tetap pakai tolerance Web Off Center
+-- b1-b2/2 (25-27) - Web of Center = WOC
 ('H.b1-b2/2','TMP-wfsiifvk','H(b1-b2/2)','number',-3.5,-1.75,0,1.75,3.5,NULL,25,true,NULL,'b1-b2/2','table'),
 ('C.b1-b2/2','TMP-wfsiifvk','C(b1-b2/2)','number',-3.5,-1.75,0,1.75,3.5,NULL,26,true,NULL,'b1-b2/2','table'),
 ('T.b1-b2/2','TMP-wfsiifvk','T(b1-b2/2)','number',-3.5,-1.75,0,1.75,3.5,NULL,27,true,NULL,'b1-b2/2','table'),
 
--- b3-b4/2 (28-30) - Web Off Center (WOC) - tetap pakai tolerance Web Off Center
+-- b3-b4/2 (28-30) - Web of Center = WOC
 ('H.b3-b4/2','TMP-wfsiifvk','H(b3-b4/2)','number',-3.5,-1.75,0,1.75,3.5,NULL,28,true,NULL,'b3-b4/2','table'),
 ('C.b3-b4/2','TMP-wfsiifvk','C(b3-b4/2)','number',-3.5,-1.75,0,1.75,3.5,NULL,29,true,NULL,'b3-b4/2','table'),
 ('T.b3-b4/2','TMP-wfsiifvk','T(b3-b4/2)','number',-3.5,-1.75,0,1.75,3.5,NULL,30,true,NULL,'b3-b4/2','table'),
 
--- t1 (31-33) - Flange Thickness
+-- t1 (31-33) - Flange Thicknees = Tebal Kaki
 ('H.t1','TMP-wfsiifvk','H(t1)','number',13,13.5,14,14.5,15,NULL,31,true,NULL,'t1','table'),
 ('C.t1','TMP-wfsiifvk','C(t1)','number',13,13.5,14,14.5,15,NULL,32,true,NULL,'t1','table'),
 ('T.t1','TMP-wfsiifvk','T(t1)','number',13,13.5,14,14.5,15,NULL,33,true,NULL,'t1','table'),
 
--- t3 (34-36) - Flange Thickness
+-- t3 (34-36) - Flange Thicknees = Tebal Kaki
 ('H.t3','TMP-wfsiifvk','H(t3)','number',13,13.5,14,14.5,15,NULL,34,true,NULL,'t3','table'),
 ('C.t3','TMP-wfsiifvk','C(t3)','number',13,13.5,14,14.5,15,NULL,35,true,NULL,'t3','table'),
 ('T.t3','TMP-wfsiifvk','T(t3)','number',13,13.5,14,14.5,15,NULL,36,true,NULL,'t3','table'),
 
--- t2 (37-39) - Flange Thickness
+-- t2 (37-39) - Flange Thicknees = Tebal Kaki
 ('H.t2','TMP-wfsiifvk','H(t2)','number',13,13.5,14,14.5,15,NULL,37,true,NULL,'t2','table'),
 ('C.t2','TMP-wfsiifvk','C(t2)','number',13,13.5,14,14.5,15,NULL,38,true,NULL,'t2','table'),
 ('T.t2','TMP-wfsiifvk','T(t2)','number',13,13.5,14,14.5,15,NULL,39,true,NULL,'t2','table'),
 
--- t4 (40-42) - Flange Thickness
+-- t4 (40-42) - Flange Thicknees = Tebal Kaki
 ('H.t4','TMP-wfsiifvk','H(t4)','number',13,13.5,14,14.5,15,NULL,40,true,NULL,'t4','table'),
 ('C.t4','TMP-wfsiifvk','C(t4)','number',13,13.5,14,14.5,15,NULL,41,true,NULL,'t4','table'),
 ('T.t4','TMP-wfsiifvk','T(t4)','number',13,13.5,14,14.5,15,NULL,42,true,NULL,'t4','table'),
 
--- t5 (43-45) - Web Thickness (Tebal Web)
+-- t5 (43-45) - Web Thicknees = Tebal Web
 ('H.t5','TMP-wfsiifvk','H(t5)','number',8.3,8.65,9,9.35,9.7,NULL,43,true,NULL,'t5','table'),
 ('C.t5','TMP-wfsiifvk','C(t5)','number',8.3,8.65,9,9.35,9.7,NULL,44,true,NULL,'t5','table'),
 ('T.t5','TMP-wfsiifvk','T(t5)','number',8.3,8.65,9,9.35,9.7,NULL,45,true,NULL,'t5','table'),
 
--- t6 (NULL) - Web Thickness (Tebal Web) - order_numb NULL
+-- t6 (NULL) - Web Thicknees = Tebal Web - order_numb NULL
 ('H.t6','TMP-wfsiifvk','H(t6)','number',8.3,8.65,9,9.35,9.7,NULL,NULL,true,NULL,'t6','table'),
 ('C.t6','TMP-wfsiifvk','C(t6)','number',8.3,8.65,9,9.35,9.7,NULL,NULL,true,NULL,'t6','table'),
 ('T.t6','TMP-wfsiifvk','T(t6)','number',8.3,8.65,9,9.35,9.7,NULL,NULL,true,NULL,'t6','table'),
 
--- t7 (NULL) - Web Thickness (Tebal Web) - order_numb NULL
+-- t7 (NULL) - Web Thicknees = Tebal Web - order_numb NULL
 ('H.t7','TMP-wfsiifvk','H(t7)','number',8.3,8.65,9,9.35,9.7,NULL,NULL,true,NULL,'t7','table'),
 ('C.t7','TMP-wfsiifvk','C(t7)','number',8.3,8.65,9,9.35,9.7,NULL,NULL,true,NULL,'t7','table'),
 ('T.t7','TMP-wfsiifvk','T(t7)','number',8.3,8.65,9,9.35,9.7,NULL,NULL,true,NULL,'t7','table'),

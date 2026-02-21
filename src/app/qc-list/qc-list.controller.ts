@@ -219,6 +219,8 @@ export class QcListController {
   @Get('plans/export/xlsx')
   @ApiOperation({ summary: 'Export Hasil QC ke XLSX' })
   @ApiQuery({ name: 'location_id', required: false })
+  @ApiQuery({ name: 'size', required: false })
+  @ApiQuery({ name: 'std_grad', required: false })
   @ApiResponse({
     status: 200,
     description: 'Berhasil mengekspor Hasil QC ke XLSX',
@@ -229,12 +231,16 @@ export class QcListController {
     @Query('from_date') fromDate?: string,
     @Query('end_date') endDate?: string,
     @Query('location_id') locationId?: string,
+    @Query('size') size?: string,
+    @Query('std_grad') stdGrad?: string,
   ): Promise<void> {
     const { buffer, filename } = await this.qcListService.exportQcRecords({
       userId,
       from_date: fromDate,
       end_date: endDate,
       location_id: locationId,
+      size,
+      std_grad: stdGrad,
     });
 
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
