@@ -7,11 +7,18 @@ export class LdapService {
   constructor(private readonly config: ConfigService) {}
 
   private createClient() {
-    return ldap.createClient({
+    const client = ldap.createClient({
       url: this.config.get<string>('LDAP_URL'),
       timeout: 5000,
       connectTimeout: 5000,
+      idleTimeout: 10000,
     });
+
+    client.on('error', (err) => {
+      console.error('LDAP Client Error:', err.message);
+    });
+
+    return client;
   }
 
   async authenticate(username: string, password: string) {
@@ -23,121 +30,129 @@ export class LdapService {
     const rawFilter = this.config.get<string>('LDAP_SEARCH_FILTER');
 
     if (!bindDN || !bindPassword || !searchBase || !rawFilter) {
-      throw new Error('LDAP config is incomplete');
+      console.error('LDAP config is incomplete');
+      return null;
     }
 
     const searchFilter = rawFilter.replace('{{username}}', username);
 
-    // Debug LDAP config (komentar, bisa diaktifkan jika perlu)
-    // console.log('\n================ LDAP CONFIG DEBUG ================');
-    // console.log('LDAP_URL           :', this.config.get('LDAP_URL'));
-    // console.log('LDAP_BIND_DN       :', bindDN);
-    // console.log('LDAP_SEARCH_BASE   :', searchBase);
-    // console.log('LDAP_SEARCH_FILTER :', searchFilter);
-    // console.log('===================================================\n');
+    try {
+      // ================= DEBUG LDAP CONFIG =================
+      // console.log('\n================ LDAP CONFIG DEBUG ================');
+      // console.log('LDAP_URL           :', this.config.get('LDAP_URL'));
+      // console.log('LDAP_BIND_DN       :', bindDN);
+      // console.log('LDAP_SEARCH_BASE   :', searchBase);
+      // console.log('LDAP_SEARCH_FILTER :', searchFilter);
+      // console.log('===================================================\n');
 
-    // 1. Bind service account
-    await new Promise<void>((resolve, reject) => {
-      client.bind(bindDN, bindPassword, (err) => {
-        if (err) {
-          // console.log('❌ LDAP SERVICE BIND FAILED', err.message);
-          return reject(new UnauthorizedException('LDAP service bind failed'));
-        }
-        // console.log('✅ LDAP SERVICE BIND SUCCESS');
-        resolve();
+      // 1. Bind service account
+      await new Promise<void>((resolve, reject) => {
+        client.bind(bindDN, bindPassword, (err) => {
+          if (err) {
+            console.error('LDAP SERVICE BIND FAILED', err.message);
+            return reject(err);
+          }
+          // console.log('LDAP SERVICE BIND SUCCESS');
+          resolve();
+        });
       });
-    });
 
-    // 2. Search user
-    const user = await new Promise<any>((resolve, reject) => {
-      const opts: ldap.SearchOptions = {
-        filter: searchFilter,
-        scope: 'sub',
-        attributes: ['*'], // ambil semua attribute
-      };
+      // 2. Search user
+      const user = await new Promise<any>((resolve, reject) => {
+        const opts: ldap.SearchOptions = {
+          filter: searchFilter,
+          scope: 'sub',
+          attributes: ['*'],
+        };
 
-      let total = 0;
-      let foundUser: any = null;
+        let total = 0;
+        let foundUser: any = null;
 
-      // console.log('🔎 LDAP SEARCH STARTED...');
-      // console.log('SEARCH BASE:', searchBase);
+        // console.log('LDAP SEARCH STARTED...');
+        // console.log('SEARCH BASE:', searchBase);
 
-      client.search(searchBase, opts, (err, res) => {
-        if (err) return reject(err);
+        client.search(searchBase, opts, (err, res) => {
+          if (err) return reject(err);
 
-        res.on('searchEntry', (entry) => {
-          total++;
-          // console.log('\n================ LDAP ENTRY FOUND ================');
-          // console.log('ENTRY NUMBER:', total);
-          // console.log('DN:', entry.dn?.toString());
-          // console.log('OBJECT:', JSON.stringify(entry.object, null, 2));
-          // console.log('ATTRIBUTES:', JSON.stringify(entry.attributes, null, 2));
-          // console.log('=================================================\n');
+          res.on('searchEntry', (entry) => {
+            total++;
+            // console.log(`\n================ LDAP ENTRY FOUND ================`);
+            // console.log('ENTRY NUMBER:', total);
+            // console.log('DN:', entry.dn?.toString());
+            // console.log('OBJECT:', JSON.stringify(entry.object, null, 2));
+            // console.log(
+            //   'ATTRIBUTES:',
+            //   JSON.stringify(entry.attributes, null, 2),
+            // );
+            // console.log('=================================================\n');
 
-          foundUser = { dn: entry.dn?.toString(), raw: {} };
-          entry.attributes.forEach((attr) => {
-            foundUser.raw[attr.type] =
-              attr.values.length === 1 ? attr.values[0] : attr.values;
+            foundUser = { dn: entry.dn?.toString(), raw: {} };
+            entry.attributes.forEach((attr) => {
+              foundUser.raw[attr.type] =
+                attr.values.length === 1 ? attr.values[0] : attr.values;
+            });
+          });
+
+          res.on('error', (err) => {
+            console.error('LDAP SEARCH STREAM ERROR', err.message || err);
+            if (!foundUser) reject(err);
+          });
+
+          res.on('end', () => {
+            // console.log('LDAP SEARCH FINISHED, TOTAL ENTRY FOUND:', total);
+            if (!foundUser) {
+              reject(new UnauthorizedException('User LDAP tidak ditemukan'));
+            } else {
+              resolve(foundUser);
+            }
           });
         });
+      });
 
-        res.on('error', (err) => {
-          // console.log('❌ LDAP SEARCH STREAM ERROR', err);
-          reject(err);
-        });
+      // 3. Bind user to validate password
+      // console.log('\n LDAP USER AUTHENTICATION');
+      // console.log('USER DN:', user.dn);
 
-        res.on('end', (result) => {
-          // console.log('🔚 LDAP SEARCH FINISHED');
-          // console.log('STATUS CODE:', result?.status);
-          // console.log('TOTAL ENTRY FOUND:', total);
+      if (!user.dn) {
+        console.error('User ditemukan tapi DN tidak terbaca');
+        return null;
+      }
 
-          if (!foundUser) {
-            reject(new UnauthorizedException('User LDAP tidak ditemukan'));
-          } else {
-            resolve(foundUser);
+      await new Promise<void>((resolve, reject) => {
+        client.bind(user.dn, password, (err) => {
+          if (err) {
+            console.error('❌ LDAP USER PASSWORD INVALID');
+            return reject(err);
           }
+          console.log('LDAP USER BIND SUCCESS');
+          resolve();
         });
       });
-    });
 
-    // 3. Bind user to validate password
-    // console.log('\n🔐 LDAP USER AUTHENTICATION');
-    // console.log('USER DN:', user.dn);
+      // console.log('\n LDAP AUTH SUCCESS');
+      // console.log('USERNAME:', username);
+      // console.log('===================================================\n');
 
-    if (!user.dn) {
-      throw new UnauthorizedException('User ditemukan tapi DN tidak terbaca');
+      return {
+        dn: user.dn,
+        username: user.raw?.sAMAccountName ?? username,
+        email: user.raw?.userPrincipalName ?? null,
+        displayName: user.raw?.displayName ?? null,
+        firstName: user.raw?.givenName ?? null,
+        lastName: user.raw?.sn ?? null,
+        roles: Array.isArray(user.raw?.memberOf)
+          ? user.raw.memberOf
+          : user.raw?.memberOf
+            ? [user.raw.memberOf]
+            : [],
+      };
+    } catch (err) {
+      console.error('LDAP Auth Error:', err.message || err);
+      return null;
+    } finally {
+      try {
+        client.unbind();
+      } catch (e) {}
     }
-
-    await new Promise<void>((resolve, reject) => {
-      client.bind(user.dn, password, (err) => {
-        if (err) {
-          // console.log('❌ LDAP USER PASSWORD INVALID');
-          return reject(new UnauthorizedException('Password LDAP salah'));
-        }
-        // console.log('✅ LDAP USER BIND SUCCESS');
-        resolve();
-      });
-    });
-
-    client.unbind();
-
-    // console.log('\n🎉 LDAP AUTH SUCCESS');
-    // console.log('USERNAME:', username);
-    // console.log('===================================================\n');
-
-    // 4. Return mapped user data
-    return {
-      dn: user.dn,
-      username: user.raw?.sAMAccountName ?? username,
-      email: user.raw?.userPrincipalName ?? null,
-      displayName: user.raw?.displayName ?? null,
-      firstName: user.raw?.givenName ?? null,
-      lastName: user.raw?.sn ?? null,
-      roles: Array.isArray(user.raw?.memberOf)
-        ? user.raw.memberOf
-        : user.raw?.memberOf
-          ? [user.raw.memberOf]
-          : [],
-    };
   }
 }

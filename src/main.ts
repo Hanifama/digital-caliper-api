@@ -39,9 +39,10 @@ import compression from 'compression';
       const allowedOrigins = [
         'http://localhost:5173', // dev frontend
         'http://localhost:4173', // staging frontend
-        'https://digitalcaliper.webview.cloud', // staging
+        'https://digitalcaliper.webview.cloud', // staging dev
         'http://172.16.22.170', // prod ip
-        'http://cims.gyssteel.com/', // prod domain
+        'http://cims.gyssteel.com', // prod domain SSL
+        'https://cims.gyssteel.com', // prod domain Non SSL
         'http://localhost:8085', // Swagger UI
       ];
 
@@ -95,7 +96,7 @@ import compression from 'compression';
     .addServer('https://api-digitalcaliper.webview.cloud/', 'Staging Server')
     .addServer('http://172.16.22.170/api', 'Production Server')
     .addServer('http://172.16.22.170/staging/api', 'Staging Server')
-    .addServer('http://cims.gyssteel.com/api', 'Production Domain Server')
+    .addServer('https://cims.gyssteel.com/api', 'Production Domain Server')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

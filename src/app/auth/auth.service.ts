@@ -129,7 +129,7 @@ export class AuthService {
       );
 
       if (!ldapUser) {
-        throw new Error('Autentikasi LDAP gagal: user tidak ditemukan.');
+        throw new Error('User tidak ditemukan.');
       }
 
       const roleId = '2';
