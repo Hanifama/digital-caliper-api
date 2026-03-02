@@ -1155,19 +1155,12 @@ export class QcRecordService {
     no_seq: number,
     piece_no: string,
     userId: string,
+    location_id: string,
     statusQc?: 'Passed' | 'Not Passed',
   ): Promise<QcRecordGroupedResult> {
     const user = await this.userRepo.findOne({
       where: { user_id: userId },
     });
-
-    if (!user?.locationId) {
-      throw new BadRequestException(
-        'User tidak memiliki location_id, tidak dapat mengambil detail QC.',
-      );
-    }
-
-    const location_id = user.locationId;
 
     const sequence_no = no_seq;
     // Fetch QC record and its related entities

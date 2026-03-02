@@ -172,7 +172,7 @@ export class QcRecordController {
    * @param qcId ID QC Record
    * @returns Data QC Record yang sudah dikelompokkan
    */
-  @Get(':qcId/:no_seq/:piece_no')
+  @Get(':qcId/:no_seq/:piece_no/:location_id')
   @ApiOperation({ summary: 'Ambil detail QC Record dikelompokkan' })
   @ApiQuery({
     name: 'status_qc',
@@ -181,6 +181,7 @@ export class QcRecordController {
     description: 'Filter data QC berdasarkan status (optional)',
   })
   @ApiParam({ name: 'qcId', description: 'ID QC Record' })
+  @ApiParam({ name: 'location_id', description: 'Location ID' })
   @ApiResponse({
     status: 200,
     description: 'Berhasil mengambil QC Record dikelompokkan',
@@ -190,6 +191,7 @@ export class QcRecordController {
     @Param('qcId') qcId: string,
     @Param('no_seq') no_seq: number,
     @Param('piece_no') piece_no: string,
+    @Param('location_id') location_id: string,
     @Query('status_qc') statusQc?: 'Passed' | 'Not Passed',
   ): Promise<QcRecordGroupedResult> {
     return this.qcRecordService.getQcRecordDetail(
@@ -197,6 +199,7 @@ export class QcRecordController {
       no_seq,
       piece_no,
       userId,
+      location_id,
       statusQc,
     );
   }
