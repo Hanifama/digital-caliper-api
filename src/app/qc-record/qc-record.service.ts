@@ -468,25 +468,19 @@ export class QcRecordService {
   /** Start Status QC Record */
   @Transactional()
   async startProcessingFromPlan(dto: StartProcessingDto, userId: string) {
-    const { qc_id, no_seq, piece_no, status } = dto;
+    const { qc_id, no_seq, piece_no, location_id, status } = dto;
     const sequence_no = no_seq;
 
-    if (!qc_id || !sequence_no) {
-      throw new BadRequestException('qc_id dan no_seq wajib dikirim.');
+    if (!qc_id || !sequence_no || !location_id) {
+      throw new BadRequestException(
+        'qc_id, no_seq, dan location_id wajib dikirim.',
+      );
     }
 
     /** 1. Ambil location_id berdasar user */
     const user = await this.userRepo.findOne({
       where: { user_id: userId },
     });
-
-    if (!user?.locationId) {
-      throw new BadRequestException(
-        'User tidak memiliki location_id. Tidak bisa memulai QC Record.',
-      );
-    }
-
-    const location_id = user.locationId;
 
     /** 2. Ambil QC Plan berdasarkan:
      * qc_id + sequence_no + location_id
@@ -587,7 +581,7 @@ export class QcRecordService {
 
     /** 6. Message sukses */
     this.messageService.setMessage(
-      `QC Plan ${qc_id} (seq: ${plan.sequence_no}) berstatus ${plan.status}.`,
+      `QC Plan ${qc_id} (No sequence: ${plan.sequence_no}) berstatus ${plan.status}.`,
     );
 
     return {

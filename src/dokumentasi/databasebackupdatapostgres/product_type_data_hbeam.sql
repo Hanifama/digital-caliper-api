@@ -78,14 +78,14 @@ VALUES
 ('T.b4', 'H-BEAM', 'T(b4)', NULL, 'number', false, 'b4', 'active', false, NULL, false),
 
 -- Posisi b1-b2/2 (Formula)
-('H.b1-b2/2', 'H-BEAM', 'H(b1-b2/2)', 'Simetri Kanan', 'number', true, 'b1-b2/2', 'active', true, '(H.b1-H.b2)/2', true),
-('C.b1-b2/2', 'H-BEAM', 'C(b1-b2/2)', 'Simetri Kanan', 'number', true, 'b1-b2/2', 'active', true, '(C.b1-C.b2)/2', true),
-('T.b1-b2/2', 'H-BEAM', 'T(b1-b2/2)', 'Simetri Kanan', 'number', true, 'b1-b2/2', 'active', true, '(T.b1-T.b2)/2', true),
+('H.b1-b2/2', 'H-BEAM', 'H(b1-b2/2)', 'Simetri Kiri', 'number', true, 'b1-b2/2', 'active', true, '(H.b1-H.b2)/2', true),
+('C.b1-b2/2', 'H-BEAM', 'C(b1-b2/2)', 'Simetri Kiri', 'number', true, 'b1-b2/2', 'active', true, '(C.b1-C.b2)/2', true),
+('T.b1-b2/2', 'H-BEAM', 'T(b1-b2/2)', 'Simetri Kiri', 'number', true, 'b1-b2/2', 'active', true, '(T.b1-T.b2)/2', true),
 
 -- Posisi b3-b4/2 (Formula)
-('H.b3-b4/2', 'H-BEAM', 'H(b3-b4/2)', 'Simetri Kiri', 'number', true, 'b3-b4/2', 'active', true, '(H.b3-H.b4)/2', true),
-('C.b3-b4/2', 'H-BEAM', 'C(b3-b4/2)', 'Simetri Kiri', 'number', true, 'b3-b4/2', 'active', true, '(C.b3-C.b4)/2', true),
-('T.b3-b4/2', 'H-BEAM', 'T(b3-b4/2)', 'Simetri Kiri', 'number', true, 'b3-b4/2', 'active', true, '(T.b3-T.b4)/2', true),
+('H.b3-b4/2', 'H-BEAM', 'H(b3-b4/2)', 'Simetri Kanan', 'number', true, 'b3-b4/2', 'active', true, '(H.b3-H.b4)/2', true),
+('C.b3-b4/2', 'H-BEAM', 'C(b3-b4/2)', 'Simetri Kanan', 'number', true, 'b3-b4/2', 'active', true, '(C.b3-C.b4)/2', true),
+('T.b3-b4/2', 'H-BEAM', 'T(b3-b4/2)', 'Simetri Kanan', 'number', true, 'b3-b4/2', 'active', true, '(T.b3-T.b4)/2', true),
 
 -- Basic input bawah Tabel
 ('kgm.nominal', 'H-BEAM', 'Kg/m Nominal', NULL, 'number', false, 'basic', 'active', false, NULL, true),

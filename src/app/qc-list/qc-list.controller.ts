@@ -303,14 +303,18 @@ export class QcListController {
   }
 
   /** Hapus QC Plan berdasarkan ID */
-  @Delete('plans/:qcId')
-  @ApiOperation({ summary: 'Hapus QC Plan berdasarkan ID' })
+  @Delete('plans/:qcId/:no_seq/:location_id')
+  @ApiOperation({ summary: 'Hapus QC Plan berdasarkan ID (Soft Delete)' })
   @ApiParam({ name: 'qcId', description: 'ID QC Plan yang ingin dihapus' })
+  @ApiParam({ name: 'no_seq', description: 'Sequence Number' })
+  @ApiParam({ name: 'location_id', description: 'Location ID' })
   @ApiResponse({ status: 200, description: 'Berhasil menghapus QC Plan' })
   async deleteSinglePlan(
     @CurrentUser('id') userId: string,
     @Param('qcId') qcId: string,
+    @Param('no_seq') no_seq: number,
+    @Param('location_id') location_id: string,
   ) {
-    return this.qcListService.softDeletePlan(userId, qcId);
+    return this.qcListService.softDeletePlan(userId, qcId, no_seq, location_id);
   }
 }

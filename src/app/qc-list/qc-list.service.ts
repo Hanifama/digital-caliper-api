@@ -726,54 +726,73 @@ export class QcListService {
   }
 
   /** Soft Delete 1 QC Plan berdasarkan qc_id & lokasi user */
-  async softDeletePlan(userId: string, qcId: string) {
+  async softDeletePlan(
+    userId: string,
+    qcId: string,
+    no_seq: number,
+    location_id: string,
+  ) {
+    // ambil user untuk logging
     const user = await this.userRepo.findOne({
       where: { user_id: userId },
-      select: ['locationId'],
     });
 
-    if (!user?.locationId) {
-      throw new BadRequestException(
-        'Pengguna belum memiliki lokasi yang terdaftar.',
-      );
+    if (!user) {
+      throw new BadRequestException('User tidak ditemukan.');
     }
 
-    // Ambil QC Plan sesuai lokasi & qc_id
+    // cek plan
     const plan = await this.qcPlanRepo.findOne({
-      where: { location_id: user.locationId, qc_id: qcId, status: 'New Data' },
+      where: {
+        qc_id: qcId,
+        sequence_no: no_seq,
+        location_id,
+        status: 'New Data',
+      },
     });
 
     if (!plan) {
       throw new BadRequestException(
-        `QC Plan dengan BATCH ID ${qcId} dan status 'New Data' tidak ditemukan di lokasi ${user.locationId}.`,
+        `QC Plan ${qcId} (seq:${no_seq}) tidak ditemukan atau sudah diproses.`,
       );
     }
 
-    // Soft delete + update status menjadi 'Deleted'
+    // soft delete row
     await this.qcPlanRepo
       .createQueryBuilder()
       .update(QcPlan)
-      .set({ status: 'Deleted', deleted_at: new Date() })
+      .set({
+        status: 'Deleted',
+        deleted_at: new Date(),
+      })
       .where(
-        'qc_id = :qcId AND location_id = :locationId AND status = :status',
+        `
+      qc_id = :qcId
+      AND sequence_no = :sequenceNo
+      AND location_id = :locationId
+      AND status = :status
+      `,
         {
           qcId,
-          locationId: user.locationId,
+          sequenceNo: no_seq,
+          locationId: location_id,
           status: 'New Data',
         },
       )
       .execute();
 
     this.messageService.setMessage(
-      `QC Plan dengan BATCH ID ${qcId} berhasil dihapus.`,
+      `QC Plan ${qcId} seq ${no_seq} berhasil dihapus.`,
     );
 
-    // LOG SERVICE
-    // await this.logService.createLog(user, {
-    //   data_1: 'SOFT-DELETE-QC-PLAN',
-    //   data_2: `qc_id:${qcId}`,
-    //   data_3: `location:${user.locationId}`,
-    // });
+    await this.logService.createLog(user, {
+      data_1: 'SOFT-DELETE-QC-PLAN',
+      data_2: `qc_id:${qcId}`,
+      data_3: `seq:${no_seq}`,
+      data_4: `location:${location_id}`,
+    });
+
+    return { success: true };
   }
 
   /** Memberikan Catatan Terhadap QC List Plan */

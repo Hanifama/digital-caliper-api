@@ -1,15 +1,10 @@
-import {
-  IsNotEmpty,
-  IsNumberString,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class StartProcessingDto {
   @ApiProperty({
     description: 'ID QC Plan yang akan diproses',
-    example: 'QC123',
+    example: '08B2604AC',
   })
   @IsNotEmpty({ message: 'qc_id tidak boleh kosong' })
   @IsString({ message: 'qc_id harus berupa string' })
@@ -28,6 +23,14 @@ export class StartProcessingDto {
   })
   @IsNotEmpty({ message: 'Potongan QC tidak boleh kosong' })
   piece_no: string;
+
+  @ApiProperty({
+    description: 'Location ID QC Plan',
+    example: 'LOC002',
+  })
+  @IsNotEmpty()
+  @IsString()
+  location_id: string;
 
   @ApiPropertyOptional({
     description: 'Status awal (opsional)',
