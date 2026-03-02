@@ -596,7 +596,7 @@ export class QcRecordService {
   /** Finish Status QC Record */
   @Transactional()
   async finishProcessing(dto: FinishProcessingDto, userId: string) {
-    const { qc_id, no_seq } = dto;
+    const { qc_id, no_seq, location_id } = dto;
     const sequence_no = no_seq;
 
     if (!qc_id || !sequence_no) {
@@ -607,14 +607,6 @@ export class QcRecordService {
     const user = await this.userRepo.findOne({
       where: { user_id: userId },
     });
-
-    if (!user?.locationId) {
-      throw new BadRequestException(
-        'User tidak memiliki location_id. Tidak bisa menyelesaikan QC.',
-      );
-    }
-
-    const location_id = user.locationId;
 
     /** 2. Ambil semua QC Record untuk qc_id + seq + location */
     const records = await this.qcRecordRepo.find({
@@ -627,7 +619,7 @@ export class QcRecordService {
 
     if (records.length === 0) {
       throw new BadRequestException(
-        `QC Record belum dimulai untuk qc_id "${qc_id}" seq "${sequence_no}".`,
+        `QC Record belum dimulai untuk qc_id "${qc_id}" No sequence "${sequence_no}".`,
       );
     }
 
@@ -648,7 +640,7 @@ export class QcRecordService {
 
     /** 4. Message */
     this.messageService.setMessage(
-      `QC Plan ${qc_id} seq ${sequence_no} selesai diproses.`,
+      `QC Plan ${qc_id} No sequence ${sequence_no} selesai diproses.`,
     );
 
     return {

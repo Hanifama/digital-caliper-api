@@ -17,4 +17,12 @@ export class FinishProcessingDto {
   @IsNotEmpty()
   @IsNumber()
   no_seq: number;
+
+  @ApiProperty({
+    description: 'Location ID QC',
+    example: 'LOC01',
+  })
+  @IsNotEmpty()
+  @IsString()
+  location_id: string;
 }
