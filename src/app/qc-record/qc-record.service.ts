@@ -338,26 +338,15 @@ export class QcRecordService {
     qcId: string,
     no_seq: number,
     piece_no: string,
-    status_qc?: 'Passed' | 'Not Passed',
+    location_id: string,
+    status_qc?: 'Passed' | 'Not Passed' | 'Not Checked',
   ): Promise<any> {
-    if (!qcId || !no_seq || !piece_no) {
+    /** 1. Validasi Required  */
+    if (!qcId || !no_seq || !piece_no || !location_id) {
       throw new BadRequestException(
         'qc_id, no_seq, dan piece_no wajib diberikan.',
       );
     }
-
-    /** 1. Ambil user + role + location  */
-    const user = await this.userRepo.findOne({
-      where: { user_id: userId },
-      relations: ['role'],
-      select: ['user_id', 'locationId', 'role'],
-    });
-
-    if (!user) {
-      throw new BadRequestException('User tidak ditemukan.');
-    }
-
-    const isAdmin = user.role?.name?.toLowerCase() === 'super admin';
 
     /** 2. Ambil header QC Record (VALIDASI + LOCATION CHECK)  */
     const qcRecordQuery = this.qcRecordRepo
@@ -366,15 +355,9 @@ export class QcRecordService {
       .andWhere('qc.sequence_no = :no_seq', { no_seq })
       .andWhere('qc.piece_no = :piece_no', { piece_no });
 
-    if (!isAdmin) {
-      if (!user.locationId) {
-        throw new BadRequestException('Pengguna belum ditempatkan lokasi.');
-      }
-
-      qcRecordQuery.andWhere('qc.location_id = :loc', {
-        loc: user.locationId,
-      });
-    }
+    qcRecordQuery.andWhere('qc.location_id = :loc', {
+      loc: location_id,
+    });
 
     const qcRecord = await qcRecordQuery.getOne();
 
@@ -388,7 +371,7 @@ export class QcRecordService {
     const allQcData = await this.qcDataRepo
       .createQueryBuilder('qd')
       .where('qd.qc_id = :qcId', { qcId })
-      .andWhere('qd.position != :pos', { pos: 'FormRight' }) // ⬅️ PENTING
+      .andWhere('qd.position != :pos', { pos: 'FormRight' })
       .orderBy('qd.qc_data_id', 'ASC')
       .getMany();
 

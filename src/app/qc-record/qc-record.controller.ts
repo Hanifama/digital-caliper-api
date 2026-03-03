@@ -137,11 +137,12 @@ export class QcRecordController {
   /**
    * Ambil detail histori QC Record
    */
-  @Get('history/:qcId/:no_seq/:piece_no')
+  @Get('history/:qcId/:no_seq/:piece_no/:location_id')
   @ApiOperation({ summary: 'Ambil detail histori QC Record' })
   @ApiParam({ name: 'qcId', description: 'Batch Id' })
   @ApiParam({ name: 'no_seq', description: 'No Sequence' })
   @ApiParam({ name: 'piece_no', description: 'Piece No' })
+  @ApiParam({ name: 'Location_id', description: 'Location ID' })
   @ApiQuery({
     name: 'status_qc',
     required: false,
@@ -156,6 +157,7 @@ export class QcRecordController {
     @Param('qcId') qcId: string,
     @Param('no_seq', ParseIntPipe) no_seq: number,
     @Param('piece_no') piece_no: string,
+    @Param('location_id') location_id: string,
     @Query('status_qc') status_qc?: 'Passed' | 'Not Passed',
   ) {
     return this.qcRecordService.getHistoryDetailRecord(
@@ -163,6 +165,7 @@ export class QcRecordController {
       qcId,
       no_seq,
       piece_no,
+      location_id,
       status_qc,
     );
   }
