@@ -142,7 +142,7 @@ export class QcRecordController {
   @ApiParam({ name: 'qcId', description: 'Batch Id' })
   @ApiParam({ name: 'no_seq', description: 'No Sequence' })
   @ApiParam({ name: 'piece_no', description: 'Piece No' })
-  @ApiParam({ name: 'Location_id', description: 'Location ID' })
+  @ApiParam({ name: 'location_id', description: 'Location ID' })
   @ApiQuery({
     name: 'status_qc',
     required: false,
