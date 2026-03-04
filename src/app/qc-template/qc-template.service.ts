@@ -731,10 +731,47 @@ export class QcTemplateService {
     return Object.values(grouped);
   }
 
+  private buildTemplateEntity(
+    qcTemplateId: string,
+    code: string,
+    label: string,
+    inputType: string,
+    position: string,
+    groupName: string,
+    enabled: boolean,
+    order: number,
+    tolerance: any,
+  ): QcTemplateData {
+    const entity = new QcTemplateData();
+
+    entity.input_code = code;
+    entity.label = label;
+    entity.input_type = inputType;
+    entity.position = position;
+    entity.group_name = groupName;
+
+    entity.enabled = enabled;
+    entity.order_numb = order ?? 0;
+    entity.qc_template_id = qcTemplateId;
+
+    entity.min_tolerance = tolerance?.minTolerance ?? 0;
+    entity.t_lt_50_tolerance = tolerance?.t_lt_50_Tolerance ?? 0;
+    entity.nominal_tolerance = tolerance?.nominalTolerance ?? 0;
+    entity.t_gt_50_tolerance = tolerance?.t_gt_50_Tolerance ?? 0;
+    entity.max_tolerance = tolerance?.maxTolerance ?? 0;
+    entity.actual_tolerance = tolerance?.actual ?? 0;
+
+    entity.sound = tolerance?.sound ?? '';
+
+    return entity;
+  }
+
   // Edit Template
   @Transactional()
   async update(qcTemplateId: string, dto: UpdateQcTemplateDto, userId: string) {
-    // Step 1: Cek template exists
+    /* ======================================================
+     STEP 1: CEK TEMPLATE
+    ====================================================== */
     const template = await this.qcTemplateRepo.findOne({
       where: { qc_template_id: qcTemplateId },
     });
@@ -745,126 +782,212 @@ export class QcTemplateService {
       );
     }
 
-    // Step 2: Validasi product type
+    /* ======================================================
+     STEP 2: VALIDASI PRODUCT TYPE
+    ====================================================== */
     const productType = await this.productTypeRepo.findOne({
-      where: { prodtype_id: dto.prodtype_id },
+      where: { prodtype_id: dto.template_prodtype_id },
     });
 
     if (!productType) {
       throw new BadRequestException(
-        `prodtype_id ${dto.prodtype_id} tidak ditemukan.`,
+        `template_prodtype_id ${dto.template_prodtype_id} tidak ditemukan.`,
       );
     }
 
-    // Step 3: Ambil user untuk updated_by
-    const user = await this.userRepo.findOne({ where: { user_id: userId } });
+    /* ======================================================
+     STEP 3: UPDATE ALIAS MASTER (ALL SECTION)
+   ====================================================== */
+    const aliasUpdates: { code: string; alias: string }[] = [];
 
-    // Step 4: Update template utama
-    template.prodtype_id = dto.prodtype_id;
-    template.name = dto.name;
-    template.profile = dto.profile ?? '';
-    template.std_dimention = dto.std_dimention ?? '';
-    template.brand_merek = dto.brand_merek ?? '';
-    template.specification = dto.specification ?? '';
-    template.status = dto.status;
+    // TABLE
+    for (const table of dto.table ?? []) {
+      for (const field of table.fields ?? []) {
+        if (field.alias) {
+          aliasUpdates.push({ code: field.code, alias: field.alias });
+        }
+      }
+    }
+
+    // BASIC
+    for (const field of dto.basic ?? []) {
+      if (field.alias) {
+        aliasUpdates.push({ code: field.code, alias: field.alias });
+      }
+    }
+
+    // DEFAULT
+    for (const field of dto.default ?? []) {
+      if (field.alias) {
+        aliasUpdates.push({ code: field.code, alias: field.alias });
+      }
+    }
+
+    // FORM RIGHT
+    for (const formRight of dto.FormRight ?? []) {
+      if (formRight.alias) {
+        aliasUpdates.push({ code: formRight.name, alias: formRight.alias });
+      }
+    }
+
+    // Execute alias updates
+    for (const item of aliasUpdates) {
+      await this.productTypeDataRepo.update(
+        {
+          code: item.code,
+          prodtype_id: dto.template_prodtype_id,
+        },
+        { alias: item.alias },
+      );
+    }
+
+    /* ======================================================
+     STEP 4: UPDATE HEADER TEMPLATE
+    ====================================================== */
+    const user = await this.userRepo.findOne({
+      where: { user_id: userId },
+    });
+
+    template.prodtype_id = dto.template_prodtype_id;
+    template.name = dto.template_name;
+    template.std_dimention = dto.template_std_dimention ?? '';
+    template.brand_merek = dto.template_brand_merek ?? '';
+    template.specification = dto.template_specification ?? '';
+    template.status = dto.template_status;
     template.updated_by = user?.full_name ?? 'system';
     template.updated_dt = new Date();
 
     await this.qcTemplateRepo.save(template);
 
-    // Step 5: Hapus data lama (fields + mappings)
-    await this.qcTemplateDataRepo.delete({ qc_template_id: qcTemplateId });
-    await this.qcTemplateMappingRepo.delete({ qc_template_id: qcTemplateId });
+    /* ======================================================
+     STEP 5: FULL REPLACE DATA
+    ====================================================== */
+    await this.qcTemplateDataRepo.delete({
+      qc_template_id: qcTemplateId,
+    });
 
-    // Step 6: Simpan TABLE FIELDS baru
-    const tableDataEntities: QcTemplateData[] = [];
+    await this.qcTemplateMappingRepo.delete({
+      qc_template_id: qcTemplateId,
+    });
 
-    for (const table of dto.tables) {
-      for (const field of table.fields) {
-        const tableData = new QcTemplateData();
-        tableData.input_code = field.input_code;
-        tableData.label = field.label;
-        tableData.input_type = field.input_type;
-        tableData.position = table.position;
-        tableData.group_name = 'table';
-        tableData.enabled = field.enabled && table.enabled;
-        tableData.order_numb = field.order_numb;
-        tableData.qc_template_id = qcTemplateId;
+    /* ======================================================
+     STEP 6: BUILD TEMPLATE DATA BARU
+   ====================================================== */
+    const dataEntities: QcTemplateData[] = [];
 
-        tableData.min_tolerance = field.min_tolerance || 0;
-        tableData.max_tolerance = field.max_tolerance || 0;
-        tableData.t_lt_50_tolerance = field.t_lt_50_tolerance || 0;
-        tableData.nominal_tolerance = field.nominal_tolerance || 0;
-        tableData.t_gt_50_tolerance = field.t_gt_50_tolerance || 0;
-
-        tableData.sound = field.sound || '';
-
-        tableDataEntities.push(tableData);
+    // TABLE
+    for (const table of dto.table ?? []) {
+      for (const field of table.fields ?? []) {
+        dataEntities.push(
+          this.buildTemplateEntity(
+            qcTemplateId,
+            field.code,
+            field.name,
+            field.inputType,
+            table.name,
+            'table',
+            field.enabled && table.enabled,
+            field.orderNumb,
+            {
+              ...field,
+              actual: field.actualTolerance,
+            },
+          ),
+        );
       }
     }
 
-    // Step 7: Simpan FORM RIGHTS dengan 5 tolerance values
-    const formRightEntities: QcTemplateData[] = [];
+    // BASIC
+    for (const field of dto.basic ?? []) {
+      dataEntities.push(
+        this.buildTemplateEntity(
+          qcTemplateId,
+          field.code,
+          field.name,
+          field.inputType ?? field.type,
+          'basic',
+          'basic',
+          field.enabled,
+          field.orderNumb,
+          {
+            ...field,
+            actual: field.actualTolerance,
+          },
+        ),
+      );
+    }
+
+    // DEFAULT
+    for (const field of dto.default ?? []) {
+      dataEntities.push(
+        this.buildTemplateEntity(
+          qcTemplateId,
+          field.code,
+          field.name,
+          field.inputType ?? field.type,
+          'default',
+          'default',
+          field.enabled,
+          field.orderNumb,
+          {
+            ...field,
+            actual: field.actualTolerance,
+          },
+        ),
+      );
+    }
+
+    // FORM RIGHT
     let formRightOrder = 0;
-
-    for (const formRight of dto.form_rights) {
-      for (const field of formRight.fields) {
-        const formRightData = new QcTemplateData();
-        formRightData.input_code = field.input_code;
-        formRightData.label = field.label;
-        formRightData.input_type = field.input_type;
-        formRightData.position = 'FormRight';
-        formRightData.group_name = formRight.name;
-        formRightData.enabled = field.enabled && formRight.enabled; // Field enabled AND formRight enabled
-        formRightData.order_numb = formRightOrder++;
-        formRightData.qc_template_id = qcTemplateId;
-
-        // Untuk FormRight, pakai semua 5 tolerance values
-        formRightData.min_tolerance = field.min_tolerance || 0;
-        formRightData.t_lt_50_tolerance = field.t_lt_50_tolerance || 0;
-        formRightData.nominal_tolerance = field.nominal_tolerance || 0;
-        formRightData.t_gt_50_tolerance = field.t_gt_50_tolerance || 0;
-        formRightData.max_tolerance = field.max_tolerance || 0;
-
-        formRightData.sound = field.sound || '';
-
-        formRightEntities.push(formRightData);
-      }
+    for (const formRight of dto.FormRight ?? []) {
+      dataEntities.push(
+        this.buildTemplateEntity(
+          qcTemplateId,
+          formRight.name,
+          formRight.name,
+          'number',
+          'FormRight',
+          formRight.name,
+          formRight.enabled,
+          formRightOrder++,
+          {
+            minTolerance: formRight.tolerance?.min,
+            t_lt_50_Tolerance: formRight.tolerance?.t_lt_50,
+            nominalTolerance: formRight.tolerance?.nominal,
+            t_gt_50_Tolerance: formRight.tolerance?.t_gt_50,
+            maxTolerance: formRight.tolerance?.max,
+            actual: formRight.tolerance?.actual,
+          },
+        ),
+      );
     }
 
-    // Step 8: Simpan MAPPING untuk korelasi FormRight dengan table positions
+    await this.qcTemplateDataRepo.save(dataEntities);
+
+    /* ======================================================
+     STEP 7: BUILD MAPPING
+    ====================================================== */
     const mappingEntities: QcTemplateMapping[] = [];
     let mappingOrder = 0;
 
-    for (const formRight of dto.form_rights) {
-      for (const tablePosition of formRight.related_positions) {
+    for (const formRight of dto.FormRight ?? []) {
+      for (const position of formRight.relatedTablePositions ?? []) {
         const mapping = new QcTemplateMapping();
+
         mapping.mapping_id = await this.generateMappingId();
         mapping.qc_template_id = qcTemplateId;
         mapping.group_name = formRight.name;
-        mapping.position = tablePosition;
+        mapping.position = position;
         mapping.order_numb = mappingOrder++;
 
         mappingEntities.push(mapping);
       }
     }
 
-    // Step 9: Simpan semua data ke database
-    if (tableDataEntities.length > 0) {
-      await this.qcTemplateDataRepo.save(tableDataEntities);
-    }
-    if (formRightEntities.length > 0) {
-      await this.qcTemplateDataRepo.save(formRightEntities);
-    }
     if (mappingEntities.length > 0) {
       await this.qcTemplateMappingRepo.save(mappingEntities);
     }
 
-    this.messageService.setMessage(
-      `QC Template ${qcTemplateId} berhasil diperbarui.`,
-    );
-
-    // Step 10: Return response dengan data terstruktur
     return this.getTemplateDetail(qcTemplateId);
   }
 

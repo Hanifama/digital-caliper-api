@@ -1,152 +1,448 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import {
-  IsString,
-  IsNotEmpty,
-  ValidateNested,
+  IsArray,
+  IsBoolean,
   IsNumber,
   IsOptional,
-  Min,
-  IsBoolean,
-  IsArray,
+  IsString,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
-export class UpdateQcTemplateTableFieldDto {
-  @ApiProperty({ example: 'H.t1' })
-  @IsString()
-  @IsNotEmpty()
-  input_code: string;
+export class QcTemplateFormRightToleranceDto {
+  @ApiPropertyOptional({ example: 4.5 })
+  @IsNumber()
+  @IsOptional()
+  min?: number;
 
-  @ApiProperty({ example: 'Height' })
+  @ApiPropertyOptional({ example: 5.15 })
+  @IsNumber()
+  @IsOptional()
+  t_lt_50?: number;
+
+  @ApiPropertyOptional({ example: 5.8 })
+  @IsNumber()
+  @IsOptional()
+  nominal?: number;
+
+  @ApiPropertyOptional({ example: 6.45 })
+  @IsNumber()
+  @IsOptional()
+  t_gt_50?: number;
+
+  @ApiPropertyOptional({ example: 7.1 })
+  @IsNumber()
+  @IsOptional()
+  max?: number;
+
+  @ApiPropertyOptional({ example: 0 })
+  @IsNumber()
+  @IsOptional()
+  actual?: number;
+}
+
+export class QcTemplateFormRightDto {
+  @ApiProperty({ example: 'Web Thickness' })
   @IsString()
-  @IsNotEmpty()
-  label: string;
+  name: string;
+
+  @ApiPropertyOptional({ example: 'Tebal Web' })
+  @IsOptional()
+  @IsString()
+  alias?: string;
+
+  @ApiProperty({ example: true })
+  @IsBoolean()
+  enabled: boolean;
+
+  @ApiProperty({ type: QcTemplateFormRightToleranceDto })
+  @ValidateNested()
+  @Type(() => QcTemplateFormRightToleranceDto)
+  tolerance: QcTemplateFormRightToleranceDto;
+
+  @ApiProperty({ example: ['t5', 't6'], type: [String] })
+  @IsArray()
+  @IsString({ each: true })
+  relatedTablePositions: string[];
+}
+
+export class QcTemplateTableFieldDto {
+  @ApiProperty({ example: 'H.b1' })
+  @IsString()
+  code: string;
+
+  @ApiProperty({ example: 'H(b1)' })
+  @IsString()
+  name: string;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  @IsOptional()
+  @IsString()
+  alias?: string | null;
 
   @ApiProperty({ example: 'number' })
   @IsString()
-  input_type: string;
+  type: string;
 
-  @ApiPropertyOptional({ example: 6 })
-  @IsNumber()
-  @IsOptional()
-  min_tolerance?: number;
+  @ApiProperty({ example: true })
+  @IsBoolean()
+  isTable: boolean;
+
+  @ApiProperty({ example: 'WF-BEAM' })
+  @IsString()
+  productType: string;
+
+  @ApiProperty({ example: true })
+  @IsBoolean()
+  enabled: boolean;
+
+  @ApiProperty({ example: true })
+  @IsBoolean()
+  selected: boolean;
 
   @ApiPropertyOptional({ example: 6.5 })
-  @IsNumber()
   @IsOptional()
-  t_lt_50_tolerance?: number;
+  @IsNumber()
+  minTolerance?: number;
 
-  @ApiPropertyOptional({ example: 7 })
-  @IsNumber()
+  @ApiPropertyOptional({ example: 7.25 })
   @IsOptional()
-  nominal_tolerance?: number;
-
-  @ApiPropertyOptional({ example: 7.5 })
   @IsNumber()
-  @IsOptional()
-  t_gt_50_tolerance?: number;
+  t_lt_50_Tolerance?: number;
 
   @ApiPropertyOptional({ example: 8 })
-  @IsNumber()
   @IsOptional()
-  max_tolerance?: number;
-
-  @ApiProperty({ example: 1 })
   @IsNumber()
-  @Min(1)
-  order_numb: number;
+  nominalTolerance?: number;
 
-  @ApiProperty({ example: true })
-  @IsBoolean()
-  enabled: boolean;
+  @ApiPropertyOptional({ example: 8.75 })
+  @IsOptional()
+  @IsNumber()
+  t_gt_50_Tolerance?: number;
 
-  @ApiPropertyOptional({ example: 'beep.mp3' })
+  @ApiPropertyOptional({ example: 9.5 })
+  @IsOptional()
+  @IsNumber()
+  maxTolerance?: number;
+
+  @ApiPropertyOptional({ example: 9.5 })
+  @IsOptional()
+  @IsNumber()
+  actualTolerance?: number;
+
+  @ApiPropertyOptional({ example: '', nullable: true })
+  @IsOptional()
   @IsString()
+  sound?: string | null;
+
+  @ApiProperty({ example: 'number' })
+  @IsString()
+  inputType: string;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  isReadonly: boolean;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  isFormula: boolean;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
   @IsOptional()
-  sound?: string;
+  @IsString()
+  formula?: string | null;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  isTolerance: boolean;
+
+  @ApiProperty({ example: 13 })
+  @IsNumber()
+  orderNumb: number;
 }
 
-export class UpdateQcTemplateFormRightFieldDto extends UpdateQcTemplateTableFieldDto {}
-
-export class UpdateQcTemplateFormRightDto {
-  @ApiProperty({ example: 'Flange Thickness' })
+export class QcTemplateTableDto {
+  @ApiProperty({ example: 'b1' })
   @IsString()
-  @IsNotEmpty()
   name: string;
 
+  @ApiPropertyOptional({ example: 'b1', nullable: true })
+  @IsOptional()
+  @IsString()
+  alias?: string | null;
+
+  @ApiProperty({ type: [QcTemplateTableFieldDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => QcTemplateTableFieldDto)
+  fields: QcTemplateTableFieldDto[];
+
   @ApiProperty({ example: true })
   @IsBoolean()
   enabled: boolean;
-
-  @ApiProperty({ type: [String], example: ['t1', 't2'] })
-  @IsArray()
-  @IsString({ each: true })
-  related_positions: string[];
-
-  @ApiProperty({ type: [UpdateQcTemplateFormRightFieldDto] })
-  @ValidateNested({ each: true })
-  @Type(() => UpdateQcTemplateFormRightFieldDto)
-  fields: UpdateQcTemplateFormRightFieldDto[];
 }
 
-export class UpdateQcTemplateTableDto {
-  @ApiProperty({ example: 't1' })
+export class QcTemplateBasicFieldDto {
+  @ApiProperty({ example: 'kgm.nominal' })
   @IsString()
-  @IsNotEmpty()
-  position: string;
+  code: string;
 
-  @ApiProperty({ example: true })
+  @ApiProperty({ example: 'Kg/m Nominal' })
+  @IsString()
+  name: string;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  @IsOptional()
+  @IsString()
+  alias?: string | null;
+
+  @ApiProperty({ example: 'number' })
+  @IsString()
+  type: string;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  isTable: boolean;
+
+  @ApiProperty({ example: 'WF-BEAM' })
+  @IsString()
+  productType: string;
+
+  @ApiProperty({ example: false })
   @IsBoolean()
   enabled: boolean;
 
-  @ApiProperty({ type: [UpdateQcTemplateTableFieldDto] })
-  @ValidateNested({ each: true })
-  @Type(() => UpdateQcTemplateTableFieldDto)
-  fields: UpdateQcTemplateTableFieldDto[];
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  selected: boolean;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  @IsOptional()
+  @IsNumber()
+  minTolerance?: number | null;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  @IsOptional()
+  @IsNumber()
+  t_lt_50_Tolerance?: number | null;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  @IsOptional()
+  @IsNumber()
+  nominalTolerance?: number | null;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  @IsOptional()
+  @IsNumber()
+  t_gt_50_Tolerance?: number | null;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  @IsOptional()
+  @IsNumber()
+  maxTolerance?: number | null;
+
+  @ApiPropertyOptional({ example: 9.5 })
+  @IsOptional()
+  @IsNumber()
+  actualTolerance?: number;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  @IsOptional()
+  @IsString()
+  sound?: string | null;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  @IsOptional()
+  @IsString()
+  inputType?: string | null;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  isReadonly: boolean;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  isFormula: boolean;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  @IsOptional()
+  @IsString()
+  formula?: string | null;
+
+  @ApiProperty({ example: true })
+  @IsBoolean()
+  isTolerance: boolean;
+
+  @ApiProperty({ example: 0 })
+  @IsNumber()
+  orderNumb: number;
+}
+
+export class QcTemplateDefaultFieldDto {
+  @ApiProperty({ example: 'pic.user' })
+  @IsString()
+  code: string;
+
+  @ApiProperty({ example: 'PIC/User' })
+  @IsString()
+  name: string;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  @IsOptional()
+  @IsString()
+  alias?: string | null;
+
+  @ApiProperty({ example: 'text' })
+  @IsString()
+  type: string;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  isTable: boolean;
+
+  @ApiProperty({ example: 'WF-BEAM' })
+  @IsString()
+  productType: string;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  enabled: boolean;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  selected: boolean;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  @IsOptional()
+  @IsNumber()
+  minTolerance?: number | null;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  @IsOptional()
+  @IsNumber()
+  t_lt_50_Tolerance?: number | null;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  @IsOptional()
+  @IsNumber()
+  nominalTolerance?: number | null;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  @IsOptional()
+  @IsNumber()
+  t_gt_50_Tolerance?: number | null;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  @IsOptional()
+  @IsNumber()
+  maxTolerance?: number | null;
+
+  @ApiPropertyOptional({ example: 9.5 })
+  @IsOptional()
+  @IsNumber()
+  actualTolerance?: number;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  @IsOptional()
+  @IsString()
+  sound?: string | null;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  @IsOptional()
+  @IsString()
+  inputType?: string | null;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  isReadonly: boolean;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  isFormula: boolean;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  @IsOptional()
+  @IsString()
+  formula?: string | null;
+
+  @ApiProperty({ example: true })
+  @IsBoolean()
+  isTolerance: boolean;
+
+  @ApiProperty({ example: 0 })
+  @IsNumber()
+  orderNumb: number;
 }
 
 export class UpdateQcTemplateDto {
-  @ApiProperty({ example: 'H-BEAM' })
+  @ApiPropertyOptional({ example: 'TMP-wffjtxwe' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  prodtype_id: string;
+  qc_template_id?: string;
 
-  @ApiProperty({ example: 'H-Beam API Template' })
+  @ApiProperty({ example: 'Template WF-BEAM 200X100X5.5X8' })
   @IsString()
-  @IsNotEmpty()
-  name: string;
+  template_name: string;
+
+  @ApiProperty({ example: 'WF-BEAM' })
+  @IsString()
+  template_prodtype_id: string;
+
+  @ApiPropertyOptional({ example: 'WF 200X100X5.5X8' })
+  @IsOptional()
+  @IsString()
+  template_prodtype_name?: string;
+
+  @ApiPropertyOptional({ example: 'WF 200X100X5.5X8' })
+  @IsOptional()
+  @IsString()
+  template_size_id?: string;
+
+  @ApiPropertyOptional({ example: 'WF 200X100X5.5X8' })
+  @IsOptional()
+  @IsString()
+  template_size_name?: string;
+
+  @ApiPropertyOptional({ example: '200X100X5.5X8' })
+  @IsOptional()
+  @IsString()
+  template_std_dimention?: string;
+
+  @ApiPropertyOptional({ example: 'WF-BEAM 200X100X5.5X8' })
+  @IsOptional()
+  @IsString()
+  template_brand_merek?: string;
+
+  @ApiPropertyOptional({ example: 'WF 200X100X5.5X8' })
+  @IsOptional()
+  @IsString()
+  template_specification?: string;
 
   @ApiProperty({ example: 'active' })
   @IsString()
-  status: string;
+  template_status: string;
 
-  @ApiPropertyOptional({ example: 'H-beam 130t' })
-  @IsString()
-  @IsOptional()
-  profile?: string;
-
-  @ApiPropertyOptional({ example: '200x200x8x12' })
-  @IsString()
-  @IsOptional()
-  std_dimention?: string;
-
-  @ApiPropertyOptional({ example: 'Brand X' })
-  @IsString()
-  @IsOptional()
-  brand_merek?: string;
-
-  @ApiPropertyOptional({ example: 'Spesifikasi tambahan' })
-  @IsString()
-  @IsOptional()
-  specification?: string;
-
-  @ApiProperty({ type: [UpdateQcTemplateTableDto] })
+  @ApiProperty({ type: [QcTemplateTableDto] })
+  @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => UpdateQcTemplateTableDto)
-  tables: UpdateQcTemplateTableDto[];
+  @Type(() => QcTemplateTableDto)
+  table: QcTemplateTableDto[];
 
-  @ApiProperty({ type: [UpdateQcTemplateFormRightDto] })
+  @ApiProperty({ type: [QcTemplateBasicFieldDto] })
+  @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => UpdateQcTemplateFormRightDto)
-  form_rights: UpdateQcTemplateFormRightDto[];
+  @Type(() => QcTemplateBasicFieldDto)
+  basic: QcTemplateBasicFieldDto[];
+
+  @ApiProperty({ type: [QcTemplateDefaultFieldDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => QcTemplateDefaultFieldDto)
+  default: QcTemplateDefaultFieldDto[];
+
+  @ApiProperty({ type: [QcTemplateFormRightDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => QcTemplateFormRightDto)
+  FormRight: QcTemplateFormRightDto[];
 }
