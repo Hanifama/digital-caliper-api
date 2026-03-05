@@ -42,6 +42,10 @@ export class QcTemplateFormRightToleranceDto {
 }
 
 export class QcTemplateFormRightDto {
+  @ApiProperty({ example: 'web.thickness' })
+  @IsString()
+  code: string;
+
   @ApiProperty({ example: 'Web Thickness' })
   @IsString()
   name: string;

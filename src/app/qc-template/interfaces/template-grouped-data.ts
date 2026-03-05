@@ -29,6 +29,7 @@ export interface TableGroup {
 }
 
 export interface FormRightGroup {
+  code?: string;
   name: string;
   alias: string;
   enabled: boolean;

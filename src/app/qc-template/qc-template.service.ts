@@ -242,12 +242,14 @@ export class QcTemplateService {
       // Cari template data untuk FormRight ini
       const templateFormRight = templateFormRights.get(formRightName);
 
-      // Dapatkan related positions dari product master mapping - unique
-      const formRightCode = formRightProductData.find(
-        (item) => item.label === formRightName,
-      )?.code;
+      // Ambil product master data sekali saja
+      const productData = formRightProductData.find(
+        (x) => x.label === formRightName,
+      );
 
-      // Convert Set ke array unique dengan type casting
+      const formRightCode = productData?.code;
+
+      // Dapatkan related positions dari product master mapping
       const relatedPositions = formRightCode
         ? (Array.from(
             mappingsByFormRight.get(formRightCode) || new Set(),
@@ -255,10 +257,9 @@ export class QcTemplateService {
         : [];
 
       const formRightEntry: FormRightGroup = {
+        code: formRightCode,
         name: formRightName,
-        alias:
-          formRightProductData.find((x) => x.label === formRightName)?.alias ||
-          formRightName,
+        alias: productData?.alias || formRightName,
         enabled: templateFormRight?.enabled ?? false,
         tolerance: templateFormRight
           ? {
@@ -279,6 +280,7 @@ export class QcTemplateService {
             },
         relatedTablePositions: relatedPositions,
       };
+
       formRight.push(formRightEntry);
     });
 
@@ -798,46 +800,76 @@ export class QcTemplateService {
     /* ======================================================
      STEP 3: UPDATE ALIAS MASTER (ALL SECTION)
    ====================================================== */
-    const aliasUpdates: { code: string; alias: string }[] = [];
+    const productTypeUpdates: {
+      code: string;
+      alias?: string;
+      isTolerance?: boolean;
+      isFormula?: boolean;
+      formula?: string | null;
+    }[] = [];
 
-    // TABLE
+    // TABLE IN H/C/T
     for (const table of dto.table ?? []) {
       for (const field of table.fields ?? []) {
-        if (field.alias) {
-          aliasUpdates.push({ code: field.code, alias: field.alias });
-        }
+        productTypeUpdates.push({
+          code: field.code,
+          alias: field.alias ?? undefined,
+          isTolerance: field.isTolerance,
+          isFormula: field.isFormula,
+          formula: field.formula ?? null,
+        });
       }
     }
 
     // BASIC
     for (const field of dto.basic ?? []) {
-      if (field.alias) {
-        aliasUpdates.push({ code: field.code, alias: field.alias });
-      }
+      productTypeUpdates.push({
+        code: field.code,
+        alias: field.alias ?? undefined,
+        isTolerance: field.isTolerance,
+        isFormula: field.isFormula,
+        formula: field.formula ?? null,
+      });
     }
 
     // DEFAULT
-    for (const field of dto.default ?? []) {
-      if (field.alias) {
-        aliasUpdates.push({ code: field.code, alias: field.alias });
-      }
+    for (const field of dto.basic ?? []) {
+      productTypeUpdates.push({
+        code: field.code,
+        alias: field.alias ?? undefined,
+        isTolerance: field.isTolerance,
+        isFormula: field.isFormula,
+        formula: field.formula ?? null,
+      });
     }
 
     // FORM RIGHT
     for (const formRight of dto.FormRight ?? []) {
-      if (formRight.alias) {
-        aliasUpdates.push({ code: formRight.name, alias: formRight.alias });
-      }
+      productTypeUpdates.push({
+        code: formRight.code,
+        alias: formRight.alias ?? undefined,
+      });
     }
 
     // Execute alias updates
-    for (const item of aliasUpdates) {
+    for (const item of productTypeUpdates) {
+      const updatePayload: any = {};
+
+      if (item.alias !== undefined) updatePayload.alias = item.alias;
+      if (item.isTolerance !== undefined)
+        updatePayload.is_tolerance = item.isTolerance;
+      if (item.isFormula !== undefined)
+        updatePayload.is_formula = item.isFormula;
+      if (item.formula !== undefined) updatePayload.formula = item.formula;
+
+      if (Object.keys(updatePayload).length === 0) continue;
+
       await this.productTypeDataRepo.update(
         {
           code: item.code,
           prodtype_id: dto.template_prodtype_id,
         },
-        { alias: item.alias },
+        updatePayload,
       );
     }
 
@@ -943,7 +975,7 @@ export class QcTemplateService {
       dataEntities.push(
         this.buildTemplateEntity(
           qcTemplateId,
-          formRight.name,
+          formRight.code,
           formRight.name,
           'number',
           'FormRight',
@@ -987,6 +1019,10 @@ export class QcTemplateService {
     if (mappingEntities.length > 0) {
       await this.qcTemplateMappingRepo.save(mappingEntities);
     }
+
+    this.messageService.setMessage(
+      `Berhasil mengubah template ${qcTemplateId}.`,
+    );
 
     return this.getTemplateDetail(qcTemplateId);
   }
