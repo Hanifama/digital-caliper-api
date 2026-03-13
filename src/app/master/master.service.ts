@@ -44,10 +44,14 @@ export class MasterService {
     const offset = (page - 1) * limit;
 
     // Query builder untuk data
-    const query = this.roleRepo.createQueryBuilder('role');
+    const query = this.roleRepo
+      .createQueryBuilder('role')
+      .where('role.status = :status', { status: 'active' }); // filter role aktif
 
     // Query builder untuk total data (count)
-    const countQuery = this.roleRepo.createQueryBuilder('role');
+    const countQuery = this.roleRepo
+      .createQueryBuilder('role')
+      .where('role.status = :status', { status: 'active' }); // filter role aktif
 
     // Filter search
     if (search && search.trim() !== '' && search !== '{{search}}') {
@@ -113,10 +117,14 @@ export class MasterService {
 
   // Ambil semua role
   async getAllRoles(search?: string): Promise<Role[]> {
-    const query = this.roleRepo.createQueryBuilder('role');
+    const query = this.roleRepo
+      .createQueryBuilder('role')
+      .where('role.status = :status', { status: 'active' });
 
     if (search && search.trim() !== '' && search !== '{{search}}') {
-      query.where('role.name LIKE :search', { search: `%${search.trim()}%` });
+      query.andWhere('role.name LIKE :search', {
+        search: `%${search.trim()}%`,
+      });
     }
 
     const roles = await query.getMany();
@@ -273,10 +281,11 @@ export class MasterService {
       throw new BadRequestException('Role Super Admin tidak dapat dihapus.');
     }
 
-    await this.roleMenuRepo.delete({ role_id: roleId });
-    await this.roleRepo.delete({ role_id: roleId });
+    // Soft delete: ubah status jadi '0'
+    role.status = 'nonactive';
+    await this.roleRepo.save(role);
 
-    this.messageService.setMessage('Role berhasil dihapus');
+    this.messageService.setMessage('Role berhasil dinonaktifkan');
   }
 
   @Transactional()
