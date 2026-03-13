@@ -263,7 +263,7 @@ export class NotificationService implements OnModuleInit {
 
   // Kirim QC histori & Image ke beberapa grup
   async sendQcImage(dto: SendWaQcDto, userId: string) {
-    const { qc_id, no_seq, piece_no, image } = dto;
+    const { qc_id, no_seq, piece_no, image = '' } = dto;
 
     if (!this.client || !this.isReady)
       throw new Error('WhatsApp client belum siap');
@@ -409,11 +409,39 @@ export class NotificationService implements OnModuleInit {
       targetGroups,
     );
 
-    const sendResult = await this.sendImageToGroups(
-      image,
-      message,
-      targetGroups,
-    );
+    let sendResult;
+
+    if (image && image.trim() !== '') {
+      sendResult = await this.sendImageToGroups(image, message, targetGroups);
+    } else {
+      // kalau tidak ada image, kirim text saja
+      const chats = await this.client.getChats();
+
+      const sent: string[] = [];
+      const failed: string[] = [];
+
+      for (const groupName of targetGroups) {
+        const group = chats.find(
+          (chat) =>
+            chat.isGroup &&
+            chat.name?.toLowerCase() === groupName.toLowerCase(),
+        );
+
+        if (!group) {
+          failed.push(groupName);
+          continue;
+        }
+
+        try {
+          await this.client.sendMessage(group.id._serialized, message);
+          sent.push(groupName);
+        } catch (err) {
+          failed.push(groupName);
+        }
+      }
+
+      sendResult = { success: sent.length > 0, sentTo: sent, failed };
+    }
 
     /** 8. LOG SERVICE (SETELAH SUKSES) */
     await this.logService.createLog(user, {

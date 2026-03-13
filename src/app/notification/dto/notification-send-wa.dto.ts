@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SendWaQcDto {
@@ -21,7 +21,7 @@ export class SendWaQcDto {
     example:
       'https://api-digitalcaliper.webview.cloud/uploads/2196f3cd-054b-4f78-a7b7-57d0836e291c.png',
   })
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   image: string;
 }
