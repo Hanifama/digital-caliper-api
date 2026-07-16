@@ -5,15 +5,40 @@ ENV TZ=Asia/Jakarta
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
     echo $TZ > /etc/timezone
 
+# Install Chromium dependencies
+RUN apt-get update && apt-get install -y \
+    chromium \
+    ca-certificates \
+    fonts-liberation \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libgdk-pixbuf2.0-0 \
+    libnspr4 \
+    libnss3 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libxshmfence1 \
+    libxss1 \
+    libxtst6 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
 WORKDIR /app
 
 # Copy package.json & package-lock.json
 COPY package*.json ./
 
-# Install semua dependencies (Baileys butuh beberapa native module)
-RUN npm ci
+# Install production dependencies saja
+RUN npm ci --omit=dev
 
-# Install package cli global
+# Install pakacge cli global
 RUN npm install -g @nestjs/cli
 
 # Copy seluruh source code
