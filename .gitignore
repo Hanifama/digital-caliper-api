@@ -5,6 +5,10 @@
 .wwebjs_auth/
 .wwebjs_cache/
 
+# library wa - BARU (Baileys)
+baileys_auth_info/
+baileys_auth_info_staging/
+
 # compiled output
 /dist
 /node_modules
