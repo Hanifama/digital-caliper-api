@@ -18,7 +18,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IWhatsAppService } from './interfaces/whatsapp.interface';
 
-// FIX: Perbaiki semua import path
 import { MessageService } from '../message/message.service';
 import { QcRecord } from '../qc-template/entity/qc-record.entity';
 import { QcData } from '../qc-template/entity/qc-data.enity';
@@ -41,7 +40,7 @@ export class WhatsappBaileysService
   private qrRefreshInterval: NodeJS.Timeout | null = null;
   private lastQr: string | null = null;
   private isConnecting = false;
-  // TAMBAHKAN INI
+
   private reconnectAttempts = 0;
   private readonly MAX_RECONNECT_ATTEMPTS = 10;
 
@@ -259,7 +258,7 @@ export class WhatsappBaileysService
           const qrcode = require('qrcode-terminal');
           qrcode.generate(qr, { small: true });
           this.logger.log(
-            '✅ Scan QR Code! Scan di HP kamu untuk login WhatsApp.',
+            '✅ QR Code generated! Scan di HP kamu untuk login WhatsApp.',
           );
         } catch (error) {
           this.logger.warn(
@@ -308,10 +307,13 @@ export class WhatsappBaileysService
 
       if (connection === 'open') {
         this.ready = true;
-        this.logger.log('✅ WhatsApp client is ready');
         this.reconnectAttempts = 0; // Reset attempts
+
         // Stop QR refresh loop
         this.stopQrRefreshLoop();
+
+        // TAMBAHKAN INI - Notifikasi sukses satu baris
+        this.logger.log('🎉 WhatsApp connected! Silakan lanjutkan QC.');
       }
     });
 

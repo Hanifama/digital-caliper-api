@@ -5,7 +5,7 @@
 .wwebjs_auth/
 .wwebjs_cache/
 
-# library wa - BARU (Baileys)
+# library wa - (Baileys)
 baileys_auth_info/
 baileys_auth_info_staging/
 
