@@ -77,15 +77,19 @@ VALUES
 ('C.b4', 'WF-BEAM', 'C(b4)', NULL, 'number', false, 'b4', 'active', false, NULL, false),
 ('T.b4', 'WF-BEAM', 'T(b4)', NULL, 'number', false, 'b4', 'active', false, NULL, false),
 
--- Posisi b1-b2/2 (Formula)
-('H.b1-b2/2', 'WF-BEAM', 'H(b1-b2/2)', 'Simetri Kanan', 'number', true, 'b1-b2/2', 'active', true, '(H.b1-H.b2)/2', true),
-('C.b1-b2/2', 'WF-BEAM', 'C(b1-b2/2)', 'Simetri Kanan', 'number', true, 'b1-b2/2', 'active', true, '(C.b1-C.b2)/2', true),
-('T.b1-b2/2', 'WF-BEAM', 'T(b1-b2/2)', 'Simetri Kanan', 'number', true, 'b1-b2/2', 'active', true, '(T.b1-T.b2)/2', true),
+INSERT INTO product_type_data 
+(code, prodtype_id, label, alias, type, is_readonly, position, status, is_formula, formula, is_tolerance)
+VALUES
+
+-- Posisi b1-b2/2 (Formula) 
+('H.b1-b2/2', 'WF-BEAM', 'H(b1-b2/2)', 'Simetri Kiri', 'number', true, 'b1-b2/2', 'active', true, '(H.b1-H.b2)/2', true),
+('C.b1-b2/2', 'WF-BEAM', 'C(b1-b2/2)', 'Simetri Kiri', 'number', true, 'b1-b2/2', 'active', true, '(C.b1-C.b2)/2', true),
+('T.b1-b2/2', 'WF-BEAM', 'T(b1-b2/2)', 'Simetri Kiri', 'number', true, 'b1-b2/2', 'active', true, '(T.b1-T.b2)/2', true),
 
 -- Posisi b3-b4/2 (Formula)
-('H.b3-b4/2', 'WF-BEAM', 'H(b3-b4/2)', 'Simetri Kiri', 'number', true, 'b3-b4/2', 'active', true, '(H.b3-H.b4)/2', true),
-('C.b3-b4/2', 'WF-BEAM', 'C(b3-b4/2)', 'Simetri Kiri', 'number', true, 'b3-b4/2', 'active', true, '(C.b3-C.b4)/2', true),
-('T.b3-b4/2', 'WF-BEAM', 'T(b3-b4/2)', 'Simetri Kiri', 'number', true, 'b3-b4/2', 'active', true, '(T.b3-T.b4)/2', true),
+('H.b3-b4/2', 'WF-BEAM', 'H(b3-b4/2)', 'Simetri Kanan', 'number', true, 'b3-b4/2', 'active', true, '(H.b3-H.b4)/2', true),
+('C.b3-b4/2', 'WF-BEAM', 'C(b3-b4/2)', 'Simetri Kanan', 'number', true, 'b3-b4/2', 'active', true, '(C.b3-C.b4)/2', true),
+('T.b3-b4/2', 'WF-BEAM', 'T(b3-b4/2)', 'Simetri Kanan', 'number', true, 'b3-b4/2', 'active', true, '(T.b3-T.b4)/2', true),
 
 -- Basic input bawah Tabel
 ('kgm.nominal', 'WF-BEAM', 'Kg/m Nominal', NULL, 'number', false, 'basic', 'active', false, NULL, true),

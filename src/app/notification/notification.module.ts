@@ -1,13 +1,20 @@
 import { Module } from '@nestjs/common';
-import { NotificationService } from './notification.service';
-import { NotificationController } from './notification.controller';
-import { User } from '../auth/entity/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MessageModule } from '../message/message.module';
+import { User } from '../auth/entity/user.entity';
 import { QcData } from '../qc-template/entity/qc-data.enity';
 import { QcRecord } from '../qc-template/entity/qc-record.entity';
+import { MessageModule } from '../message/message.module';
 import { GeneratorModule } from '../generator/generator.module';
 import { LogModule } from '../log-app/log.module';
+
+// BAILEYS SERVICE
+import { WhatsappBaileysService } from './whatsapp-baileys.service';
+
+// IMPORT CONTROLLER
+import { NotificationController } from './notification.controller';
+
+// === SERVICE LAMA DI-NONAKTIFKAN SEMENTARA ===
+// import { NotificationService } from './notification.service';
 
 @Module({
   imports: [
@@ -16,8 +23,17 @@ import { LogModule } from '../log-app/log.module';
     GeneratorModule,
     MessageModule,
   ],
-  providers: [NotificationService],
+  providers: [
+    // === SERVICE LAMA DI-NONAKTIFKAN ===
+    // NotificationService,
+
+    // === SERVICE BAILEYS ===
+    WhatsappBaileysService,
+  ],
   controllers: [NotificationController],
-  exports: [NotificationService],
+  exports: [
+    WhatsappBaileysService,
+    // NotificationService,
+  ],
 })
 export class NotificationModule {}

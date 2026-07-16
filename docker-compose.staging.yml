@@ -8,12 +8,12 @@ services:
     environment:
       - TZ=Asia/Jakarta
     ports:
-      - '8086:8085' # host 8086 → container 8085
+      - '8086:8085'
     networks:
       - app-network-staging
     volumes:
-      - ./wwebjs_auth_staging:/app/.wwebjs_auth
-      - ./wwebjs_cache_staging:/app/.wwebjs_cache
+      # volume untuk Baileys staging
+      - ./baileys_auth_info_staging:/app/baileys_auth_info
 
 networks:
   app-network-staging:

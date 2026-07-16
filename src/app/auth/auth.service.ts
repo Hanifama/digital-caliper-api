@@ -111,71 +111,146 @@ export class AuthService {
    * @throws mencari ke LDAP jika pengguna tidak ditemukan di database postgre
    */
   async authenticaton(dto: LoginUserDto) {
-    // 1️ Cari user di database dulu berdasarkan email / username / NIK
-    let user = await this.userRepo.findOne({
-      where: [
-        { email: dto.identifier },
-        { username: dto.identifier },
-        { NIK: dto.identifier },
-      ],
-      relations: ['role'],
-    });
+    try {
+      // ==========================
+      // Cari User Lokal
+      // ==========================
+      let user = await this.userRepo.findOne({
+        where: [
+          { email: dto.identifier },
+          { username: dto.identifier },
+          { NIK: dto.identifier },
+        ],
+        relations: ['role'],
+      });
 
-    // 2️ Kalau user belum ada, autentikasi ke LDAP
-    if (!user) {
-      const ldapUser = await this.ldapService.authenticate(
-        dto.identifier,
-        dto.password,
-      );
+      // ==========================
+      // Jika user belum ada -> LDAP
+      // ==========================
+      if (!user) {
+        const ldapUser = await this.ldapService.authenticate(
+          dto.identifier,
+          dto.password,
+        );
 
-      if (!ldapUser) {
-        throw new Error('User tidak ditemukan.');
+        // LDAP gagal
+        if (!ldapUser) {
+          await this.logService.createLog(undefined, {
+            data_1: 'LOGIN-FAILED',
+            data_2: `identifier:${dto.identifier}`,
+            data_3: 'reason:USER_NOT_FOUND',
+            data_4: 'source:LDAP',
+          });
+
+          throw new UnauthorizedException('Username atau password tidak valid');
+        }
+
+        // LDAP berhasil
+        await this.logService.createLog(undefined, {
+          data_1: 'LDAP-AUTH-SUCCESS',
+          data_2: `username:${ldapUser.username}`,
+          data_3: `email:${ldapUser.email ?? '-'}`,
+        });
+
+        const roleId = '2';
+
+        const fullName =
+          ldapUser.displayName ??
+          (`${ldapUser.firstName ?? ''} ${ldapUser.lastName ?? ''}`.trim() ||
+            ldapUser.username);
+
+        const defaultPassword = await bcrypt.hash(dto.password, 10);
+
+        user = this.userRepo.create({
+          user_id: randomUUID(),
+          username: ldapUser.username,
+          email: ldapUser.email ?? ldapUser.username,
+          full_name: fullName,
+          name: fullName,
+          password: defaultPassword,
+          status: 1,
+          role: roleId,
+          locationId: 'LOC004',
+          nik: null,
+        } as DeepPartial<User>);
+
+        await this.userRepo.save(user);
+
+        // User otomatis dibuat
+        await this.logService.createLog(user, {
+          data_1: 'AUTO-CREATE-USER',
+          data_2: `user_id:${user.user_id}`,
+          data_3: `username:${user.username}`,
+          data_4: `email:${user.email}`,
+          data_5: 'source:LDAP',
+        });
+
+        // Reload user + role relation
+        user = await this.userRepo.findOne({
+          where: {
+            user_id: user.user_id,
+          },
+          relations: ['role'],
+        });
       }
 
-      const roleId = '2';
+      // ==========================
+      // Safety Check
+      // ==========================
+      if (!user) {
+        throw new UnauthorizedException('User tidak ditemukan');
+      }
 
-      // Full name fallback ke firstName + lastName jika displayName kosong
-      const fullName =
-        ldapUser.displayName ??
-        (`${ldapUser.firstName ?? ''} ${ldapUser.lastName ?? ''}`.trim() ||
-          ldapUser.username);
-
-      // Buat user baru
-      const defaultPassword = await bcrypt.hash(dto.password, 10);
-
-      user = this.userRepo.create({
-        user_id: randomUUID(),
-        username: ldapUser.username,
-        email: ldapUser.email ?? ldapUser.username,
-        full_name: fullName,
-        name: fullName,
-        password: defaultPassword,
-        status: 1,
-        role: roleId,
-        locationId: 'LOC004',
-        nik: null,
-      } as DeepPartial<User>);
+      // ==========================
+      // Update Last Login
+      // ==========================
+      user.last_login = new Date();
 
       await this.userRepo.save(user);
+
+      // ==========================
+      // Login Success Log
+      // ==========================
+      await this.logService.createLog(user, {
+        data_1: 'LOGIN-SUCCESS',
+        data_2: `user_id:${user.user_id}`,
+        data_3: `email:${user.email}`,
+        data_4: `role:${user.role?.name ?? '-'}`,
+        data_5: `login_at:${user.last_login.toISOString()}`,
+      });
+
+      // ==========================
+      // JWT Payload
+      // ==========================
+      const payload: IJwtPayload = {
+        id: user.user_id,
+        name: user.full_name,
+        email: user.email,
+        role: user.role?.name ?? '1',
+      };
+
+      const accessToken = await this.tokenManager.generateAccessToken(payload);
+
+      const refreshToken =
+        await this.tokenManager.generateRefreshToken(payload);
+
+      this.messageService.setMessage('Berhasil Login. Silahkan Masuk!');
+
+      return {
+        accessToken,
+        refreshToken,
+      };
+    } catch (error: unknown) {
+      const err = error as Error;
+
+      await this.logService.createLog(undefined, {
+        data_1: 'LOGIN-ERROR',
+        data_2: `identifier:${dto.identifier}`,
+        data_3: err.message,
+        data_4: err.name,
+      });
+
+      throw error;
     }
-
-    // 3️ Update last login
-    user.last_login = new Date();
-    await this.userRepo.save(user);
-
-    // 4️ Generate JWT
-    const payload: IJwtPayload = {
-      id: user.user_id,
-      name: user.full_name,
-      email: user.email,
-      role: user.role?.name ?? '1',
-    };
-
-    this.messageService.setMessage(`Berhasil Login. Silahkan Masuk!`);
-
-    return {
-      accessToken: await this.tokenManager.generateAccessToken(payload),
-      refreshToken: await this.tokenManager.generateRefreshToken(payload),
-    };
   }
 }

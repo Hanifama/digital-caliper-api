@@ -171,10 +171,214 @@ export class NotificationService implements OnModuleInit {
     caption: string,
     groupNames: string[],
   ) {
-    if (!this.client || !this.isReady)
-      throw new Error('WhatsApp client belum siap');
+    console.log('\n======================================');
+    console.log('SEND PDF TO GROUPS');
+    console.log('======================================');
 
-    const chats = await this.client.getChats();
+    if (!this.client || !this.isReady) {
+      throw new Error('WhatsApp client belum siap');
+    }
+
+    /**
+     * CLIENT INFO
+     */
+    console.log('\n========== CLIENT ==========');
+
+    console.log('Client Ready :', this.isReady);
+    console.log('Client Exists :', !!this.client);
+    console.log('Client Info :', this.client.info);
+
+    try {
+      const state = await this.client.getState();
+      console.log('State :', state);
+    } catch (err: any) {
+      console.error('getState ERROR');
+      console.error(err);
+    }
+
+    console.log('Browser Exists :', !!this.client.pupBrowser);
+
+    console.log('Page Exists :', !!this.client.pupPage);
+
+    /**
+     * PAGE INFO
+     */
+    console.log('\n========== PAGE ==========');
+
+    try {
+      const page = this.client.pupPage!;
+
+      console.log('URL :', await page.url());
+      console.log('Title :', await page.title());
+
+      const ready = await page.evaluate(() => document.readyState);
+
+      console.log('ReadyState :', ready);
+
+      const pageInfo = await page.evaluate(() => {
+        return {
+          href: window.location.href,
+          title: document.title,
+          readyState: document.readyState,
+        };
+      });
+
+      console.log(pageInfo);
+    } catch (err: any) {
+      console.error('PAGE ERROR');
+      console.error(err);
+    }
+
+    /**
+     * WWEBJS INFO
+     */
+    console.log('\n========== WWEBJS ==========');
+
+    try {
+      const result = await this.client.pupPage!.evaluate(() => {
+        const data: any = {};
+
+        data.hasRequire = typeof (window as any).require;
+        data.hasWWebJS = typeof (window as any).WWebJS;
+        data.hasStore = typeof (window as any).Store;
+
+        try {
+          data.keys = Object.keys((window as any).WWebJS);
+        } catch (e: any) {
+          data.keys = e.message;
+        }
+
+        return data;
+      });
+
+      console.log(result);
+    } catch (err: any) {
+      console.error('WWEBJS ERROR');
+      console.error(err);
+    }
+
+    /**
+     * WA COLLECTIONS
+     */
+    console.log('\n========== WA COLLECTIONS ==========');
+
+    try {
+      const result = await this.client.pupPage!.evaluate(() => {
+        const data: any = {};
+
+        try {
+          const WA = (window as any).require('WAWebCollections');
+
+          data.exist = true;
+          data.keys = Object.keys(WA);
+
+          data.chatExist = !!WA.Chat;
+
+          if (WA.Chat) {
+            data.chatKeys = Object.keys(WA.Chat);
+          }
+        } catch (e: any) {
+          data.error = e.message;
+        }
+
+        return data;
+      });
+
+      console.log(result);
+    } catch (err: any) {
+      console.error('WA COLLECTION ERROR');
+      console.error(err);
+    }
+
+    /**
+     * CHAT MODELS
+     */
+    console.log('\n========== CHAT MODELS ==========');
+
+    try {
+      const result = await this.client.pupPage!.evaluate(() => {
+        const data: any = {};
+
+        try {
+          const WA = (window as any).require('WAWebCollections');
+
+          const chats = WA.Chat.getModelsArray();
+
+          data.success = true;
+          data.total = chats.length;
+
+          if (chats.length > 0) {
+            data.first = {
+              id: chats[0].id?._serialized,
+              name: chats[0].name,
+              isGroup: chats[0].isGroup,
+            };
+          }
+        } catch (e: any) {
+          data.success = false;
+          data.error = e.message;
+        }
+
+        return data;
+      });
+
+      console.log(result);
+    } catch (err: any) {
+      console.error('CHAT MODEL ERROR');
+      console.error(err);
+    }
+
+    /**
+     * WWEBJS GETCHATS
+     */
+    console.log('\n========== WWEBJS GETCHATS ==========');
+
+    try {
+      const result = await this.client.pupPage!.evaluate(async () => {
+        try {
+          const chats = await (window as any).WWebJS.getChats();
+
+          return {
+            success: true,
+            total: chats.length,
+          };
+        } catch (e: any) {
+          return {
+            success: false,
+            message: e.message,
+            stack: e.stack,
+          };
+        }
+      });
+
+      console.log(result);
+    } catch (err: any) {
+      console.error('WWEBJS GETCHATS ERROR');
+      console.error(err);
+    }
+
+    /**
+     * CLIENT GETCHATS
+     */
+    console.log('\n========== CLIENT GETCHATS ==========');
+
+    let chats;
+
+    try {
+      chats = await this.client.getChats();
+
+      console.log('SUCCESS');
+      console.log('TOTAL :', chats.length);
+    } catch (err: any) {
+      console.error('CLIENT GETCHATS ERROR');
+      console.error(err);
+      throw err;
+    }
+
+    /**
+     * CREATE MEDIA
+     */
+    console.log('\n========== CREATE MEDIA ==========');
 
     const media = new MessageMedia(
       'application/pdf',
@@ -182,32 +386,59 @@ export class NotificationService implements OnModuleInit {
       fileName,
     );
 
+    console.log('MEDIA CREATED');
+
     const sent: string[] = [];
     const failed: string[] = [];
 
+    /**
+     * LOOP GROUP
+     */
     for (const groupName of groupNames) {
+      console.log('\n------------------------------');
+      console.log('TARGET :', groupName);
+
       const group = chats.find(
         (chat) =>
           chat.isGroup && chat.name?.toLowerCase() === groupName.toLowerCase(),
       );
 
       if (!group) {
+        console.log('GROUP NOT FOUND');
         failed.push(groupName);
         continue;
       }
+
+      console.log('GROUP FOUND');
+      console.log(group.id._serialized);
 
       try {
         await this.client.sendMessage(group.id._serialized, media, {
           caption,
           sendMediaAsDocument: true,
         });
+
+        console.log('SEND SUCCESS');
+
         sent.push(groupName);
-      } catch (err) {
+      } catch (err: any) {
+        console.error('SEND MESSAGE ERROR');
+        console.error(err);
+
         failed.push(groupName);
       }
     }
 
-    return { sent, failed };
+    console.log('\n======================================');
+    console.log('FINISHED');
+    console.log('SENT :', sent);
+    console.log('FAILED :', failed);
+    console.log('======================================');
+
+    return {
+      sent,
+      failed,
+    };
   }
 
   // Kirim Image ke beberapa grup sekaligus
